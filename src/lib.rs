@@ -12,8 +12,6 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
-use log::warn;
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use winit::dpi::PhysicalSize;
 
@@ -350,7 +348,9 @@ pub async fn run() {
     event_loop.run(move |event, _, control_flow| {
         unsafe {
             if NEED_TO_RESIZE_WINDOW {
-                // TODO: resize actual winit window
+                state
+                    .window()
+                    .set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                 state.resize(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                 NEED_TO_RESIZE_WINDOW = false;
             }

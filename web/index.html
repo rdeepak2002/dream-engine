@@ -17,15 +17,26 @@
 <script type="module">
     import init, { resize_window } from './build/dream.js';
     init().then(() => {
-        resize_window(600, 600);
-        // remove context menu pop-up when right-clicking on canvas
+        // set initial size of renderer
+        resize_window(Math.floor(window.innerWidth * 2), Math.floor(window.innerHeight * 2));
+        // handle window resizing
+        window.addEventListener('resize', function(e) {
+            resize_window(Math.floor(window.innerWidth * 2), Math.floor(window.innerHeight * 2));
+        });
         const canvasElement = document?.getElementsByTagName('canvas')[0];
-        canvasElement && canvasElement.addEventListener('contextmenu', function(e) {
-            if (e.button === 2) {
-                e.preventDefault();
-                return false;
-            }
-        }, false);
+        if (canvasElement) {
+            // remove context menu pop-up when right-clicking on canvas
+            canvasElement.addEventListener('contextmenu', function(e) {
+                if (e.button === 2) {
+                    e.preventDefault();
+                    return false;
+                }
+            }, false);
+            // handle canvas resizing
+            canvasElement.addEventListener('resize', function(e) {
+                resize_window(Math.floor(window.innerWidth * 2), Math.floor(window.innerHeight * 2));
+            });
+        }
     });
 </script>
 </body>
