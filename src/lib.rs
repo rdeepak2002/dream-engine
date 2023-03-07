@@ -15,6 +15,7 @@ use egui_winit_platform::{Platform, PlatformDescriptor};
 use log::warn;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+use winit::dpi::PhysicalSize;
 
 struct State {
     surface: wgpu::Surface,
@@ -349,7 +350,8 @@ pub async fn run() {
     event_loop.run(move |event, _, control_flow| {
         unsafe {
             if NEED_TO_RESIZE_WINDOW {
-                // warn!("TODO: do stuff");
+                // TODO: resize actual winit window
+                state.resize(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                 NEED_TO_RESIZE_WINDOW = false;
             }
         }

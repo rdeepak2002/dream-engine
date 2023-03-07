@@ -17,7 +17,7 @@
 <script type="module">
     import init, { resize_window } from './build/dream.js';
     init().then(() => {
-        resize_window(10, 10);
+        resize_window(600, 600);
         // remove context menu pop-up when right-clicking on canvas
         const canvasElement = document?.getElementsByTagName('canvas')[0];
         canvasElement && canvasElement.addEventListener('contextmenu', function(e) {
