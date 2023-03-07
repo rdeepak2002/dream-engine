@@ -272,7 +272,12 @@ impl State {
                         &view,
                         &paint_jobs,
                         &screen_descriptor,
-                        Some(wgpu::Color::BLACK),
+                        Some(wgpu::Color {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 1.0,
+                        }),
                     )
                     .unwrap();
             }
