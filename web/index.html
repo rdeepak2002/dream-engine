@@ -8,17 +8,20 @@
     <title>Learn WGPU</title>
     <style>
         canvas {
+            width: 100%;
+            height: 100%;
             background-color: black;
         }
     </style>
 </head>
 
-<body id="wasm-example">
+<body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
 <script type="module">
-    import init from "./build/dream.js";
+    import init from './build/dream.js';
     init().then(() => {
         // remove context menu pop-up when right-clicking on canvas
-        document.getElementsByTagName("canvas")[0].addEventListener('contextmenu', function(e) {
+        const canvasElement = document?.getElementsByTagName('canvas')[0];
+        canvasElement && canvasElement.addEventListener('contextmenu', function(e) {
             if (e.button === 2) {
                 e.preventDefault();
                 return false;
