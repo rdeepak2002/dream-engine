@@ -17,7 +17,13 @@
 <script type="module">
     import init from "./build/dream.js";
     init().then(() => {
-        console.log("WASM Loaded");
+        // remove context menu pop-up when right-clicking on canvas
+        document.getElementsByTagName("canvas")[0].addEventListener('contextmenu', function(e) {
+            if (e.button === 2) {
+                e.preventDefault();
+                return false;
+            }
+        }, false);
     });
 </script>
 </body>
