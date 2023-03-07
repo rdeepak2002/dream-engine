@@ -211,7 +211,24 @@ impl State {
         self.platform.begin_frame();
 
         // Draw the demo application.
-        self.demo_app.ui(&self.platform.context());
+        // self.demo_app.ui(&self.platform.context());
+        let ctx = &self.platform.context();
+        egui::SidePanel::right("egui_demo_panel")
+            .resizable(false)
+            .default_width(150.0)
+            .show(ctx, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.heading("Dream Engine");
+                });
+
+                ui.separator();
+
+                // TODO: render result onto image using this
+                // ui.image();
+
+                // ui.separator();
+            });
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let full_output = self.platform.end_frame(Some(&self.window));
