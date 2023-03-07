@@ -13,6 +13,7 @@ use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
 use winit::dpi::PhysicalSize;
 
 struct State {
@@ -288,9 +289,13 @@ impl State {
     }
 }
 
-static mut WINDOW_WIDTH: u32 = 2000;
-static mut WINDOW_HEIGHT: u32 = 1500;
-static mut NEED_TO_RESIZE_WINDOW: bool = false;
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        static mut WINDOW_WIDTH: u32 = 2000;
+        static mut WINDOW_HEIGHT: u32 = 1500;
+        static mut NEED_TO_RESIZE_WINDOW: bool = false;
+    }
+}
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
@@ -325,7 +330,7 @@ pub async fn run() {
         // the size manually when on web.
         use winit::dpi::PhysicalSize;
         unsafe {
-            window.set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+            window.set_inner_size(PhysicalSize::new(2000, 1500));
         }
 
         use winit::platform::web::WindowExtWebSys;
@@ -346,13 +351,16 @@ pub async fn run() {
     let start_time = instant::Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
-        unsafe {
-            if NEED_TO_RESIZE_WINDOW {
-                state
-                    .window()
-                    .set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                state.resize(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                NEED_TO_RESIZE_WINDOW = false;
+        #[cfg(target_arch = "wasm32")]
+        {
+            unsafe {
+                if NEED_TO_RESIZE_WINDOW {
+                    state
+                        .window()
+                        .set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    state.resize(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    NEED_TO_RESIZE_WINDOW = false;
+                }
             }
         }
         state.platform.handle_event(&event);
