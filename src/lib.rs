@@ -266,19 +266,23 @@ impl State {
                 );
 
                 // Record all render passes.
+                // self.egui_rpass
+                //     .execute(
+                //         &mut encoder,
+                //         &view,
+                //         &paint_jobs,
+                //         &screen_descriptor,
+                //         Some(wgpu::Color {
+                //             r: 0.0,
+                //             g: 0.0,
+                //             b: 0.0,
+                //             a: 1.0,
+                //         }),
+                //     )
+                //     .unwrap();
+                // TODO: right now we are using clera_color None to not clear the screen
                 self.egui_rpass
-                    .execute(
-                        &mut encoder,
-                        &view,
-                        &paint_jobs,
-                        &screen_descriptor,
-                        Some(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        }),
-                    )
+                    .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
                     .unwrap();
             }
 
