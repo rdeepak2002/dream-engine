@@ -12,6 +12,10 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
+use log::debug;
+#[cfg(target_arch = "wasm32")]
+use log::warn;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 struct State {
@@ -289,12 +293,17 @@ impl State {
     }
 }
 
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn resizeWindow(width: u32, height: u32) {
+    warn!("setting window size to {width} {height}!");
+}
+
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Warn).expect("Could't initialize logger");
+            console_log::init_with_level(log::Level::Info).expect("Could't initialize logger");
         } else {
             env_logger::init();
         }
