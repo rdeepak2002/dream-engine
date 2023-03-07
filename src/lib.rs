@@ -224,63 +224,64 @@ impl State {
             });
 
         {
-            // TODO: uncomment
-            // let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            //     label: Some("Render Pass"),
-            //     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-            //         view: &view,
-            //         resolve_target: None,
-            //         ops: wgpu::Operations {
-            //             load: wgpu::LoadOp::Clear(wgpu::Color {
-            //                 r: 0.1,
-            //                 g: 0.2,
-            //                 b: 0.3,
-            //                 a: 1.0,
-            //             }),
-            //             store: true,
-            //         },
-            //     })],
-            //     depth_stencil_attachment: None,
-            // });
+            // draw triangle
+            {
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.1,
+                                g: 0.2,
+                                b: 0.3,
+                                a: 1.0,
+                            }),
+                            store: true,
+                        },
+                    })],
+                    depth_stencil_attachment: None,
+                });
 
-            // Upload all resources for the GPU.
-            let screen_descriptor = ScreenDescriptor {
-                physical_width: self.config.width,
-                physical_height: self.config.height,
-                scale_factor: self.window.scale_factor() as f32,
-            };
-            let tdelta: egui::TexturesDelta = full_output.textures_delta;
-            self.egui_rpass
-                .add_textures(&self.device, &self.queue, &tdelta)
-                .expect("add texture ok");
-            self.egui_rpass.update_buffers(
-                &self.device,
-                &self.queue,
-                &paint_jobs,
-                &screen_descriptor,
-            );
+                render_pass.set_pipeline(&self.render_pipeline);
+                render_pass.draw(0..3, 0..1);
+            }
 
-            // Record all render passes.
-            self.egui_rpass
-                .execute(
-                    &mut encoder,
-                    &view,
+            // draw egui
+            {
+                let screen_descriptor = ScreenDescriptor {
+                    physical_width: self.config.width,
+                    physical_height: self.config.height,
+                    scale_factor: self.window.scale_factor() as f32,
+                };
+                self.egui_rpass
+                    .add_textures(&self.device, &self.queue, &full_output.textures_delta)
+                    .expect("add texture ok");
+                self.egui_rpass.update_buffers(
+                    &self.device,
+                    &self.queue,
                     &paint_jobs,
                     &screen_descriptor,
-                    Some(wgpu::Color::BLACK),
-                )
-                .unwrap();
+                );
 
-            // TODO: uncomment
-            // render_pass.set_pipeline(&self.render_pipeline);
-            // render_pass.draw(0..3, 0..1);
+                // Record all render passes.
+                self.egui_rpass
+                    .execute(
+                        &mut encoder,
+                        &view,
+                        &paint_jobs,
+                        &screen_descriptor,
+                        Some(wgpu::Color::BLACK),
+                    )
+                    .unwrap();
+            }
 
             self.queue.submit(iter::once(encoder.finish()));
             output.present();
 
-            // TODO
             self.egui_rpass
-                .remove_textures(tdelta)
+                .remove_textures(full_output.textures_delta)
                 .expect("remove texture ok");
         }
 
