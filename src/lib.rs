@@ -12,8 +12,6 @@ use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
-use log::debug;
-#[cfg(target_arch = "wasm32")]
 use log::warn;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -27,7 +25,6 @@ struct State {
     // NEW!
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
-    surface_format: wgpu::TextureFormat,
     platform: Platform,
     egui_rpass: RenderPass,
     demo_app: DemoWindows,
@@ -156,7 +153,7 @@ impl State {
         });
 
         // We use the egui_winit_platform crate as the platform.
-        let mut platform = Platform::new(PlatformDescriptor {
+        let platform = Platform::new(PlatformDescriptor {
             physical_width: size.width as u32,
             physical_height: size.height as u32,
             scale_factor: window.scale_factor(),
@@ -165,10 +162,10 @@ impl State {
         });
 
         // We use the egui_wgpu_backend crate as the render backend.
-        let mut egui_rpass = RenderPass::new(&device, surface_format, 1);
+        let egui_rpass = RenderPass::new(&device, surface_format, 1);
 
         // Display the demo application that ships with egui.
-        let mut demo_app = egui_demo_lib::DemoWindows::default();
+        let demo_app = egui_demo_lib::DemoWindows::default();
 
         Self {
             surface,
@@ -178,7 +175,6 @@ impl State {
             config,
             render_pipeline,
             window,
-            surface_format,
             platform,
             egui_rpass,
             demo_app,
@@ -293,9 +289,13 @@ impl State {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn resizeWindow(width: u32, height: u32) {
-    warn!("setting window size to {width} {height}!");
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+        pub fn resize_window(width: u32, height: u32) {
+            warn!("setting window size to {width} {height}!");
+        }
+    }
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
@@ -303,7 +303,7 @@ pub async fn run() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Info).expect("Could't initialize logger");
+            console_log::init_with_level(log::Level::Warn).expect("Could't initialize logger");
         } else {
             env_logger::init();
         }

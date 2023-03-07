@@ -15,9 +15,9 @@
 
 <body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
 <script type="module">
-    import init, { resizeWindow } from './build/dream.js';
+    import init, { resize_window } from './build/dream.js';
     init().then(() => {
-        resizeWindow(10, 10);
+        resize_window(10, 10);
         // remove context menu pop-up when right-clicking on canvas
         const canvasElement = document?.getElementsByTagName('canvas')[0];
         canvasElement && canvasElement.addEventListener('contextmenu', function(e) {
