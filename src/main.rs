@@ -1,5 +1,5 @@
 use dream::run;
 
 fn main() {
-    run();
+    pollster::block_on(run());
 }
