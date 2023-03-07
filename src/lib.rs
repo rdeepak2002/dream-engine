@@ -1,3 +1,5 @@
+use egui::FontDefinitions;
+use egui_demo_lib::DemoWindows;
 use std::iter;
 
 use winit::{
@@ -5,6 +7,9 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
+
+use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
+use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -18,6 +23,10 @@ struct State {
     // NEW!
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
+    surface_format: wgpu::TextureFormat,
+    platform: Platform,
+    egui_rpass: RenderPass,
+    demo_app: DemoWindows,
 }
 
 impl State {
@@ -142,6 +151,21 @@ impl State {
             multiview: None,
         });
 
+        // We use the egui_winit_platform crate as the platform.
+        let mut platform = Platform::new(PlatformDescriptor {
+            physical_width: size.width as u32,
+            physical_height: size.height as u32,
+            scale_factor: window.scale_factor(),
+            font_definitions: FontDefinitions::default(),
+            style: Default::default(),
+        });
+
+        // We use the egui_wgpu_backend crate as the render backend.
+        let mut egui_rpass = RenderPass::new(&device, surface_format, 1);
+
+        // Display the demo application that ships with egui.
+        let mut demo_app = egui_demo_lib::DemoWindows::default();
+
         Self {
             surface,
             device,
@@ -150,6 +174,10 @@ impl State {
             config,
             render_pipeline,
             window,
+            surface_format,
+            platform,
+            egui_rpass,
+            demo_app,
         }
     }
 
@@ -179,6 +207,16 @@ impl State {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
+        // Begin to draw the UI frame.
+        self.platform.begin_frame();
+
+        // Draw the demo application.
+        self.demo_app.ui(&self.platform.context());
+
+        // End the UI frame. We could now handle the output and draw the UI with the backend.
+        let full_output = self.platform.end_frame(Some(&self.window));
+        let paint_jobs = self.platform.context().tessellate(full_output.shapes);
+
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -186,30 +224,65 @@ impl State {
             });
 
         {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: None,
-            });
+            // TODO: uncomment
+            // let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            //     label: Some("Render Pass"),
+            //     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            //         view: &view,
+            //         resolve_target: None,
+            //         ops: wgpu::Operations {
+            //             load: wgpu::LoadOp::Clear(wgpu::Color {
+            //                 r: 0.1,
+            //                 g: 0.2,
+            //                 b: 0.3,
+            //                 a: 1.0,
+            //             }),
+            //             store: true,
+            //         },
+            //     })],
+            //     depth_stencil_attachment: None,
+            // });
 
-            render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw(0..3, 0..1);
+            // Upload all resources for the GPU.
+            let screen_descriptor = ScreenDescriptor {
+                physical_width: self.config.width,
+                physical_height: self.config.height,
+                scale_factor: self.window.scale_factor() as f32,
+            };
+            let tdelta: egui::TexturesDelta = full_output.textures_delta;
+            self.egui_rpass
+                .add_textures(&self.device, &self.queue, &tdelta)
+                .expect("add texture ok");
+            self.egui_rpass.update_buffers(
+                &self.device,
+                &self.queue,
+                &paint_jobs,
+                &screen_descriptor,
+            );
+
+            // Record all render passes.
+            self.egui_rpass
+                .execute(
+                    &mut encoder,
+                    &view,
+                    &paint_jobs,
+                    &screen_descriptor,
+                    Some(wgpu::Color::BLACK),
+                )
+                .unwrap();
+
+            // TODO: uncomment
+            // render_pass.set_pipeline(&self.render_pipeline);
+            // render_pass.draw(0..3, 0..1);
+
+            self.queue.submit(iter::once(encoder.finish()));
+            output.present();
+
+            // TODO
+            self.egui_rpass
+                .remove_textures(tdelta)
+                .expect("remove texture ok");
         }
-
-        self.queue.submit(iter::once(encoder.finish()));
-        output.present();
 
         Ok(())
     }
@@ -234,7 +307,7 @@ pub async fn run() {
         // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
         use winit::dpi::PhysicalSize;
-        window.set_inner_size(PhysicalSize::new(450, 400));
+        window.set_inner_size(PhysicalSize::new(2000, 1500));
 
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
@@ -251,7 +324,10 @@ pub async fn run() {
     // State::new uses async code, so we're going to wait for it to finish
     let mut state = State::new(window).await;
 
+    let start_time = instant::Instant::now();
+
     event_loop.run(move |event, _, control_flow| {
+        state.platform.handle_event(&event);
         match event {
             Event::WindowEvent {
                 ref event,
@@ -281,6 +357,9 @@ pub async fn run() {
                 }
             }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
+                state
+                    .platform
+                    .update_time(start_time.elapsed().as_secs_f64());
                 state.update();
                 match state.render() {
                     Ok(_) => {}
