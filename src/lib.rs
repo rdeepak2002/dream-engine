@@ -1,8 +1,6 @@
 use egui::FontDefinitions;
 use egui_demo_lib::DemoWindows;
-use std::cell::{Cell, RefCell};
 use std::iter;
-use std::sync::RwLock;
 
 use winit::{
     event::*,
@@ -291,19 +289,19 @@ impl State {
     }
 }
 
-static WINDOW_WIDTH: RwLock<u32> = RwLock::new(2000);
-static WINDOW_HEIGHT: RwLock<u32> = RwLock::new(1500);
-static NEED_TO_RESIZE_WINDOW: RwLock<bool> = RwLock::new(false);
+static mut WINDOW_WIDTH: u32 = 2000;
+static mut WINDOW_HEIGHT: u32 = 1500;
+static mut NEED_TO_RESIZE_WINDOW: bool = false;
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
         #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
         pub fn resize_window(width: u32, height: u32) {
-            // WINDOW_WIDTH width;
-            // WINDOW_HEIGHT = height;
-            // NEED_TO_RESIZE_WINDOW = true;
-            let mut w = NEED_TO_RESIZE_WINDOW.write().unwrap();
-            *w = true;
+            unsafe {
+                WINDOW_WIDTH = width;
+                WINDOW_HEIGHT = height;
+                NEED_TO_RESIZE_WINDOW = true;
+            }
         }
     }
 }
@@ -322,14 +320,14 @@ pub async fn run() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    // #[cfg(target_arch = "wasm32")]
+    #[cfg(target_arch = "wasm32")]
     {
         // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
         use winit::dpi::PhysicalSize;
-        let window_width = WINDOW_WIDTH.read().unwrap();
-        let window_height = WINDOW_WIDTH.read().unwrap();
-        window.set_inner_size(PhysicalSize::new(*window_width, *window_height));
+        unsafe {
+            window.set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+        }
 
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
@@ -349,6 +347,12 @@ pub async fn run() {
     let start_time = instant::Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
+        unsafe {
+            if NEED_TO_RESIZE_WINDOW {
+                // warn!("TODO: do stuff");
+                NEED_TO_RESIZE_WINDOW = false;
+            }
+        }
         state.platform.handle_event(&event);
         match event {
             Event::WindowEvent {
