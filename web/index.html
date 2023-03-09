@@ -36,6 +36,30 @@
             canvasElement.addEventListener('resize', function(e) {
                 resize_window(Math.floor(window.innerWidth * 2), Math.floor(window.innerHeight * 2));
             });
+            // handle command s
+            canvasElement.addEventListener("keydown", function(e) {
+                if (e.key === 's' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                    e.preventDefault();
+                }
+            }, false);
+            // handle command o
+            canvasElement.addEventListener("keydown", function(e) {
+                if (e.key === 'o' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                    e.preventDefault();
+                }
+            }, false);
+            // handle command r
+            canvasElement.addEventListener("keydown", function(e) {
+                if (e.key === 'r' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                    e.preventDefault();
+                }
+            }, false);
+            // handle command p
+            canvasElement.addEventListener("keydown", function(e) {
+                if (e.key === 'p' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                    e.preventDefault();
+                }
+            }, false);
         }
     });
 </script>
