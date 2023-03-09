@@ -15,7 +15,7 @@ log = "0.4"
 wgpu = "0.15"
 pollster = "0.3.0"
 egui = "0.21.0"
-egui-winit = { version = "0.21.1", default-features = false, features = []}
+egui-winit = { version = "0.21.1", default-features = false, features = ["links", "wayland"]}
 egui_demo_lib = "0.21.0"
 egui-wgpu = "0.21.0"
 epi = "0.17.0"
