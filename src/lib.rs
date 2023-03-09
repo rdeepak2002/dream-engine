@@ -282,6 +282,9 @@ impl State {
                     &screen_descriptor,
                 );
 
+                // TODO: get egui texture from depth texture
+                // self.egui_rpass.egui_texture_from_wgpu_texture();
+
                 // Record all render passes.
                 // self.egui_rpass
                 //     .execute(
