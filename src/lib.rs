@@ -1,8 +1,6 @@
-use egui::mutex::RwLock;
 use egui::FontDefinitions;
 use egui_demo_lib::DemoWindows;
 use std::iter;
-use std::sync::Arc;
 
 use winit::{
     event::*,
@@ -87,12 +85,6 @@ impl State {
             .await
             .map(|(device, queue)| {
                 let renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
-                // egui_wgpu::RenderState {
-                //     device: Arc::new(device),
-                //     queue: Arc::new(queue),
-                //     target_format: surface_format,
-                //     renderer: Arc::new(RwLock::new(renderer)),
-                // }
                 return (device, queue, renderer);
             })
             .unwrap();
@@ -298,6 +290,10 @@ impl State {
 
             self.queue.submit(iter::once(encoder.finish()));
             output.present();
+        }
+
+        for id in &full_output.textures_delta.free {
+            self.renderer.free_texture(id);
         }
 
         Ok(())
