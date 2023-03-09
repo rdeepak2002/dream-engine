@@ -1,6 +1,8 @@
+use egui::mutex::RwLock;
 use egui::FontDefinitions;
 use egui_demo_lib::DemoWindows;
 use std::iter;
+use std::sync::Arc;
 
 use winit::{
     event::*,
@@ -28,6 +30,7 @@ struct State {
     platform: Platform,
     egui_rpass: RenderPass,
     demo_app: DemoWindows,
+    renderer: egui_wgpu::Renderer,
 }
 
 impl State {
@@ -56,7 +59,19 @@ impl State {
             .await
             .unwrap();
 
-        let (device, queue) = adapter
+        let surface_caps = surface.get_capabilities(&adapter);
+        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
+        // one will result all the colors comming out darker. If you want to support non
+        // Srgb surfaces, you'll need to account for that when drawing to the frame.
+        let surface_format = surface_caps
+            .formats
+            .iter()
+            .copied()
+            .filter(|f| f.describe().srgb)
+            .next()
+            .unwrap_or(surface_caps.formats[0]);
+
+        let (device, queue, renderer) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
@@ -72,19 +87,18 @@ impl State {
                 None, // Trace path
             )
             .await
+            .map(|(device, queue)| {
+                let renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
+                // egui_wgpu::RenderState {
+                //     device: Arc::new(device),
+                //     queue: Arc::new(queue),
+                //     target_format: surface_format,
+                //     renderer: Arc::new(RwLock::new(renderer)),
+                // }
+                return (device, queue, renderer);
+            })
             .unwrap();
 
-        let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors comming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .filter(|f| f.describe().srgb)
-            .next()
-            .unwrap_or(surface_caps.formats[0]);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
@@ -178,6 +192,7 @@ impl State {
             platform,
             egui_rpass,
             demo_app,
+            renderer,
         }
     }
 
@@ -241,6 +256,24 @@ impl State {
             });
 
         {
+            for (id, image_delta) in &full_output.textures_delta.set {
+                self.renderer
+                    .update_texture(&self.device, &self.queue, *id, image_delta)
+            }
+
+            let screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
+                size_in_pixels: [self.config.width, self.config.height],
+                pixels_per_point: self.window.scale_factor() as f32,
+            };
+
+            self.renderer.update_buffers(
+                &self.device,
+                &self.queue,
+                &mut encoder,
+                &paint_jobs,
+                &screen_descriptor,
+            );
+
             // draw triangle
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -263,55 +296,77 @@ impl State {
 
                 render_pass.set_pipeline(&self.render_pipeline);
                 render_pass.draw(0..3, 0..1);
+
+                self.renderer
+                    .render(&mut render_pass, &paint_jobs, &screen_descriptor);
             }
 
             // draw egui
             {
-                let screen_descriptor = ScreenDescriptor {
-                    physical_width: self.config.width,
-                    physical_height: self.config.height,
-                    scale_factor: self.window.scale_factor() as f32,
-                };
-                self.egui_rpass
-                    .add_textures(&self.device, &self.queue, &full_output.textures_delta)
-                    .expect("add texture ok");
-                self.egui_rpass.update_buffers(
-                    &self.device,
-                    &self.queue,
-                    &paint_jobs,
-                    &screen_descriptor,
-                );
+                // let screen_descriptor = ScreenDescriptor {
+                //     physical_width: self.config.width,
+                //     physical_height: self.config.height,
+                //     scale_factor: self.window.scale_factor() as f32,
+                // };
 
-                // TODO: get egui texture from depth texture
-                // self.egui_rpass.egui_texture_from_wgpu_texture();
+                // for (id, image_delta) in &full_output.textures_delta.set {
+                //     self.renderer
+                //         .update_texture(&self.device, &self.queue, *id, image_delta)
+                // }
+                //
+                // let screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
+                //     size_in_pixels: [self.config.width, self.config.height],
+                //     pixels_per_point: self.window.scale_factor() as f32,
+                // };
 
-                // Record all render passes.
+                // self.renderer.update_buffers(
+                //     &self.device,
+                //     &self.queue,
+                //     &mut encoder,
+                //     clipped_primitives,
+                //     &screen_descriptor,
+                // )
+
                 // self.egui_rpass
-                //     .execute(
-                //         &mut encoder,
-                //         &view,
-                //         &paint_jobs,
-                //         &screen_descriptor,
-                //         Some(wgpu::Color {
-                //             r: 0.0,
-                //             g: 0.0,
-                //             b: 0.0,
-                //             a: 1.0,
-                //         }),
-                //     )
+                //     .add_textures(&self.device, &self.queue, &full_output.textures_delta)
+                //     .expect("add texture ok");
+                // self.egui_rpass.update_buffers(
+                //     &self.device,
+                //     &self.queue,
+                //     &paint_jobs,
+                //     &screen_descriptor,
+                // );
+                //
+                // // TODO: get egui texture from depth texture
+                // // self.egui_rpass.egui_texture_from_wgpu_texture();
+                //
+                // // Record all render passes.
+                // // self.egui_rpass
+                // //     .execute(
+                // //         &mut encoder,
+                // //         &view,
+                // //         &paint_jobs,
+                // //         &screen_descriptor,
+                // //         Some(wgpu::Color {
+                // //             r: 0.0,
+                // //             g: 0.0,
+                // //             b: 0.0,
+                // //             a: 1.0,
+                // //         }),
+                // //     )
+                // //     .unwrap();
+                // // TODO: right now we are using clera_color None to not clear the screen
+                // self.egui_rpass
+                //     .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
                 //     .unwrap();
-                // TODO: right now we are using clera_color None to not clear the screen
-                self.egui_rpass
-                    .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
-                    .unwrap();
             }
 
             self.queue.submit(iter::once(encoder.finish()));
             output.present();
 
-            self.egui_rpass
-                .remove_textures(full_output.textures_delta)
-                .expect("remove texture ok");
+            // self.egui_rpass
+            //     .remove_textures(full_output.textures_delta)
+            //     .expect("remove texture ok");
         }
 
         Ok(())

@@ -401,6 +401,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "egui",
+ "egui-wgpu",
  "egui_demo_lib",
  "egui_wgpu_backend",
  "egui_winit_platform",
@@ -433,6 +434,19 @@ dependencies = [
  "ahash 0.8.3",
  "epaint",
  "nohash-hasher",
+]
+
+[[package]]
+name = "egui-wgpu"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1678d8f30181193e78c15dddae16e6027c6058fdda9631950ade511b8a4b26f5"
+dependencies = [
+ "bytemuck",
+ "epaint",
+ "tracing",
+ "type-map",
+ "wgpu",
 ]
 
 [[package]]
@@ -1614,6 +1628,15 @@ name = "ttf-parser"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0609f771ad9c6155384897e1df4d948e692667cc0588548b68eb44d052b27633"
+
+[[package]]
+name = "type-map"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "deb68604048ff8fa93347f02441e4487594adc20bb8a084f9e564d2b827a0a9f"
+dependencies = [
+ "rustc-hash",
+]
 
 [[package]]
 name = "unicode-ident"
