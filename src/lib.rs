@@ -1,4 +1,4 @@
-use egui_demo_lib::DemoWindows;
+// use egui_demo_lib::DemoWindows;
 use std::iter;
 
 use winit::{
@@ -9,8 +9,6 @@ use winit::{
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use winit::dpi::PhysicalSize;
 
 struct State {
     surface: wgpu::Surface,
@@ -24,7 +22,7 @@ struct State {
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_winit_context: egui::Context,
     egui_winit_state: egui_winit::State,
-    demo_app: DemoWindows,
+    // demo_app: DemoWindows,
 }
 
 impl State {
@@ -157,7 +155,7 @@ impl State {
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(window.scale_factor() as f32);
         let egui_winit_context = egui::Context::default();
-        let demo_app = egui_demo_lib::DemoWindows::default();
+        // let demo_app = egui_demo_lib::DemoWindows::default();
 
         Self {
             surface,
@@ -170,7 +168,7 @@ impl State {
             egui_wgpu_renderer,
             egui_winit_state,
             egui_winit_context,
-            demo_app,
+            // demo_app,
         }
     }
 
@@ -200,7 +198,40 @@ impl State {
         self.egui_winit_context.begin_frame(input);
 
         // Draw the demo application.
-        self.demo_app.ui(&self.egui_winit_context);
+        // self.demo_app.ui(&self.egui_winit_context);
+        egui::SidePanel::right("inspector_panel")
+            .resizable(false)
+            .default_width(150.0)
+            .show(&self.egui_winit_context, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.heading("TODO: inspector");
+                });
+
+                ui.separator();
+
+                // TODO: render result onto image using this
+                // ui.image();
+
+                // ui.separator();
+            });
+
+        egui::SidePanel::left("scene_hierarchy")
+            .resizable(false)
+            .default_width(150.0)
+            .show(&self.egui_winit_context, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.heading("TODO: scene hierarchy");
+                });
+
+                ui.separator();
+
+                // TODO: render result onto image using this
+                // ui.image();
+
+                // ui.separator();
+            });
 
         let full_output = self.egui_winit_context.end_frame();
         let paint_jobs = self.egui_winit_context.tessellate(full_output.shapes);
@@ -302,14 +333,16 @@ pub async fn run() {
     }
 
     let event_loop = EventLoop::new();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new()
+        .with_inner_size(winit::dpi::PhysicalSize::new(3000, 1750))
+        .build(&event_loop)
+        .unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
         // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
-        use winit::dpi::PhysicalSize;
-        window.set_inner_size(PhysicalSize::new(2000, 1500));
+        window.set_inner_size(winit::dpi::PhysicalSize::new(2000, 1500));
 
         use winit::platform::web::WindowExtWebSys;
         web_sys::window()
@@ -332,8 +365,8 @@ pub async fn run() {
                 if NEED_TO_RESIZE_WINDOW {
                     state
                         .window()
-                        .set_inner_size(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                    state.resize(PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                        .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                     NEED_TO_RESIZE_WINDOW = false;
                 }
             }
