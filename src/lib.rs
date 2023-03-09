@@ -65,6 +65,9 @@ impl State {
             .next()
             .unwrap_or(surface_caps.formats[0]);
 
+        let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
+        web_gl_limits.max_texture_dimension_2d = 4096;
+
         let (device, queue, egui_wgpu_renderer) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
@@ -73,7 +76,7 @@ impl State {
                     // WebGL doesn't support all of wgpu's features, so if
                     // we're building for the web we'll have to disable some.
                     limits: if cfg!(target_arch = "wasm32") {
-                        wgpu::Limits::downlevel_webgl2_defaults()
+                        web_gl_limits
                     } else {
                         wgpu::Limits::default()
                     },
