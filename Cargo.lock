@@ -403,7 +403,6 @@ dependencies = [
  "egui",
  "egui-wgpu",
  "egui_demo_lib",
- "egui_wgpu_backend",
  "egui_winit_platform",
  "env_logger",
  "instant",
@@ -470,17 +469,6 @@ checksum = "8f051342e97dfa2445107cb7d2e720617f5c840199b5cb4fe0ffcf481fcf5cce"
 dependencies = [
  "egui",
  "serde",
-]
-
-[[package]]
-name = "egui_wgpu_backend"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72e3987dfe2ed2852a5b78aa5b1c5a0e39ffc14445e6611b00b61d653fd95535"
-dependencies = [
- "bytemuck",
- "egui",
- "wgpu",
 ]
 
 [[package]]

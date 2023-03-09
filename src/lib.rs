@@ -10,7 +10,6 @@ use winit::{
     window::{Window, WindowBuilder},
 };
 
-use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
@@ -28,7 +27,6 @@ struct State {
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
     platform: Platform,
-    egui_rpass: RenderPass,
     demo_app: DemoWindows,
     renderer: egui_wgpu::Renderer,
 }
@@ -175,9 +173,6 @@ impl State {
             style: Default::default(),
         });
 
-        // We use the egui_wgpu_backend crate as the render backend.
-        let egui_rpass = RenderPass::new(&device, surface_format, 1);
-
         // Display the demo application that ships with egui.
         let demo_app = egui_demo_lib::DemoWindows::default();
 
@@ -190,7 +185,6 @@ impl State {
             render_pipeline,
             window,
             platform,
-            egui_rpass,
             demo_app,
             renderer,
         }
@@ -228,22 +222,23 @@ impl State {
         // Draw the demo application.
         // self.demo_app.ui(&self.platform.context());
         let ctx = &self.platform.context();
-        egui::SidePanel::right("egui_demo_panel")
-            .resizable(false)
-            .default_width(150.0)
-            .show(ctx, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.heading("Dream Engine");
-                });
-
-                ui.separator();
-
-                // TODO: render result onto image using this
-                // ui.image();
-
-                // ui.separator();
-            });
+        // egui::SidePanel::right("egui_demo_panel")
+        //     .resizable(false)
+        //     .default_width(150.0)
+        //     .show(ctx, |ui| {
+        //         egui::trace!(ui);
+        //         ui.vertical_centered(|ui| {
+        //             ui.heading("Dream Engine");
+        //         });
+        //
+        //         ui.separator();
+        //
+        //         // TODO: render result onto image using this
+        //         // ui.image();
+        //
+        //         // ui.separator();
+        //     });
+        self.demo_app.ui(ctx);
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let full_output = self.platform.end_frame(Some(&self.window));
@@ -301,72 +296,8 @@ impl State {
                     .render(&mut render_pass, &paint_jobs, &screen_descriptor);
             }
 
-            // draw egui
-            {
-                // let screen_descriptor = ScreenDescriptor {
-                //     physical_width: self.config.width,
-                //     physical_height: self.config.height,
-                //     scale_factor: self.window.scale_factor() as f32,
-                // };
-
-                // for (id, image_delta) in &full_output.textures_delta.set {
-                //     self.renderer
-                //         .update_texture(&self.device, &self.queue, *id, image_delta)
-                // }
-                //
-                // let screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
-                //     size_in_pixels: [self.config.width, self.config.height],
-                //     pixels_per_point: self.window.scale_factor() as f32,
-                // };
-
-                // self.renderer.update_buffers(
-                //     &self.device,
-                //     &self.queue,
-                //     &mut encoder,
-                //     clipped_primitives,
-                //     &screen_descriptor,
-                // )
-
-                // self.egui_rpass
-                //     .add_textures(&self.device, &self.queue, &full_output.textures_delta)
-                //     .expect("add texture ok");
-                // self.egui_rpass.update_buffers(
-                //     &self.device,
-                //     &self.queue,
-                //     &paint_jobs,
-                //     &screen_descriptor,
-                // );
-                //
-                // // TODO: get egui texture from depth texture
-                // // self.egui_rpass.egui_texture_from_wgpu_texture();
-                //
-                // // Record all render passes.
-                // // self.egui_rpass
-                // //     .execute(
-                // //         &mut encoder,
-                // //         &view,
-                // //         &paint_jobs,
-                // //         &screen_descriptor,
-                // //         Some(wgpu::Color {
-                // //             r: 0.0,
-                // //             g: 0.0,
-                // //             b: 0.0,
-                // //             a: 1.0,
-                // //         }),
-                // //     )
-                // //     .unwrap();
-                // // TODO: right now we are using clera_color None to not clear the screen
-                // self.egui_rpass
-                //     .execute(&mut encoder, &view, &paint_jobs, &screen_descriptor, None)
-                //     .unwrap();
-            }
-
             self.queue.submit(iter::once(encoder.finish()));
             output.present();
-
-            // self.egui_rpass
-            //     .remove_textures(full_output.textures_delta)
-            //     .expect("remove texture ok");
         }
 
         Ok(())
