@@ -1,5 +1,4 @@
 use egui::FontDefinitions;
-use egui_demo_lib::DemoWindows;
 use std::iter;
 
 use winit::{
@@ -25,8 +24,7 @@ struct State {
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
     platform: Platform,
-    demo_app: DemoWindows,
-    renderer: egui_wgpu::Renderer,
+    egui_wgpu_renderer: egui_wgpu::Renderer,
 }
 
 impl State {
@@ -67,7 +65,7 @@ impl State {
             .next()
             .unwrap_or(surface_caps.formats[0]);
 
-        let (device, queue, renderer) = adapter
+        let (device, queue, egui_wgpu_renderer) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
@@ -84,8 +82,8 @@ impl State {
             )
             .await
             .map(|(device, queue)| {
-                let renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
-                return (device, queue, renderer);
+                let egui_wgpu_renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
+                return (device, queue, egui_wgpu_renderer);
             })
             .unwrap();
 
@@ -165,9 +163,6 @@ impl State {
             style: Default::default(),
         });
 
-        // Display the demo application that ships with egui.
-        let demo_app = egui_demo_lib::DemoWindows::default();
-
         Self {
             surface,
             device,
@@ -177,8 +172,7 @@ impl State {
             render_pipeline,
             window,
             platform,
-            demo_app,
-            renderer,
+            egui_wgpu_renderer,
         }
     }
 
@@ -214,23 +208,22 @@ impl State {
         // Draw the demo application.
         // self.demo_app.ui(&self.platform.context());
         let ctx = &self.platform.context();
-        // egui::SidePanel::right("egui_demo_panel")
-        //     .resizable(false)
-        //     .default_width(150.0)
-        //     .show(ctx, |ui| {
-        //         egui::trace!(ui);
-        //         ui.vertical_centered(|ui| {
-        //             ui.heading("Dream Engine");
-        //         });
-        //
-        //         ui.separator();
-        //
-        //         // TODO: render result onto image using this
-        //         // ui.image();
-        //
-        //         // ui.separator();
-        //     });
-        self.demo_app.ui(ctx);
+        egui::SidePanel::right("egui_demo_panel")
+            .resizable(false)
+            .default_width(150.0)
+            .show(ctx, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.heading("Dream Engine");
+                });
+
+                ui.separator();
+
+                // TODO: render result onto image using this
+                // ui.image();
+
+                // ui.separator();
+            });
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
         let full_output = self.platform.end_frame(Some(&self.window));
@@ -244,7 +237,7 @@ impl State {
 
         {
             for (id, image_delta) in &full_output.textures_delta.set {
-                self.renderer
+                self.egui_wgpu_renderer
                     .update_texture(&self.device, &self.queue, *id, image_delta)
             }
 
@@ -253,7 +246,7 @@ impl State {
                 pixels_per_point: self.window.scale_factor() as f32,
             };
 
-            self.renderer.update_buffers(
+            self.egui_wgpu_renderer.update_buffers(
                 &self.device,
                 &self.queue,
                 &mut encoder,
@@ -284,7 +277,7 @@ impl State {
                 render_pass.set_pipeline(&self.render_pipeline);
                 render_pass.draw(0..3, 0..1);
 
-                self.renderer
+                self.egui_wgpu_renderer
                     .render(&mut render_pass, &paint_jobs, &screen_descriptor);
             }
 
@@ -293,7 +286,7 @@ impl State {
         }
 
         for id in &full_output.textures_delta.free {
-            self.renderer.free_texture(id);
+            self.egui_wgpu_renderer.free_texture(id);
         }
 
         Ok(())
