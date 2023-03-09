@@ -1,4 +1,4 @@
-use egui::FontDefinitions;
+use egui_demo_lib::DemoWindows;
 use std::iter;
 
 use winit::{
@@ -6,8 +6,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
-
-use egui_winit_platform::{Platform, PlatformDescriptor};
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -23,12 +21,14 @@ struct State {
     // NEW!
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
-    platform: Platform,
     egui_wgpu_renderer: egui_wgpu::Renderer,
+    egui_winit_context: egui::Context,
+    egui_winit_state: egui_winit::State,
+    demo_app: DemoWindows,
 }
 
 impl State {
-    async fn new(window: Window) -> Self {
+    async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
@@ -155,13 +155,18 @@ impl State {
         });
 
         // We use the egui_winit_platform crate as the platform.
-        let platform = Platform::new(PlatformDescriptor {
-            physical_width: size.width as u32,
-            physical_height: size.height as u32,
-            scale_factor: window.scale_factor(),
-            font_definitions: FontDefinitions::default(),
-            style: Default::default(),
-        });
+        // let platform = Platform::new(PlatformDescriptor {
+        //     physical_width: size.width as u32,
+        //     physical_height: size.height as u32,
+        //     scale_factor: window.scale_factor(),
+        //     font_definitions: FontDefinitions::default(),
+        //     style: Default::default(),
+        // });
+
+        let mut egui_winit_state = egui_winit::State::new(&event_loop);
+        egui_winit_state.set_pixels_per_point(window.scale_factor() as f32);
+        let egui_winit_context = egui::Context::default();
+        let demo_app = egui_demo_lib::DemoWindows::default();
 
         Self {
             surface,
@@ -171,8 +176,10 @@ impl State {
             config,
             render_pipeline,
             window,
-            platform,
             egui_wgpu_renderer,
+            egui_winit_state,
+            egui_winit_context,
+            demo_app,
         }
     }
 
@@ -189,10 +196,10 @@ impl State {
         }
     }
 
-    #[allow(unused_variables)]
-    fn input(&mut self, event: &WindowEvent) -> bool {
-        false
-    }
+    // #[allow(unused_variables)]
+    // fn input(&mut self, event: &WindowEvent) -> bool {
+    //     false
+    // }
 
     fn update(&mut self) {}
 
@@ -203,31 +210,38 @@ impl State {
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         // Begin to draw the UI frame.
-        self.platform.begin_frame();
+        // self.platform.begin_frame();
+
+        // TODO: pass in event loop here
+        let input = self.egui_winit_state.take_egui_input(&self.window);
+        self.egui_winit_context.begin_frame(input);
 
         // Draw the demo application.
-        // self.demo_app.ui(&self.platform.context());
-        let ctx = &self.platform.context();
-        egui::SidePanel::right("egui_demo_panel")
-            .resizable(false)
-            .default_width(150.0)
-            .show(ctx, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.heading("Dream Engine");
-                });
-
-                ui.separator();
-
-                // TODO: render result onto image using this
-                // ui.image();
-
-                // ui.separator();
-            });
+        self.demo_app.ui(&self.egui_winit_context);
+        // let ctx = &self.platform.context();
+        // egui::SidePanel::right("egui_demo_panel")
+        //     .resizable(false)
+        //     .default_width(150.0)
+        //     .show(&self.egui_winit_context, |ui| {
+        //         egui::trace!(ui);
+        //         ui.vertical_centered(|ui| {
+        //             ui.heading("Dream Engine");
+        //         });
+        //
+        //         ui.separator();
+        //
+        //         // TODO: render result onto image using this
+        //         // ui.image();
+        //
+        //         // ui.separator();
+        //     });
 
         // End the UI frame. We could now handle the output and draw the UI with the backend.
-        let full_output = self.platform.end_frame(Some(&self.window));
-        let paint_jobs = self.platform.context().tessellate(full_output.shapes);
+        // let full_output = self.platform.end_frame(Some(&self.window));
+        // let paint_jobs = self.platform.context().tessellate(full_output.shapes);
+
+        let full_output = self.egui_winit_context.end_frame();
+        let paint_jobs = self.egui_winit_context.tessellate(full_output.shapes);
 
         let mut encoder = self
             .device
@@ -348,10 +362,7 @@ pub async fn run() {
     }
 
     // State::new uses async code, so we're going to wait for it to finish
-    let mut state = State::new(window).await;
-
-    let start_time = instant::Instant::now();
-
+    let mut state = State::new(window, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {
@@ -365,14 +376,18 @@ pub async fn run() {
                 }
             }
         }
-        state.platform.handle_event(&event);
+        // state.platform.handle_event(&event);
         match event {
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if window_id == state.window().id() => {
-                if !state.input(event) {
+            Event::WindowEvent { event, .. } => {
+                let exclusive = state
+                    .egui_winit_state
+                    .on_event(&state.egui_winit_context, &event);
+                // state.on_event returns true when the event has already been handled by egui and shouldn't be passed further
+                if !exclusive.consumed {
                     match event {
+                        WindowEvent::Resized(physical_size) => {
+                            state.resize(physical_size);
+                        }
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
                             input:
@@ -383,22 +398,48 @@ pub async fn run() {
                                 },
                             ..
                         } => *control_flow = ControlFlow::Exit,
-                        WindowEvent::Resized(physical_size) => {
-                            state.resize(*physical_size);
-                        }
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &mut so w have to dereference it twice
-                            state.resize(**new_inner_size);
+                            state.resize(*new_inner_size);
                         }
-                        _ => {}
+                        _ => (),
                     }
                 }
             }
+
+            // Event::WindowEvent {
+            //     ref event,
+            //     window_id,
+            // } if window_id == state.window().id() => {
+            //     if !state.input(event) {
+            //         match event {
+            //             WindowEvent::CloseRequested
+            //             | WindowEvent::KeyboardInput {
+            //                 input:
+            //                     KeyboardInput {
+            //                         state: ElementState::Pressed,
+            //                         virtual_keycode: Some(VirtualKeyCode::Escape),
+            //                         ..
+            //                     },
+            //                 ..
+            //             } => *control_flow = ControlFlow::Exit,
+            //             WindowEvent::Resized(physical_size) => {
+            //                 state.resize(*physical_size);
+            //             }
+            //             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+            //                 // new_inner_size is &mut so w have to dereference it twice
+            //                 state.resize(**new_inner_size);
+            //             }
+            //             _ => {}
+            //         }
+            //     }
+            // }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                state
-                    .platform
-                    .update_time(start_time.elapsed().as_secs_f64());
+                // state
+                //     .platform
+                //     .update_time(start_time.elapsed().as_secs_f64());
                 state.update();
+
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
