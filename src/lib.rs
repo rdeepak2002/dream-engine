@@ -23,6 +23,7 @@ struct State {
     egui_winit_context: egui::Context,
     egui_winit_state: egui_winit::State,
     demo_app: egui_demo_lib::DemoWindows,
+    diffuse_texture: texture::Texture,
 }
 
 impl State {
@@ -95,6 +96,10 @@ impl State {
             view_formats: vec![],
         };
         surface.configure(&device, &config);
+
+        let diffuse_bytes = include_bytes!("happy-tree.png");
+        let diffuse_texture =
+            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -169,6 +174,7 @@ impl State {
             egui_winit_state,
             egui_winit_context,
             demo_app,
+            diffuse_texture,
         }
     }
 
@@ -286,16 +292,18 @@ impl State {
             ui.vertical_centered(|ui| {
                 ui.label("TODO: renderer");
 
-                // let view2 = output
-                //     .texture
-                //     .create_view(&wgpu::TextureViewDescriptor::default());
-                // let epaintTextureID = self.egui_wgpu_renderer.register_native_texture(
-                //     &self.device,
-                //     &view2,
-                //     wgpu::FilterMode::default(),
-                // );
-                //
-                // ui.image(epaintTextureID, Vec2::new(500.0, 500.0));
+                let view2 = self
+                    .diffuse_texture
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
+
+                let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                    &self.device,
+                    &view2,
+                    wgpu::FilterMode::default(),
+                );
+
+                ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
             });
         });
 
