@@ -1,4 +1,3 @@
-// use egui_demo_lib::DemoWindows;
 use std::iter;
 
 use winit::{
@@ -22,7 +21,7 @@ struct State {
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_winit_context: egui::Context,
     egui_winit_state: egui_winit::State,
-    // demo_app: DemoWindows,
+    demo_app: egui_demo_lib::DemoWindows,
 }
 
 impl State {
@@ -155,7 +154,7 @@ impl State {
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(window.scale_factor() as f32);
         let egui_winit_context = egui::Context::default();
-        // let demo_app = egui_demo_lib::DemoWindows::default();
+        let demo_app = egui_demo_lib::DemoWindows::default();
 
         Self {
             surface,
@@ -168,7 +167,7 @@ impl State {
             egui_wgpu_renderer,
             egui_winit_state,
             egui_winit_context,
-            // demo_app,
+            demo_app,
         }
     }
 
@@ -199,39 +198,94 @@ impl State {
 
         // Draw the demo application.
         // self.demo_app.ui(&self.egui_winit_context);
+
+        egui::TopBottomPanel::top("menu_bar").show(&self.egui_winit_context, |ui| {
+            egui::menu::bar(ui, |ui| {
+                let save_shortcut =
+                    egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
+
+                if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
+                    // TODO: allow saving
+                    println!("TODO: save");
+                }
+
+                ui.menu_button("File", |ui| {
+                    ui.set_min_width(100.0);
+                    ui.style_mut().wrap = Some(false);
+
+                    if ui
+                        .add(
+                            egui::Button::new("Save")
+                                .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
+                        )
+                        .clicked()
+                    {
+                        // TODO: allow saving
+                        println!("TODO: save");
+                        ui.close_menu();
+                    }
+                });
+            });
+        });
+
         egui::SidePanel::right("inspector_panel")
-            .resizable(false)
-            .default_width(150.0)
+            .resizable(true)
+            .default_width(200.0)
+            .max_width(400.0)
+            .min_width(200.0)
             .show(&self.egui_winit_context, |ui| {
                 egui::trace!(ui);
                 ui.vertical_centered(|ui| {
-                    ui.heading("TODO: inspector");
+                    ui.label("TODO: inspector");
                 });
+            });
 
-                ui.separator();
-
-                // TODO: render result onto image using this
-                // ui.image();
-
-                // ui.separator();
+        egui::TopBottomPanel::bottom("assets")
+            .resizable(false)
+            .default_height(200.0)
+            .max_height(200.0)
+            .min_height(200.0)
+            .show(&self.egui_winit_context, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.label("TODO: assets");
+                });
             });
 
         egui::SidePanel::left("scene_hierarchy")
-            .resizable(false)
-            .default_width(150.0)
+            .resizable(true)
+            .default_width(200.0)
+            .max_width(400.0)
+            .min_width(200.0)
             .show(&self.egui_winit_context, |ui| {
                 egui::trace!(ui);
                 ui.vertical_centered(|ui| {
-                    ui.heading("TODO: scene hierarchy");
+                    ui.label("TODO: scene hierarchy");
                 });
-
-                ui.separator();
 
                 // TODO: render result onto image using this
                 // ui.image();
 
                 // ui.separator();
             });
+
+        egui::TopBottomPanel::top("render-controls")
+            .resizable(false)
+            .default_height(25.0)
+            .max_height(25.0)
+            .min_height(25.0)
+            .show(&self.egui_winit_context, |ui| {
+                egui::trace!(ui);
+                ui.vertical_centered(|ui| {
+                    ui.label("TODO: renderer controls");
+                });
+            });
+
+        egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label("TODO: renderer");
+            });
+        });
 
         let full_output = self.egui_winit_context.end_frame();
         let paint_jobs = self.egui_winit_context.tessellate(full_output.shapes);
@@ -338,6 +392,13 @@ pub async fn run() {
         .build(&event_loop)
         .unwrap();
 
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+        } else {
+            window.set_title("Dream Engine");
+        }
+    }
+
     #[cfg(target_arch = "wasm32")]
     {
         // Winit prevents sizing with CSS, so we have to set
@@ -381,16 +442,7 @@ pub async fn run() {
                         WindowEvent::Resized(physical_size) => {
                             state.resize(physical_size);
                         }
-                        WindowEvent::CloseRequested
-                        | WindowEvent::KeyboardInput {
-                            input:
-                                KeyboardInput {
-                                    state: ElementState::Pressed,
-                                    virtual_keycode: Some(VirtualKeyCode::Escape),
-                                    ..
-                                },
-                            ..
-                        } => *control_flow = ControlFlow::Exit,
+                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &mut so w have to dereference it twice
                             state.resize(*new_inner_size);
