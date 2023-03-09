@@ -1,3 +1,4 @@
+use egui::Vec2;
 use std::iter;
 
 use winit::{
@@ -281,27 +282,22 @@ impl State {
                 });
             });
 
-        // egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
-        //     ui.vertical_centered(|ui| {
-        //         ui.label("TODO: renderer");
-        //
-        //         // TODO: show output render texture (for testing show depth texture first)
-        //         // let texture: &egui::TextureHandle = self.texture.get_or_insert_with(|| {
-        //         //     // Load the texture only once.
-        //         //     ui.ctx().load_texture(
-        //         //         "my-image",
-        //         //         egui::ColorImage::example(),
-        //         //         Default::default(),
-        //         //     )
-        //         // });
-        //         //
-        //         // // Show the image:
-        //         // ui.add(egui::Image::new(texture, texture.size_vec2()));
-        //
-        //         // Shorter version:
-        //         // ui.image(texture, texture.size_vec2());
-        //     });
-        // });
+        egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
+            ui.vertical_centered(|ui| {
+                ui.label("TODO: renderer");
+
+                // let view2 = output
+                //     .texture
+                //     .create_view(&wgpu::TextureViewDescriptor::default());
+                // let epaintTextureID = self.egui_wgpu_renderer.register_native_texture(
+                //     &self.device,
+                //     &view2,
+                //     wgpu::FilterMode::default(),
+                // );
+                //
+                // ui.image(epaintTextureID, Vec2::new(500.0, 500.0));
+            });
+        });
 
         let full_output = self.egui_winit_context.end_frame();
         let paint_jobs = self.egui_winit_context.tessellate(full_output.shapes);
