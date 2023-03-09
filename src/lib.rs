@@ -292,14 +292,14 @@ impl State {
             ui.vertical_centered(|ui| {
                 ui.label("TODO: renderer");
 
-                let view2 = self
+                let output_texture_view = self
                     .diffuse_texture
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default());
 
                 let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
                     &self.device,
-                    &view2,
+                    &output_texture_view,
                     wgpu::FilterMode::default(),
                 );
 
