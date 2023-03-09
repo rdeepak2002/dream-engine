@@ -82,7 +82,12 @@ impl State {
             )
             .await
             .map(|(device, queue)| {
-                let egui_wgpu_renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
+                let egui_wgpu_renderer = egui_wgpu::Renderer::new(
+                    &device,
+                    surface_format,
+                    Some(texture::Texture::DEPTH_FORMAT),
+                    1,
+                );
                 return (device, queue, egui_wgpu_renderer);
             })
             .unwrap();
@@ -150,7 +155,13 @@ impl State {
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -304,6 +315,11 @@ impl State {
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default());
 
+                // let output_texture_view = self
+                //     .depth_texture
+                //     .texture
+                //     .create_view(&wgpu::TextureViewDescriptor::default());
+
                 let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
                     &self.device,
                     &output_texture_view,
@@ -359,7 +375,14 @@ impl State {
                             store: true,
                         },
                     })],
-                    depth_stencil_attachment: None,
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
                 });
 
                 render_pass.set_pipeline(&self.render_pipeline);
