@@ -24,6 +24,7 @@ struct State {
     egui_winit_state: egui_winit::State,
     demo_app: egui_demo_lib::DemoWindows,
     diffuse_texture: texture::Texture,
+    depth_texture: texture::Texture,
 }
 
 impl State {
@@ -106,6 +107,9 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
+        let depth_texture =
+            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -175,6 +179,7 @@ impl State {
             egui_winit_context,
             demo_app,
             diffuse_texture,
+            depth_texture,
         }
     }
 
@@ -188,6 +193,8 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
+            self.depth_texture =
+                texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
     }
 
