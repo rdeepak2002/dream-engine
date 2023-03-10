@@ -34,7 +34,6 @@ struct State {
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
-    // NEW!
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
     egui_wgpu_renderer: egui_wgpu::Renderer,
@@ -43,6 +42,8 @@ struct State {
     demo_app: egui_demo_lib::DemoWindows,
     diffuse_texture: texture::Texture,
     depth_texture: texture::Texture,
+    frame_texture: texture::Texture,
+    frame_texture_view: Option<wgpu::TextureView>,
 }
 
 impl State {
@@ -136,6 +137,9 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
+        let frame_texture =
+            texture::Texture::create_frame_texture(&device, &config, "frame_texture");
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -212,6 +216,8 @@ impl State {
             demo_app,
             diffuse_texture,
             depth_texture,
+            frame_texture,
+            frame_texture_view: None,
         }
     }
 
@@ -237,6 +243,16 @@ impl State {
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut view2: Option<wgpu::TextureView> = None;
+
+        if self.frame_texture_view.is_none() {
+            view2 = Some(
+                self.frame_texture
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default()),
+            );
+        }
 
         // Begin to draw the UI frame.
         let input = self.egui_winit_state.take_egui_input(&self.window);
@@ -331,23 +347,40 @@ impl State {
             ui.vertical_centered(|ui| {
                 ui.label("TODO: renderer");
 
-                let output_texture_view = self
-                    .diffuse_texture
-                    .texture
-                    .create_view(&wgpu::TextureViewDescriptor::default());
+                {
+                    if self.frame_texture_view.is_some() {
+                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                            &self.device,
+                            &self.frame_texture_view.as_ref().unwrap(),
+                            wgpu::FilterMode::default(),
+                        );
+
+                        ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
+                    }
+                }
+
+                // let output_texture_view = self
+                //     .frame_texture
+                //     .texture
+                //     .create_view(&wgpu::TextureViewDescriptor::default());
+
+                // let output_texture_view = self
+                //     .diffuse_texture
+                //     .texture
+                //     .create_view(&wgpu::TextureViewDescriptor::default());
 
                 // let output_texture_view = self
                 //     .depth_texture
                 //     .texture
                 //     .create_view(&wgpu::TextureViewDescriptor::default());
 
-                let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                    &self.device,
-                    &output_texture_view,
-                    wgpu::FilterMode::default(),
-                );
-
-                ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
+                // let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                //     &self.device,
+                //     &output_texture_view,
+                //     wgpu::FilterMode::default(),
+                // );
+                //
+                // ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
             });
         });
 
@@ -378,6 +411,46 @@ impl State {
                 &paint_jobs,
                 &screen_descriptor,
             );
+
+            // draw to another texture
+            {
+                if view2.is_some() {
+                    let tv = view2.unwrap();
+                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: Some("Render Pass"),
+                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                            view: &tv,
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.1,
+                                    g: 0.2,
+                                    b: 0.3,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        })],
+                        depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                            view: &self.depth_texture.view,
+                            depth_ops: Some(wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(1.0),
+                                store: true,
+                            }),
+                            stencil_ops: None,
+                        }),
+                    });
+
+                    render_pass.set_pipeline(&self.render_pipeline);
+                    render_pass.draw(0..3, 0..1);
+
+                    self.egui_wgpu_renderer.render(
+                        &mut render_pass,
+                        &paint_jobs,
+                        &screen_descriptor,
+                    );
+                }
+            }
 
             // draw triangle
             {
@@ -416,6 +489,13 @@ impl State {
             self.queue.submit(iter::once(encoder.finish()));
             output.present();
         }
+
+        let output_texture_view = self
+            .frame_texture
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        self.frame_texture_view = Some(output_texture_view);
 
         for id in &full_output.textures_delta.free {
             self.egui_wgpu_renderer.free_texture(id);
