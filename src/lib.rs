@@ -244,10 +244,10 @@ impl State {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut view2: Option<wgpu::TextureView> = None;
+        let mut new_frame_texture_view: Option<wgpu::TextureView> = None;
 
         if self.frame_texture_view.is_none() {
-            view2 = Some(
+            new_frame_texture_view = Some(
                 self.frame_texture
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default()),
@@ -414,8 +414,8 @@ impl State {
 
             // draw to another texture
             {
-                if view2.is_some() {
-                    let tv = view2.unwrap();
+                if new_frame_texture_view.is_some() {
+                    let tv = new_frame_texture_view.unwrap();
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         label: Some("Render Pass"),
                         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
