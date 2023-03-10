@@ -439,6 +439,24 @@ pub async fn run() {
         }
     }
 
+    {
+        // example execution of javascript code
+        // let js_code = "console.log('hello world');";
+        let js_code = "7 * 8.1";
+        let mut context = boa_engine::Context::default();
+        match context.eval(js_code) {
+            Ok(res) => {
+                println!("{}", res.to_string(&mut context).unwrap());
+                log::warn!("{}", res.to_string(&mut context).unwrap());
+            }
+            Err(e) => {
+                // Pretty print the error
+                eprintln!("Uncaught {}", e.display());
+                log::error!("Uncaught {}", e.display());
+            }
+        };
+    }
+
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new()
         .with_inner_size(winit::dpi::PhysicalSize::new(3000, 1750))

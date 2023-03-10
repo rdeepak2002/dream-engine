@@ -21,6 +21,7 @@ egui-wgpu = "0.21.0"
 epi = "0.17.0"
 anyhow = "1.0"
 bytemuck = { version = "1.12", features = [ "derive" ] }
+boa_engine = { version = "0.16.0", features = ["console"]}
 
 [dependencies.image]
 version = "0.24"
@@ -28,6 +29,7 @@ default-features = false
 features = ["png", "jpeg"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
 console_error_panic_hook = "0.1.6"
 console_log = "0.2.0"
 wgpu = { version = "0.15", features = ["webgl"]}
