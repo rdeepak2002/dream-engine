@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build web" type="ShConfigurationType">
+  <configuration default="false" name="build web" type="ShConfigurationType">
     <option name="SCRIPT_TEXT" value="wasm-pack build --target web --out-dir web/build " />
     <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
-    <option name="SCRIPT_PATH" value="" />
+    <option name="SCRIPT_PATH" value="$PROJECT_DIR$/tools/build-web.sh" />
     <option name="SCRIPT_OPTIONS" value="" />
     <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
     <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -10,8 +10,10 @@
     <option name="INTERPRETER_PATH" value="/bin/zsh" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="EXECUTE_IN_TERMINAL" value="false" />
-    <option name="EXECUTE_SCRIPT_FILE" value="false" />
+    <option name="EXECUTE_SCRIPT_FILE" value="true" />
     <envs />
-    <method v="2" />
+    <method v="2">
+      <option name="LaunchBrowser.Before.Run" url="http://localhost:63342/dream/web/index.html" />
+    </method>
   </configuration>
 </component>
