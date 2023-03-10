@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "cargo",
+            "name": "Run Dream",
+            "cargoArgs": ["run"],
+        },
+        {
+            "type": "command",
+            "name": "Build Web",
+            "program": "./tools/build-web.sh",
+        },
+    ]
+}
