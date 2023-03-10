@@ -444,11 +444,11 @@ impl State {
                     render_pass.set_pipeline(&self.render_pipeline);
                     render_pass.draw(0..3, 0..1);
 
-                    self.egui_wgpu_renderer.render(
-                        &mut render_pass,
-                        &paint_jobs,
-                        &screen_descriptor,
-                    );
+                    // self.egui_wgpu_renderer.render(
+                    //     &mut render_pass,
+                    //     &paint_jobs,
+                    //     &screen_descriptor,
+                    // );
                 }
             }
 
