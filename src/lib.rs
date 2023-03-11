@@ -97,7 +97,7 @@ struct State {
     render_pipeline: wgpu::RenderPipeline,
     window: Window,
     egui_wgpu_renderer: egui_wgpu::Renderer,
-    egui_winit_context: egui::Context,
+    egui_context: egui::Context,
     egui_winit_state: egui_winit::State,
     #[allow(dead_code)]
     demo_app: egui_demo_lib::DemoWindows,
@@ -112,6 +112,249 @@ struct State {
     directory_icon_texture: texture::Texture,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
+}
+
+pub fn render_egui_editor_content(
+    ctx: &egui::Context,
+    render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
+    file_epaint_texture_id: egui::epaint::TextureId,
+    directory_epaint_texture_id: egui::epaint::TextureId,
+    play_icon_epaint_texture_id: egui::epaint::TextureId,
+) {
+    // Draw the demo application.
+    // self.demo_app.ui(&self.egui_context);
+
+    egui::TopBottomPanel::top("menu_bar").show(&ctx, |ui| {
+        egui::menu::bar(ui, |ui| {
+            let save_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
+
+            if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
+                // TODO: allow saving
+                println!("TODO: save");
+            }
+
+            ui.menu_button("File", |ui| {
+                ui.set_min_width(100.0);
+                ui.style_mut().wrap = Some(false);
+
+                if ui
+                    .add(
+                        egui::Button::new("Save")
+                            .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
+                    )
+                    .clicked()
+                {
+                    // TODO: allow saving
+                    println!("TODO: save");
+                    ui.close_menu();
+                }
+            });
+        });
+    });
+
+    egui::SidePanel::right("inspector_panel")
+        .resizable(false)
+        .default_width(200.0)
+        .max_width(400.0)
+        .min_width(200.0)
+        .show(&ctx, |ui| {
+            egui::trace!(ui);
+
+            // name entity name
+            ui.strong("Entity 1");
+
+            // sample tag component
+            egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                ui.make_persistent_id("Tag"),
+                true,
+            )
+            .show_header(ui, |ui| {
+                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                ui.strong("Tag");
+            })
+            .body(|ui| {
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.label("Untagged");
+                });
+            });
+
+            // sample transform component
+            egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                ui.make_persistent_id("Transform"),
+                true,
+            )
+            .show_header(ui, |ui| {
+                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                ui.strong("Transform");
+            })
+            .body(|ui| {
+                ui.strong("Position");
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.strong("x");
+                    ui.label("0.000");
+                    ui.strong("y");
+                    ui.label("0.000");
+                    ui.strong("z");
+                    ui.label("0.000");
+                });
+                ui.strong("Rotation");
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.strong("x");
+                    ui.label("0.000");
+                    ui.strong("y");
+                    ui.label("0.000");
+                    ui.strong("z");
+                    ui.label("0.000");
+                });
+                ui.strong("Scale");
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.strong("x");
+                    ui.label("0.000");
+                    ui.strong("y");
+                    ui.label("0.000");
+                    ui.strong("z");
+                    ui.label("0.000");
+                });
+            });
+        });
+
+    egui::TopBottomPanel::bottom("assets")
+        .resizable(false)
+        .default_height(200.0)
+        .max_height(200.0)
+        .min_height(200.0)
+        .show(&ctx, |ui| {
+            egui::trace!(ui);
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.style_mut().spacing.item_spacing = egui::vec2(20.0, 1.0);
+
+                {
+                    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                        ui.image(file_epaint_texture_id, egui::vec2(40.0, 40.0));
+                        ui.strong("main.scene");
+                    });
+                }
+
+                {
+                    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                        ui.image(directory_epaint_texture_id, egui::vec2(40.0, 40.0));
+                        ui.strong("textures");
+                    });
+                }
+            });
+        });
+
+    egui::SidePanel::left("scene_hierarchy")
+        .resizable(false)
+        .default_width(200.0)
+        .max_width(400.0)
+        .min_width(200.0)
+        .show(&ctx, |ui| {
+            egui::trace!(ui);
+
+            // sample list entity 1
+            egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                ui.make_persistent_id("Entity 1"),
+                false,
+            )
+            .show_header(ui, |ui| {
+                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                ui.strong("Entity 1");
+            })
+            .body(|ui| {
+                // TODO: recursively call this
+                {
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 1 child"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 1 child");
+                    })
+                    .body(|_ui| {});
+                }
+            });
+
+            // sample list entity 2
+            egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                ui.make_persistent_id("Entity 2"),
+                false,
+            )
+            .show_header(ui, |ui| {
+                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                ui.strong("Entity 2");
+            })
+            .body(|ui| {
+                // TODO: recursively call this
+                {
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 2 child"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 2 child");
+                    })
+                    .body(|_ui| {});
+                }
+            });
+
+            // sample list entity 3
+            egui::collapsing_header::CollapsingState::load_with_default_open(
+                ui.ctx(),
+                ui.make_persistent_id("Entity 3"),
+                false,
+            )
+            .show_header(ui, |ui| {
+                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                ui.strong("Entity 3");
+            })
+            .body(|ui| {
+                // TODO: recursively call this
+                {
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 3 child"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 3 child");
+                    })
+                    .body(|_ui| {});
+                }
+            });
+        });
+
+    egui::TopBottomPanel::top("render-controls")
+        .resizable(false)
+        .default_height(25.0)
+        .max_height(25.0)
+        .min_height(25.0)
+        .show(&ctx, |ui| {
+            egui::trace!(ui);
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                let btn =
+                    egui::ImageButton::new(play_icon_epaint_texture_id, egui::vec2(15.5, 15.5));
+                btn.ui(ui);
+            });
+        });
+
+    egui::CentralPanel::default().show(&ctx, |ui| {
+        if render_output_epaint_texture_id.is_some() {
+            ui.image(
+                render_output_epaint_texture_id.unwrap(),
+                ui.available_size(),
+            );
+        }
+    });
 }
 
 impl State {
@@ -326,7 +569,7 @@ impl State {
             window,
             egui_wgpu_renderer,
             egui_winit_state,
-            egui_winit_context,
+            egui_context: egui_winit_context,
             demo_app,
             diffuse_texture,
             depth_texture,
@@ -433,291 +676,49 @@ impl State {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
+        let input = self.egui_winit_state.take_egui_input(&self.window);
+        self.egui_context.begin_frame(input);
         {
-            // define rendering of egui elements
+            let file_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &self.device,
+                &self.file_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
 
-            // Begin to draw the UI frame.
-            let input = self.egui_winit_state.take_egui_input(&self.window);
-            self.egui_winit_context.begin_frame(input);
+            let directory_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &self.device,
+                &self.directory_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
 
-            // Draw the demo application.
-            // self.demo_app.ui(&self.egui_winit_context);
+            let play_icon_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &self.device,
+                &self.play_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
 
-            egui::TopBottomPanel::top("menu_bar").show(&self.egui_winit_context, |ui| {
-                egui::menu::bar(ui, |ui| {
-                    let save_shortcut =
-                        egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
+            let mut render_output_epaint_texture_id: Option<egui::epaint::TextureId> = None;
 
-                    if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
-                        // TODO: allow saving
-                        println!("TODO: save");
-                    }
-
-                    ui.menu_button("File", |ui| {
-                        ui.set_min_width(100.0);
-                        ui.style_mut().wrap = Some(false);
-
-                        if ui
-                            .add(
-                                egui::Button::new("Save")
-                                    .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
-                            )
-                            .clicked()
-                        {
-                            // TODO: allow saving
-                            println!("TODO: save");
-                            ui.close_menu();
-                        }
-                    });
-                });
-            });
-
-            egui::SidePanel::right("inspector_panel")
-                .resizable(false)
-                .default_width(200.0)
-                .max_width(400.0)
-                .min_width(200.0)
-                .show(&self.egui_winit_context, |ui| {
-                    egui::trace!(ui);
-
-                    // name entity name
-                    ui.strong("Entity 1");
-
-                    // sample tag component
-                    egui::collapsing_header::CollapsingState::load_with_default_open(
-                        ui.ctx(),
-                        ui.make_persistent_id("Tag"),
-                        true,
-                    )
-                    .show_header(ui, |ui| {
-                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                        ui.strong("Tag");
-                    })
-                    .body(|ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            ui.label("Untagged");
-                        });
-                    });
-
-                    // sample transform component
-                    egui::collapsing_header::CollapsingState::load_with_default_open(
-                        ui.ctx(),
-                        ui.make_persistent_id("Transform"),
-                        true,
-                    )
-                    .show_header(ui, |ui| {
-                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                        ui.strong("Transform");
-                    })
-                    .body(|ui| {
-                        ui.strong("Position");
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            ui.strong("x");
-                            ui.label("0.000");
-                            ui.strong("y");
-                            ui.label("0.000");
-                            ui.strong("z");
-                            ui.label("0.000");
-                        });
-                        ui.strong("Rotation");
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            ui.strong("x");
-                            ui.label("0.000");
-                            ui.strong("y");
-                            ui.label("0.000");
-                            ui.strong("z");
-                            ui.label("0.000");
-                        });
-                        ui.strong("Scale");
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                            ui.strong("x");
-                            ui.label("0.000");
-                            ui.strong("y");
-                            ui.label("0.000");
-                            ui.strong("z");
-                            ui.label("0.000");
-                        });
-                    });
-                });
-
-            egui::TopBottomPanel::bottom("assets")
-                .resizable(false)
-                .default_height(200.0)
-                .max_height(200.0)
-                .min_height(200.0)
-                .show(&self.egui_winit_context, |ui| {
-                    egui::trace!(ui);
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                        ui.style_mut().spacing.item_spacing = egui::vec2(20.0, 1.0);
-
-                        let file_epaint_texture_id =
-                            self.egui_wgpu_renderer.register_native_texture(
-                                &self.device,
-                                &self.file_icon_texture.view,
-                                wgpu::FilterMode::Linear,
-                            );
-
-                        let directory_epaint_texture_id =
-                            self.egui_wgpu_renderer.register_native_texture(
-                                &self.device,
-                                &self.directory_icon_texture.view,
-                                wgpu::FilterMode::Linear,
-                            );
-
-                        {
-                            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                                // let file_btn = egui::ImageButton::new(
-                                //     file_epaint_texture_id,
-                                //     egui::vec2(40.0, 40.0),
-                                // );
-                                // file_btn.ui(ui);
-                                ui.image(file_epaint_texture_id, egui::vec2(40.0, 40.0));
-                                ui.strong("main.scene");
-                            });
-                        }
-
-                        {
-                            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                                // let directory_btn = egui::ImageButton::new(
-                                //     directory_epaint_texture_id,
-                                //     egui::vec2(40.0, 40.0),
-                                // );
-                                // directory_btn.ui(ui);
-                                ui.image(directory_epaint_texture_id, egui::vec2(40.0, 40.0));
-                                ui.strong("textures");
-                            });
-                        }
-
-                        // ui.image(file_epaint_texture_id, egui::vec2(70.0, 70.0));
-                        // ui.image(directory_epaint_texture_id, egui::vec2(70.0, 70.0));
-                    });
-                });
-
-            egui::SidePanel::left("scene_hierarchy")
-                .resizable(false)
-                .default_width(200.0)
-                .max_width(400.0)
-                .min_width(200.0)
-                .show(&self.egui_winit_context, |ui| {
-                    egui::trace!(ui);
-
-                    // sample list entity 1
-                    egui::collapsing_header::CollapsingState::load_with_default_open(
-                        ui.ctx(),
-                        ui.make_persistent_id("Entity 1"),
-                        false,
-                    )
-                    .show_header(ui, |ui| {
-                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                        ui.strong("Entity 1");
-                    })
-                    .body(|ui| {
-                        // TODO: recursively call this
-                        {
-                            egui::collapsing_header::CollapsingState::load_with_default_open(
-                                ui.ctx(),
-                                ui.make_persistent_id("Entity 1 child"),
-                                false,
-                            )
-                            .show_header(ui, |ui| {
-                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                                ui.strong("Entity 1 child");
-                            })
-                            .body(|_ui| {});
-                        }
-                    });
-
-                    // sample list entity 2
-                    egui::collapsing_header::CollapsingState::load_with_default_open(
-                        ui.ctx(),
-                        ui.make_persistent_id("Entity 2"),
-                        false,
-                    )
-                    .show_header(ui, |ui| {
-                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                        ui.strong("Entity 2");
-                    })
-                    .body(|ui| {
-                        // TODO: recursively call this
-                        {
-                            egui::collapsing_header::CollapsingState::load_with_default_open(
-                                ui.ctx(),
-                                ui.make_persistent_id("Entity 2 child"),
-                                false,
-                            )
-                            .show_header(ui, |ui| {
-                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                                ui.strong("Entity 2 child");
-                            })
-                            .body(|_ui| {});
-                        }
-                    });
-
-                    // sample list entity 3
-                    egui::collapsing_header::CollapsingState::load_with_default_open(
-                        ui.ctx(),
-                        ui.make_persistent_id("Entity 3"),
-                        false,
-                    )
-                    .show_header(ui, |ui| {
-                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                        ui.strong("Entity 3");
-                    })
-                    .body(|ui| {
-                        // TODO: recursively call this
-                        {
-                            egui::collapsing_header::CollapsingState::load_with_default_open(
-                                ui.ctx(),
-                                ui.make_persistent_id("Entity 3 child"),
-                                false,
-                            )
-                            .show_header(ui, |ui| {
-                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                                ui.strong("Entity 3 child");
-                            })
-                            .body(|_ui| {});
-                        }
-                    });
-                });
-
-            egui::TopBottomPanel::top("render-controls")
-                .resizable(false)
-                .default_height(25.0)
-                .max_height(25.0)
-                .min_height(25.0)
-                .show(&self.egui_winit_context, |ui| {
-                    egui::trace!(ui);
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                            &self.device,
-                            &self.play_icon_texture.view,
-                            wgpu::FilterMode::Linear,
-                        );
-
-                        let btn = egui::ImageButton::new(epaint_texture_id, egui::vec2(15.5, 15.5));
-                        btn.ui(ui);
-                    });
-                });
-
-            egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
-                if self.frame_texture_view.is_some() {
-                    ui.style_mut().spacing.window_margin = egui::Margin::from(0.0);
-                    ui.style_mut().spacing.item_spacing = egui::vec2(0.0, 0.0);
-
-                    let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+            if self.frame_texture_view.is_some() {
+                render_output_epaint_texture_id =
+                    Some(self.egui_wgpu_renderer.register_native_texture(
                         &self.device,
                         &self.frame_texture_view.as_ref().unwrap(),
                         wgpu::FilterMode::default(),
-                    );
+                    ));
+            }
 
-                    ui.image(epaint_texture_id, ui.available_size());
-                }
-            });
+            render_egui_editor_content(
+                &self.egui_context,
+                render_output_epaint_texture_id,
+                file_epaint_texture_id,
+                directory_epaint_texture_id,
+                play_icon_epaint_texture_id,
+            );
         }
+        let egui_full_output = self.egui_context.end_frame();
 
-        let egui_full_output = self.egui_winit_context.end_frame();
-        let egui_paint_jobs = self.egui_winit_context.tessellate(egui_full_output.shapes);
-
+        let egui_paint_jobs = self.egui_context.tessellate(egui_full_output.shapes);
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -914,9 +915,7 @@ pub async fn run() {
                 }
             }
             Event::WindowEvent { event, .. } => {
-                let exclusive = state
-                    .egui_winit_state
-                    .on_event(&state.egui_winit_context, &event);
+                let exclusive = state.egui_winit_state.on_event(&state.egui_context, &event);
                 if !exclusive.consumed {
                     match event {
                         WindowEvent::Resized(physical_size) => {
