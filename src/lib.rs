@@ -17,6 +17,7 @@
  **********************************************************************************/
 
 mod texture;
+use egui::Widget;
 use std::iter;
 
 use winit::{
@@ -47,6 +48,7 @@ struct State {
     depth_texture_egui: texture::Texture,
     frame_texture: texture::Texture,
     frame_texture_view: Option<wgpu::TextureView>,
+    play_icon_texture: texture::Texture,
 }
 
 impl State {
@@ -132,6 +134,15 @@ impl State {
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
+        let play_icon_texture_bytes = include_bytes!("icons/PlayIconDark.png");
+        let play_icon_texture = texture::Texture::from_bytes(
+            &device,
+            &queue,
+            play_icon_texture_bytes,
+            "icons/PlayIcon.png",
+        )
+        .unwrap();
+
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -167,8 +178,12 @@ impl State {
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
                     blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent::REPLACE,
-                        alpha: wgpu::BlendComponent::REPLACE,
+                        color: wgpu::BlendComponent {
+                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                            operation: wgpu::BlendOperation::Add,
+                        },
+                        alpha: wgpu::BlendComponent::OVER,
                     }),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -225,6 +240,7 @@ impl State {
             depth_texture_egui,
             frame_texture,
             frame_texture_view: None,
+            play_icon_texture,
         }
     }
 
@@ -385,8 +401,83 @@ impl State {
                 .min_width(200.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
-                    ui.vertical_centered(|ui| {
-                        ui.label("TODO: scene hierarchy");
+
+                    // sample list entity 1
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 1"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 1");
+                    })
+                    .body(|ui| {
+                        // TODO: recursively call this
+                        {
+                            egui::collapsing_header::CollapsingState::load_with_default_open(
+                                ui.ctx(),
+                                ui.make_persistent_id("Entity 1 child"),
+                                false,
+                            )
+                            .show_header(ui, |ui| {
+                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                                ui.strong("Entity 1 child");
+                            })
+                            .body(|_ui| {});
+                        }
+                    });
+
+                    // sample list entity 2
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 2"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 2");
+                    })
+                    .body(|ui| {
+                        // TODO: recursively call this
+                        {
+                            egui::collapsing_header::CollapsingState::load_with_default_open(
+                                ui.ctx(),
+                                ui.make_persistent_id("Entity 2 child"),
+                                false,
+                            )
+                            .show_header(ui, |ui| {
+                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                                ui.strong("Entity 2 child");
+                            })
+                            .body(|_ui| {});
+                        }
+                    });
+
+                    // sample list entity 3
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Entity 3"),
+                        false,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Entity 3");
+                    })
+                    .body(|ui| {
+                        // TODO: recursively call this
+                        {
+                            egui::collapsing_header::CollapsingState::load_with_default_open(
+                                ui.ctx(),
+                                ui.make_persistent_id("Entity 3 child"),
+                                false,
+                            )
+                            .show_header(ui, |ui| {
+                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                                ui.strong("Entity 3 child");
+                            })
+                            .body(|_ui| {});
+                        }
                     });
                 });
 
@@ -398,25 +489,30 @@ impl State {
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
                     ui.vertical_centered(|ui| {
-                        ui.label("TODO: renderer controls");
+                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                            &self.device,
+                            &self.play_icon_texture.view,
+                            wgpu::FilterMode::Linear,
+                        );
+
+                        let btn = egui::ImageButton::new(epaint_texture_id, egui::vec2(15.5, 15.5));
+                        btn.ui(ui);
                     });
                 });
 
             egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
-                ui.vertical_centered(|ui| {
-                    if self.frame_texture_view.is_some() {
-                        ui.style_mut().spacing.window_margin = egui::Margin::from(0.0);
-                        ui.style_mut().spacing.item_spacing = egui::vec2(0.0, 0.0);
+                if self.frame_texture_view.is_some() {
+                    ui.style_mut().spacing.window_margin = egui::Margin::from(0.0);
+                    ui.style_mut().spacing.item_spacing = egui::vec2(0.0, 0.0);
 
-                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                            &self.device,
-                            &self.frame_texture_view.as_ref().unwrap(),
-                            wgpu::FilterMode::default(),
-                        );
+                    let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                        &self.device,
+                        &self.frame_texture_view.as_ref().unwrap(),
+                        wgpu::FilterMode::default(),
+                    );
 
-                        ui.image(epaint_texture_id, ui.available_size());
-                    }
-                });
+                    ui.image(epaint_texture_id, ui.available_size());
+                }
             });
         }
 
