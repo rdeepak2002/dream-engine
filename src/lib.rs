@@ -44,7 +44,6 @@ struct State {
     #[allow(dead_code)]
     diffuse_texture: texture::Texture,
     depth_texture_1: texture::Texture,
-    depth_texture_2: texture::Texture,
     frame_texture: texture::Texture,
     frame_texture_view: Option<wgpu::TextureView>,
 }
@@ -107,12 +106,7 @@ impl State {
             )
             .await
             .map(|(device, queue)| {
-                let egui_wgpu_renderer = egui_wgpu::Renderer::new(
-                    &device,
-                    surface_format,
-                    Some(texture::Texture::DEPTH_FORMAT),
-                    1,
-                );
+                let egui_wgpu_renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
                 return (device, queue, egui_wgpu_renderer);
             })
             .unwrap();
@@ -139,9 +133,6 @@ impl State {
 
         let depth_texture_1 =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture_1");
-
-        let depth_texture_2 =
-            texture::Texture::create_depth_texture(&device, &config, "depth_texture_2");
 
         let frame_texture =
             texture::Texture::create_frame_texture(&device, &config, "frame_texture");
@@ -186,13 +177,14 @@ impl State {
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
+            // depth_stencil: Some(wgpu::DepthStencilState {
+            //     format: texture::Texture::DEPTH_FORMAT,
+            //     depth_write_enabled: true,
+            //     depth_compare: wgpu::CompareFunction::Less,
+            //     stencil: wgpu::StencilState::default(),
+            //     bias: wgpu::DepthBiasState::default(),
+            // }),
+            depth_stencil: None,
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -222,7 +214,6 @@ impl State {
             demo_app,
             diffuse_texture,
             depth_texture_1,
-            depth_texture_2,
             frame_texture,
             frame_texture_view: None,
         }
@@ -242,11 +233,6 @@ impl State {
                 &self.device,
                 &self.config,
                 "depth_texture_1",
-            );
-            self.depth_texture_2 = texture::Texture::create_depth_texture(
-                &self.device,
-                &self.config,
-                "depth_texture_2",
             );
         }
     }
@@ -282,14 +268,15 @@ impl State {
                         store: true,
                     },
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture_1.view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
-                    }),
-                    stencil_ops: None,
-                }),
+                // depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                //     view: &self.depth_texture_1.view,
+                //     depth_ops: Some(wgpu::Operations {
+                //         load: wgpu::LoadOp::Clear(1.0),
+                //         store: true,
+                //     }),
+                //     stencil_ops: None,
+                // }),
+                depth_stencil_attachment: None,
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
@@ -466,14 +453,7 @@ impl State {
                             store: true,
                         },
                     })],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture_2.view,
-                        depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
-                            store: true,
-                        }),
-                        stencil_ops: None,
-                    }),
+                    depth_stencil_attachment: None,
                 });
 
                 self.egui_wgpu_renderer.render(
@@ -583,11 +563,11 @@ pub async fn run() {
         {
             unsafe {
                 if NEED_TO_RESIZE_WINDOW {
-                    // state
-                    //     .window()
-                    //     .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                    // state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                    // NEED_TO_RESIZE_WINDOW = false;
+                    state
+                        .window()
+                        .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    NEED_TO_RESIZE_WINDOW = false;
                 }
             }
         }
