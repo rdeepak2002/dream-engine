@@ -377,8 +377,61 @@ impl State {
                 .min_width(200.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
-                    ui.vertical_centered(|ui| {
-                        ui.label("TODO: inspector");
+
+                    // sample tag component
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Tag"),
+                        true,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Tag");
+                    })
+                    .body(|ui| {
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            ui.label("Entity 1");
+                        });
+                    });
+
+                    // sample transform component
+                    egui::collapsing_header::CollapsingState::load_with_default_open(
+                        ui.ctx(),
+                        ui.make_persistent_id("Transform"),
+                        true,
+                    )
+                    .show_header(ui, |ui| {
+                        // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                        ui.strong("Transform");
+                    })
+                    .body(|ui| {
+                        ui.strong("Position");
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            ui.strong("x");
+                            ui.label("0.000");
+                            ui.strong("y");
+                            ui.label("0.000");
+                            ui.strong("z");
+                            ui.label("0.000");
+                        });
+                        ui.strong("Rotation");
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            ui.strong("x");
+                            ui.label("0.000");
+                            ui.strong("y");
+                            ui.label("0.000");
+                            ui.strong("z");
+                            ui.label("0.000");
+                        });
+                        ui.strong("Scale");
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            ui.strong("x");
+                            ui.label("0.000");
+                            ui.strong("y");
+                            ui.label("0.000");
+                            ui.strong("z");
+                            ui.label("0.000");
+                        });
                     });
                 });
 
@@ -488,7 +541,7 @@ impl State {
                 .min_height(25.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
-                    ui.vertical_centered(|ui| {
+                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                         let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
                             &self.device,
                             &self.play_icon_texture.view,
