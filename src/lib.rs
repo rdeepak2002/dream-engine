@@ -43,7 +43,8 @@ struct State {
     demo_app: egui_demo_lib::DemoWindows,
     #[allow(dead_code)]
     diffuse_texture: texture::Texture,
-    depth_texture_1: texture::Texture,
+    depth_texture: texture::Texture,
+    depth_texture_egui: texture::Texture,
     frame_texture: texture::Texture,
     frame_texture_view: Option<wgpu::TextureView>,
 }
@@ -106,7 +107,12 @@ impl State {
             )
             .await
             .map(|(device, queue)| {
-                let egui_wgpu_renderer = egui_wgpu::Renderer::new(&device, surface_format, None, 1);
+                let egui_wgpu_renderer = egui_wgpu::Renderer::new(
+                    &device,
+                    surface_format,
+                    Some(texture::Texture::DEPTH_FORMAT),
+                    1,
+                );
                 return (device, queue, egui_wgpu_renderer);
             })
             .unwrap();
@@ -131,8 +137,11 @@ impl State {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let depth_texture_1 =
+        let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+
+        let depth_texture_egui =
+            texture::Texture::create_depth_texture(&device, &config, "depth_texture_egui");
 
         let frame_texture =
             texture::Texture::create_frame_texture(&device, &config, "frame_texture");
@@ -184,7 +193,6 @@ impl State {
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
-            // depth_stencil: None,
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -213,7 +221,8 @@ impl State {
             egui_winit_context,
             demo_app,
             diffuse_texture,
-            depth_texture_1,
+            depth_texture,
+            depth_texture_egui,
             frame_texture,
             frame_texture_view: None,
         }
@@ -229,16 +238,23 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture_1 =
-                texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            // resize frame textures
             self.frame_texture =
                 texture::Texture::create_frame_texture(&self.device, &self.config, "frame_texture");
+            self.depth_texture =
+                texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            // resize egui depth texture
+            self.depth_texture_egui = texture::Texture::create_depth_texture(
+                &self.device,
+                &self.config,
+                "depth_texture_egui",
+            );
         }
     }
 
     fn update(&mut self) {}
 
-    fn render1(&mut self) -> Result<(), wgpu::SurfaceError> {
+    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let texture_view = self
             .frame_texture
             .texture
@@ -268,7 +284,7 @@ impl State {
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture_1.view,
+                    view: &self.depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
                         store: true,
@@ -293,7 +309,7 @@ impl State {
         Ok(())
     }
 
-    fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    fn render_egui(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -451,15 +467,14 @@ impl State {
                             store: true,
                         },
                     })],
-                    // depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    //     view: &self.depth_texture_1.view,
-                    //     depth_ops: Some(wgpu::Operations {
-                    //         load: wgpu::LoadOp::Clear(1.0),
-                    //         store: true,
-                    //     }),
-                    //     stencil_ops: None,
-                    // }),
-                    depth_stencil_attachment: None,
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture_egui.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
                 });
 
                 self.egui_wgpu_renderer.render(
@@ -581,7 +596,7 @@ pub async fn run() {
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
                 state.update();
 
-                match state.render1() {
+                match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -593,7 +608,7 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                match state.render() {
+                match state.render_egui() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
