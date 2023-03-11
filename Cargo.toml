@@ -48,5 +48,5 @@ web-sys = { version = "0.3", features = [
 [workspace]
 members = [
     "dream-editor",
-    "dream-resource",
+    "dream-application",
 ]
