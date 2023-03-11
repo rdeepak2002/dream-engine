@@ -254,138 +254,120 @@ impl State {
             );
         }
 
-        // Begin to draw the UI frame.
-        let input = self.egui_winit_state.take_egui_input(&self.window);
-        self.egui_winit_context.begin_frame(input);
+        {
+            // define rendering of egui elements
 
-        // Draw the demo application.
-        // self.demo_app.ui(&self.egui_winit_context);
+            // Begin to draw the UI frame.
+            let input = self.egui_winit_state.take_egui_input(&self.window);
+            self.egui_winit_context.begin_frame(input);
 
-        egui::TopBottomPanel::top("menu_bar").show(&self.egui_winit_context, |ui| {
-            egui::menu::bar(ui, |ui| {
-                let save_shortcut =
-                    egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
+            // Draw the demo application.
+            // self.demo_app.ui(&self.egui_winit_context);
 
-                if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
-                    // TODO: allow saving
-                    println!("TODO: save");
-                }
+            egui::TopBottomPanel::top("menu_bar").show(&self.egui_winit_context, |ui| {
+                egui::menu::bar(ui, |ui| {
+                    let save_shortcut =
+                        egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
 
-                ui.menu_button("File", |ui| {
-                    ui.set_min_width(100.0);
-                    ui.style_mut().wrap = Some(false);
-
-                    if ui
-                        .add(
-                            egui::Button::new("Save")
-                                .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
-                        )
-                        .clicked()
-                    {
+                    if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
                         // TODO: allow saving
                         println!("TODO: save");
-                        ui.close_menu();
+                    }
+
+                    ui.menu_button("File", |ui| {
+                        ui.set_min_width(100.0);
+                        ui.style_mut().wrap = Some(false);
+
+                        if ui
+                            .add(
+                                egui::Button::new("Save")
+                                    .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
+                            )
+                            .clicked()
+                        {
+                            // TODO: allow saving
+                            println!("TODO: save");
+                            ui.close_menu();
+                        }
+                    });
+                });
+            });
+
+            egui::SidePanel::right("inspector_panel")
+                .resizable(true)
+                .default_width(200.0)
+                .max_width(400.0)
+                .min_width(200.0)
+                .show(&self.egui_winit_context, |ui| {
+                    egui::trace!(ui);
+                    ui.vertical_centered(|ui| {
+                        ui.label("TODO: inspector");
+                    });
+                });
+
+            egui::TopBottomPanel::bottom("assets")
+                .resizable(false)
+                .default_height(200.0)
+                .max_height(200.0)
+                .min_height(200.0)
+                .show(&self.egui_winit_context, |ui| {
+                    egui::trace!(ui);
+                    ui.vertical_centered(|ui| {
+                        ui.label("TODO: assets");
+                    });
+                });
+
+            egui::SidePanel::left("scene_hierarchy")
+                .resizable(true)
+                .default_width(200.0)
+                .max_width(400.0)
+                .min_width(200.0)
+                .show(&self.egui_winit_context, |ui| {
+                    egui::trace!(ui);
+                    ui.vertical_centered(|ui| {
+                        ui.label("TODO: scene hierarchy");
+                    });
+
+                    // TODO: render result onto image using this
+                    // ui.image();
+
+                    // ui.separator();
+                });
+
+            egui::TopBottomPanel::top("render-controls")
+                .resizable(false)
+                .default_height(25.0)
+                .max_height(25.0)
+                .min_height(25.0)
+                .show(&self.egui_winit_context, |ui| {
+                    egui::trace!(ui);
+                    ui.vertical_centered(|ui| {
+                        ui.label("TODO: renderer controls");
+                    });
+                });
+
+            egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.label("TODO: renderer");
+
+                    {
+                        if self.frame_texture_view.is_some() {
+                            let epaint_texture_id =
+                                self.egui_wgpu_renderer.register_native_texture(
+                                    &self.device,
+                                    &self.frame_texture_view.as_ref().unwrap(),
+                                    wgpu::FilterMode::default(),
+                                );
+
+                            ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
+                        }
                     }
                 });
             });
-        });
+        }
 
-        egui::SidePanel::right("inspector_panel")
-            .resizable(true)
-            .default_width(200.0)
-            .max_width(400.0)
-            .min_width(200.0)
-            .show(&self.egui_winit_context, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.label("TODO: inspector");
-                });
-            });
-
-        egui::TopBottomPanel::bottom("assets")
-            .resizable(false)
-            .default_height(200.0)
-            .max_height(200.0)
-            .min_height(200.0)
-            .show(&self.egui_winit_context, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.label("TODO: assets");
-                });
-            });
-
-        egui::SidePanel::left("scene_hierarchy")
-            .resizable(true)
-            .default_width(200.0)
-            .max_width(400.0)
-            .min_width(200.0)
-            .show(&self.egui_winit_context, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.label("TODO: scene hierarchy");
-                });
-
-                // TODO: render result onto image using this
-                // ui.image();
-
-                // ui.separator();
-            });
-
-        egui::TopBottomPanel::top("render-controls")
-            .resizable(false)
-            .default_height(25.0)
-            .max_height(25.0)
-            .min_height(25.0)
-            .show(&self.egui_winit_context, |ui| {
-                egui::trace!(ui);
-                ui.vertical_centered(|ui| {
-                    ui.label("TODO: renderer controls");
-                });
-            });
-
-        egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
-            ui.vertical_centered(|ui| {
-                ui.label("TODO: renderer");
-
-                {
-                    if self.frame_texture_view.is_some() {
-                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                            &self.device,
-                            &self.frame_texture_view.as_ref().unwrap(),
-                            wgpu::FilterMode::default(),
-                        );
-
-                        ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
-                    }
-                }
-
-                // let output_texture_view = self
-                //     .frame_texture
-                //     .texture
-                //     .create_view(&wgpu::TextureViewDescriptor::default());
-
-                // let output_texture_view = self
-                //     .diffuse_texture
-                //     .texture
-                //     .create_view(&wgpu::TextureViewDescriptor::default());
-
-                // let output_texture_view = self
-                //     .depth_texture
-                //     .texture
-                //     .create_view(&wgpu::TextureViewDescriptor::default());
-
-                // let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                //     &self.device,
-                //     &output_texture_view,
-                //     wgpu::FilterMode::default(),
-                // );
-                //
-                // ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
-            });
-        });
-
-        let full_output = self.egui_winit_context.end_frame();
-        let paint_jobs = self.egui_winit_context.tessellate(full_output.shapes);
+        let egui_full_output = self.egui_winit_context.end_frame();
+        let egui_paint_jobs = self.egui_winit_context.tessellate(egui_full_output.shapes);
 
         let mut encoder = self
             .device
@@ -394,12 +376,12 @@ impl State {
             });
 
         {
-            for (id, image_delta) in &full_output.textures_delta.set {
+            for (id, image_delta) in &egui_full_output.textures_delta.set {
                 self.egui_wgpu_renderer
                     .update_texture(&self.device, &self.queue, *id, image_delta)
             }
 
-            let screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
+            let egui_screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
                 size_in_pixels: [self.config.width, self.config.height],
                 pixels_per_point: self.window.scale_factor() as f32,
             };
@@ -408,8 +390,8 @@ impl State {
                 &self.device,
                 &self.queue,
                 &mut encoder,
-                &paint_jobs,
-                &screen_descriptor,
+                &egui_paint_jobs,
+                &egui_screen_descriptor,
             );
 
             // draw to another texture
@@ -482,8 +464,11 @@ impl State {
                 render_pass.set_pipeline(&self.render_pipeline);
                 render_pass.draw(0..3, 0..1);
 
-                self.egui_wgpu_renderer
-                    .render(&mut render_pass, &paint_jobs, &screen_descriptor);
+                self.egui_wgpu_renderer.render(
+                    &mut render_pass,
+                    &egui_paint_jobs,
+                    &screen_descriptor,
+                );
             }
 
             self.queue.submit(iter::once(encoder.finish()));
@@ -497,7 +482,7 @@ impl State {
 
         self.frame_texture_view = Some(output_texture_view);
 
-        for id in &full_output.textures_delta.free {
+        for id in &egui_full_output.textures_delta.free {
             self.egui_wgpu_renderer.free_texture(id);
         }
 
