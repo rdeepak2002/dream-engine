@@ -404,19 +404,17 @@ impl State {
 
             egui::CentralPanel::default().show(&self.egui_winit_context, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.label("TODO: renderer");
+                    if self.frame_texture_view.is_some() {
+                        ui.style_mut().spacing.window_margin = egui::Margin::from(0.0);
+                        ui.style_mut().spacing.item_spacing = egui::vec2(0.0, 0.0);
 
-                    {
-                        if self.frame_texture_view.is_some() {
-                            let epaint_texture_id =
-                                self.egui_wgpu_renderer.register_native_texture(
-                                    &self.device,
-                                    &self.frame_texture_view.as_ref().unwrap(),
-                                    wgpu::FilterMode::default(),
-                                );
+                        let epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                            &self.device,
+                            &self.frame_texture_view.as_ref().unwrap(),
+                            wgpu::FilterMode::default(),
+                        );
 
-                            ui.image(epaint_texture_id, egui::Vec2::new(500.0, 500.0));
-                        }
+                        ui.image(epaint_texture_id, ui.available_size());
                     }
                 });
             });
