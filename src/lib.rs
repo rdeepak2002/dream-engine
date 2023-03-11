@@ -39,7 +39,9 @@ struct State {
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_winit_context: egui::Context,
     egui_winit_state: egui_winit::State,
+    #[allow(dead_code)]
     demo_app: egui_demo_lib::DemoWindows,
+    #[allow(dead_code)]
     diffuse_texture: texture::Texture,
     depth_texture: texture::Texture,
     frame_texture: texture::Texture,
@@ -397,11 +399,11 @@ impl State {
             // draw to another texture
             {
                 if new_frame_texture_view.is_some() {
-                    let tv = new_frame_texture_view.unwrap();
+                    let texture_view = new_frame_texture_view.unwrap();
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         label: Some("Render Pass"),
                         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                            view: &tv,
+                            view: &texture_view,
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -467,7 +469,7 @@ impl State {
                 self.egui_wgpu_renderer.render(
                     &mut render_pass,
                     &egui_paint_jobs,
-                    &screen_descriptor,
+                    &egui_screen_descriptor,
                 );
             }
 
