@@ -369,7 +369,7 @@ impl State {
             egui::TopBottomPanel::bottom("assets")
                 .resizable(true)
                 .default_height(200.0)
-                .max_height(400.0)
+                .max_height(200.0)
                 .min_height(200.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
