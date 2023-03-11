@@ -49,6 +49,8 @@ struct State {
     frame_texture: texture::Texture,
     frame_texture_view: Option<wgpu::TextureView>,
     play_icon_texture: texture::Texture,
+    file_icon_texture: texture::Texture,
+    directory_icon_texture: texture::Texture,
 }
 
 impl State {
@@ -134,12 +136,30 @@ impl State {
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
-        let play_icon_texture_bytes = include_bytes!("icons/PlayIconDark.png");
+        let play_icon_texture_bytes = include_bytes!("icons/PlayIcon.png");
         let play_icon_texture = texture::Texture::from_bytes(
             &device,
             &queue,
             play_icon_texture_bytes,
             "icons/PlayIcon.png",
+        )
+        .unwrap();
+
+        let file_icon_texture_bytes = include_bytes!("icons/FileIcon.png");
+        let file_icon_texture = texture::Texture::from_bytes(
+            &device,
+            &queue,
+            file_icon_texture_bytes,
+            "icons/FileIcon.png",
+        )
+        .unwrap();
+
+        let directory_icon_texture_bytes = include_bytes!("icons/DirectoryIcon.png");
+        let directory_icon_texture = texture::Texture::from_bytes(
+            &device,
+            &queue,
+            directory_icon_texture_bytes,
+            "icons/FileIcon.png",
         )
         .unwrap();
 
@@ -241,6 +261,8 @@ impl State {
             frame_texture,
             frame_texture_view: None,
             play_icon_texture,
+            file_icon_texture,
+            directory_icon_texture,
         }
     }
 
@@ -371,7 +393,7 @@ impl State {
             });
 
             egui::SidePanel::right("inspector_panel")
-                .resizable(true)
+                .resizable(false)
                 .default_width(200.0)
                 .max_width(400.0)
                 .min_width(200.0)
@@ -436,19 +458,60 @@ impl State {
                 });
 
             egui::TopBottomPanel::bottom("assets")
-                .resizable(true)
+                .resizable(false)
                 .default_height(200.0)
                 .max_height(200.0)
                 .min_height(200.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
-                    ui.vertical_centered(|ui| {
-                        ui.label("TODO: assets");
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.style_mut().spacing.item_spacing = egui::vec2(20.0, 1.0);
+
+                        let file_epaint_texture_id =
+                            self.egui_wgpu_renderer.register_native_texture(
+                                &self.device,
+                                &self.file_icon_texture.view,
+                                wgpu::FilterMode::Linear,
+                            );
+
+                        let directory_epaint_texture_id =
+                            self.egui_wgpu_renderer.register_native_texture(
+                                &self.device,
+                                &self.directory_icon_texture.view,
+                                wgpu::FilterMode::Linear,
+                            );
+
+                        {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                                // let file_btn = egui::ImageButton::new(
+                                //     file_epaint_texture_id,
+                                //     egui::vec2(40.0, 40.0),
+                                // );
+                                // file_btn.ui(ui);
+                                ui.image(file_epaint_texture_id, egui::vec2(40.0, 40.0));
+                                ui.strong("main.scene");
+                            });
+                        }
+
+                        {
+                            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                                // let directory_btn = egui::ImageButton::new(
+                                //     directory_epaint_texture_id,
+                                //     egui::vec2(40.0, 40.0),
+                                // );
+                                // directory_btn.ui(ui);
+                                ui.image(directory_epaint_texture_id, egui::vec2(40.0, 40.0));
+                                ui.strong("textures");
+                            });
+                        }
+
+                        // ui.image(file_epaint_texture_id, egui::vec2(70.0, 70.0));
+                        // ui.image(directory_epaint_texture_id, egui::vec2(70.0, 70.0));
                     });
                 });
 
             egui::SidePanel::left("scene_hierarchy")
-                .resizable(true)
+                .resizable(false)
                 .default_width(200.0)
                 .max_width(400.0)
                 .min_width(200.0)
