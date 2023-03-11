@@ -132,7 +132,7 @@ impl State {
         });
 
         let depth_texture_1 =
-            texture::Texture::create_depth_texture(&device, &config, "depth_texture_1");
+            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
         let frame_texture =
             texture::Texture::create_frame_texture(&device, &config, "frame_texture");
@@ -177,14 +177,14 @@ impl State {
                 // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
-            // depth_stencil: Some(wgpu::DepthStencilState {
-            //     format: texture::Texture::DEPTH_FORMAT,
-            //     depth_write_enabled: true,
-            //     depth_compare: wgpu::CompareFunction::Less,
-            //     stencil: wgpu::StencilState::default(),
-            //     bias: wgpu::DepthBiasState::default(),
-            // }),
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: texture::Texture::DEPTH_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
+            // depth_stencil: None,
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,
@@ -229,11 +229,10 @@ impl State {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            self.depth_texture_1 = texture::Texture::create_depth_texture(
-                &self.device,
-                &self.config,
-                "depth_texture_1",
-            );
+            self.depth_texture_1 =
+                texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            self.frame_texture =
+                texture::Texture::create_frame_texture(&self.device, &self.config, "frame_texture");
         }
     }
 
@@ -268,15 +267,14 @@ impl State {
                         store: true,
                     },
                 })],
-                // depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                //     view: &self.depth_texture_1.view,
-                //     depth_ops: Some(wgpu::Operations {
-                //         load: wgpu::LoadOp::Clear(1.0),
-                //         store: true,
-                //     }),
-                //     stencil_ops: None,
-                // }),
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &self.depth_texture_1.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: true,
+                    }),
+                    stencil_ops: None,
+                }),
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
@@ -453,6 +451,14 @@ impl State {
                             store: true,
                         },
                     })],
+                    // depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    //     view: &self.depth_texture_1.view,
+                    //     depth_ops: Some(wgpu::Operations {
+                    //         load: wgpu::LoadOp::Clear(1.0),
+                    //         store: true,
+                    //     }),
+                    //     stencil_ops: None,
+                    // }),
                     depth_stencil_attachment: None,
                 });
 
@@ -572,24 +578,6 @@ pub async fn run() {
             }
         }
         match event {
-            Event::WindowEvent { event, .. } => {
-                let exclusive = state
-                    .egui_winit_state
-                    .on_event(&state.egui_winit_context, &event);
-                if !exclusive.consumed {
-                    match event {
-                        WindowEvent::Resized(physical_size) => {
-                            state.resize(physical_size);
-                        }
-                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            // new_inner_size is &mut so w have to dereference it twice
-                            state.resize(*new_inner_size);
-                        }
-                        _ => (),
-                    }
-                }
-            }
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
                 state.update();
 
@@ -615,6 +603,24 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // We're ignoring timeouts
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                }
+            }
+            Event::WindowEvent { event, .. } => {
+                let exclusive = state
+                    .egui_winit_state
+                    .on_event(&state.egui_winit_context, &event);
+                if !exclusive.consumed {
+                    match event {
+                        WindowEvent::Resized(physical_size) => {
+                            state.resize(physical_size);
+                        }
+                        WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                            // new_inner_size is &mut so w have to dereference it twice
+                            state.resize(*new_inner_size);
+                        }
+                        _ => (),
+                    }
                 }
             }
             Event::MainEventsCleared => {
