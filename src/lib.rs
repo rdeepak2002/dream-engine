@@ -263,13 +263,13 @@ impl State {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder 1"),
+                label: Some("Render Encoder"),
             });
 
         // draw triangle
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass 1"),
+                label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &texture_view,
                     resolve_target: None,
@@ -367,9 +367,9 @@ impl State {
                 });
 
             egui::TopBottomPanel::bottom("assets")
-                .resizable(false)
+                .resizable(true)
                 .default_height(200.0)
-                .max_height(200.0)
+                .max_height(400.0)
                 .min_height(200.0)
                 .show(&self.egui_winit_context, |ui| {
                     egui::trace!(ui);
@@ -428,7 +428,7 @@ impl State {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder 2"),
+                label: Some("EGUI Render Encoder"),
             });
 
         {
@@ -453,15 +453,15 @@ impl State {
             // draw editor
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Render Pass 2"),
+                    label: Some("EGUI Render Pass"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.1,
-                                g: 0.2,
-                                b: 0.3,
+                                r: 0.10588235294,
+                                g: 0.10588235294,
+                                b: 0.10588235294,
                                 a: 1.0,
                             }),
                             store: true,
