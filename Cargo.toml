@@ -26,6 +26,7 @@ boa_engine = { version = "0.16.0", features = ["console"]}
 rapier3d = "0.17.2"
 rapier2d = "0.17.2"
 shipyard = "0.6.2"
+cgmath = "0.18"
 
 [dependencies.image]
 version = "0.24"

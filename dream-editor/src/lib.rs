@@ -6,7 +6,7 @@ pub fn render_egui_editor_content(
     file_epaint_texture_id: egui::epaint::TextureId,
     directory_epaint_texture_id: egui::epaint::TextureId,
     play_icon_epaint_texture_id: egui::epaint::TextureId,
-) {
+) -> f32 {
     // Draw the demo application.
     // self.demo_app.ui(&self.egui_context);
 
@@ -233,12 +233,18 @@ pub fn render_egui_editor_content(
             });
         });
 
+    let mut aspect_ratio: f32 = 1.0;
+
     egui::CentralPanel::default().show(&ctx, |ui| {
         if render_output_epaint_texture_id.is_some() {
-            ui.image(
-                render_output_epaint_texture_id.unwrap(),
-                ui.available_size(),
-            );
+            let panel_size = ui.available_size();
+            let new_aspect_ratio = panel_size.x / panel_size.y;
+            if new_aspect_ratio > 0.0 {
+                aspect_ratio = new_aspect_ratio;
+            }
+            ui.image(render_output_epaint_texture_id.unwrap(), panel_size);
         }
     });
+
+    return aspect_ratio;
 }
