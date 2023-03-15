@@ -111,24 +111,23 @@ pub async fn run() {
 
     // State::new uses async code, so we're going to wait for it to finish
     let scale_factor = window.scale_factor() as f32;
-    let mut renderer = dream_renderer::RendererWgpu::new(window, &event_loop).await;
+    let mut renderer = dream_renderer::RendererWgpu::new(&window).await;
     let mut editor = dream_editor::EditorEguiWgpu::new(&renderer, scale_factor, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {
             unsafe {
                 if NEED_TO_RESIZE_WINDOW {
-                    state
-                        .window
+                    window
                         .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                    state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
-                    editor.handle_resize(&state);
+                    renderer.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    editor.handle_resize(&renderer);
                     NEED_TO_RESIZE_WINDOW = false;
                 }
             }
         }
         match event {
-            Event::RedrawRequested(window_id) if window_id == renderer.window.id() => {
+            Event::RedrawRequested(window_id) if window_id == window.id() => {
                 match renderer.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
@@ -142,7 +141,7 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                match editor.render_wgpu(&renderer) {
+                match editor.render_wgpu(&renderer, &window) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -178,7 +177,7 @@ pub async fn run() {
             Event::MainEventsCleared => {
                 // RedrawRequested will only trigger once, unless we manually
                 // request it.
-                renderer.window.request_redraw();
+                window.request_redraw();
             }
             _ => {}
         }

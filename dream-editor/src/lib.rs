@@ -82,13 +82,14 @@ impl EditorEguiWgpu {
     pub fn render_wgpu(
         &mut self,
         state: &dream_renderer::RendererWgpu,
+        window: &Window,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = state.surface.get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let input = self.egui_winit_state.take_egui_input(&state.window);
+        let input = self.egui_winit_state.take_egui_input(&window);
         self.egui_context.begin_frame(input);
         {
             if state.frame_texture_view.is_some() {
@@ -123,7 +124,7 @@ impl EditorEguiWgpu {
 
             let egui_screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
                 size_in_pixels: [state.config.width, state.config.height],
-                pixels_per_point: state.window.scale_factor() as f32,
+                pixels_per_point: window.scale_factor() as f32,
             };
 
             self.egui_wgpu_renderer.update_buffers(

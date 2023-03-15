@@ -119,7 +119,6 @@ pub struct RendererWgpu {
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
-    pub window: Window,
     depth_texture: texture::Texture,
     frame_texture: texture::Texture,
     pub frame_texture_view: Option<wgpu::TextureView>,
@@ -138,7 +137,7 @@ pub struct RendererWgpu {
 }
 
 impl RendererWgpu {
-    pub async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
+    pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
@@ -421,7 +420,6 @@ impl RendererWgpu {
             size,
             config,
             render_pipeline,
-            window,
             depth_texture,
             frame_texture,
             frame_texture_view: None,
