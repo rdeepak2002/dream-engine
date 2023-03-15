@@ -154,17 +154,8 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                // match state.render_egui() {
-                //     Ok(_) => {}
-                //     // Reconfigure the surface if it's lost or outdated
-                //     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                //         state.resize(state.size)
-                //     }
-                //     // The system is out of memory, we should probably quit
-                //     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                //     // We're ignoring timeouts
-                //     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                // }
+                // TODO: pass this to renderer class (called state rn) and have it handle aspect ratio there [just has to set camera aspect ratio]
+                editor.renderer_aspect_ratio;
             }
             Event::WindowEvent { event, .. } => {
                 let exclusive = editor
