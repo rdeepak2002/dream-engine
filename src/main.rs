@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use dream::run;
+use dream;
 
 fn main() {
-    pollster::block_on(run());
+    pollster::block_on(dream::run());
 }
