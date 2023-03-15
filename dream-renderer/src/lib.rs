@@ -121,7 +121,6 @@ pub struct State {
     render_pipeline: wgpu::RenderPipeline,
     pub window: Window,
     depth_texture: texture::Texture,
-    // pub depth_texture_egui: texture::Texture,
     frame_texture: texture::Texture,
     pub frame_texture_view: Option<wgpu::TextureView>,
     // TODO: move these icons to editor
@@ -339,9 +338,6 @@ impl State {
         let depth_texture =
             texture::Texture::create_depth_texture(&device, &config, "depth_texture");
 
-        // let depth_texture_egui =
-        //     texture::Texture::create_depth_texture(&device, &config, "depth_texture_egui");
-
         let frame_texture =
             texture::Texture::create_frame_texture(&device, &config, "frame_texture");
 
@@ -427,7 +423,6 @@ impl State {
             render_pipeline,
             window,
             depth_texture,
-            // depth_texture_egui,
             frame_texture,
             frame_texture_view: None,
             play_icon_texture,
@@ -459,14 +454,6 @@ impl State {
                 texture::Texture::create_frame_texture(&self.device, &self.config, "frame_texture");
             self.depth_texture =
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
-            // resize egui depth texture
-
-            // TODO: allow resizing of egui depth texture
-            // self.depth_texture_egui = texture::Texture::create_depth_texture(
-            //     &self.device,
-            //     &self.config,
-            //     "depth_texture_egui",
-            // );
         }
     }
 
