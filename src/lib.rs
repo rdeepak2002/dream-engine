@@ -122,19 +122,19 @@ pub async fn run() {
                         .window()
                         .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                     state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
+                    editor.handle_resize(&state);
                     NEED_TO_RESIZE_WINDOW = false;
                 }
             }
         }
         match event {
             Event::RedrawRequested(window_id) if window_id == state.window().id() => {
-                state.update();
-
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size)
+                        state.resize(state.size);
+                        editor.handle_resize(&state);
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -146,7 +146,8 @@ pub async fn run() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        // state.resize(state.size)
+                        state.resize(state.size);
+                        editor.handle_resize(&state);
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -158,15 +159,17 @@ pub async fn run() {
                 editor.renderer_aspect_ratio;
             }
             Event::WindowEvent { event, .. } => {
-                if !editor.handle_event(&event) {
+                if !editor.handle_event(&event, &state) {
                     match event {
                         WindowEvent::Resized(physical_size) => {
                             state.resize(physical_size);
+                            editor.handle_resize(&state);
                         }
                         WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &mut so w have to dereference it twice
                             state.resize(*new_inner_size);
+                            editor.handle_resize(&state);
                         }
                         _ => (),
                     }

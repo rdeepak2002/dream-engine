@@ -3,7 +3,7 @@ use egui::Widget;
 use egui_wgpu::Renderer;
 use std::iter;
 
-use dream_renderer::texture;
+use dream_renderer::{texture, State};
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -11,6 +11,7 @@ use winit::{
 };
 
 pub struct EditorState {
+    pub depth_texture_egui: texture::Texture,
     pub renderer_aspect_ratio: f32,
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_context: egui::Context,
@@ -30,12 +31,19 @@ pub fn get_egui_renderer(state: &dream_renderer::State) -> Renderer {
     );
 }
 
+pub fn generate_egui_depth_texture(state: &dream_renderer::State) -> texture::Texture {
+    let depth_texture_egui =
+        texture::Texture::create_depth_texture(&state.device, &state.config, "depth_texture_egui");
+    return depth_texture_egui;
+}
+
 impl EditorState {
     pub async fn new(
         state: &dream_renderer::State,
         scale_factor: f32,
         event_loop: &EventLoop<()>,
     ) -> Self {
+        let depth_texture_egui = generate_egui_depth_texture(state);
         let mut egui_wgpu_renderer = get_egui_renderer(state);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(scale_factor);
@@ -68,6 +76,7 @@ impl EditorState {
             directory_epaint_texture_id,
             play_icon_epaint_texture_id,
             render_output_epaint_texture_id: None,
+            depth_texture_egui,
         }
     }
 
@@ -153,7 +162,7 @@ impl EditorState {
                         },
                     })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &state.depth_texture_egui.view,
+                        view: &self.depth_texture_egui.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
                             store: true,
@@ -423,7 +432,20 @@ impl EditorState {
         return aspect_ratio;
     }
 
-    pub fn handle_event(&mut self, window_event: &WindowEvent) -> bool {
+    pub fn handle_resize(&mut self, state: &State) {
+        self.depth_texture_egui = generate_egui_depth_texture(state);
+    }
+
+    pub fn handle_event(&mut self, window_event: &WindowEvent, state: &State) -> bool {
+        // match window_event {
+        //     WindowEvent::Resized(physical_size) => {
+        //         self.handle_resize(state);
+        //     }
+        //     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+        //         self.handle_resize(state);
+        //     }
+        //     _ => (),
+        // }
         let exclusive = self
             .egui_winit_state
             .on_event(&self.egui_context, &window_event);
