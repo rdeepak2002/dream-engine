@@ -34,7 +34,6 @@ default-features = false
 features = ["png", "jpeg"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.2", features = ["js"] }
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
 wgpu = { version = "0.15", features = ["webgl"]}

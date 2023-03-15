@@ -22,7 +22,7 @@ use dream_renderer;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -109,10 +109,10 @@ pub async fn run() {
             .expect("Couldn't append canvas to document body.");
     }
 
-    // State::new uses async code, so we're going to wait for it to finish
-    let scale_factor = window.scale_factor() as f32;
     let mut renderer = dream_renderer::RendererWgpu::new(&window).await;
-    let mut editor = dream_editor::EditorEguiWgpu::new(&renderer, scale_factor, &event_loop).await;
+    let mut editor =
+        dream_editor::EditorEguiWgpu::new(&renderer, window.scale_factor() as f32, &event_loop)
+            .await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {

@@ -1,11 +1,10 @@
 use egui::Widget;
-use egui_wgpu::Renderer;
 use std::iter;
 
 use dream_renderer::{texture, RendererWgpu};
 use winit::{
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
     window::{Window, WindowBuilder},
 };
 
@@ -21,7 +20,7 @@ pub struct EditorEguiWgpu {
     render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
 }
 
-pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> Renderer {
+pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
     return egui_wgpu::Renderer::new(
         &state.device,
         state.surface_format,
