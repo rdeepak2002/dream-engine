@@ -439,6 +439,19 @@ impl RendererWgpu {
         }
     }
 
+    pub fn set_camera_aspect_ratio(&mut self, new_aspect_ratio: f32) {
+        if self.camera.aspect != new_aspect_ratio {
+            self.camera.aspect = new_aspect_ratio;
+            self.camera.build_view_projection_matrix();
+            self.camera_uniform.update_view_proj(&self.camera);
+            self.queue.write_buffer(
+                &self.camera_buffer,
+                0,
+                bytemuck::cast_slice(&[self.camera_uniform]),
+            );
+        }
+    }
+
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
         if new_size.width > 0 && new_size.height > 0 {
             self.size = new_size;

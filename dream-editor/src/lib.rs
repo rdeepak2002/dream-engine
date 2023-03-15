@@ -102,18 +102,6 @@ impl EditorEguiWgpu {
             }
 
             self.renderer_aspect_ratio = self.render_egui_editor_content();
-
-            // TODO: allow aspect ratio of camera to be changed depending on panel size (maybe expose getter method)
-            // if state.camera.aspect != new_aspect_ratio {
-            //     state.camera.aspect = new_aspect_ratio;
-            //     state.camera.build_view_projection_matrix();
-            //     state.camera_uniform.update_view_proj(&state.camera);
-            //     state.queue.write_buffer(
-            //         &state.camera_buffer,
-            //         0,
-            //         bytemuck::cast_slice(&[state.camera_uniform]),
-            //     );
-            // }
         }
         let egui_full_output = self.egui_context.end_frame();
 

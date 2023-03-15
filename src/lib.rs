@@ -155,8 +155,8 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                // TODO: pass this to renderer class (called state rn) and have it handle aspect ratio there [just has to set camera aspect ratio]
-                editor.renderer_aspect_ratio;
+                // set aspect ratio of camera for renderer after rendering editor and knowing the size of the center panel
+                state.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
             }
             Event::WindowEvent { event, .. } => {
                 if !editor.handle_event(&event, &state) {
