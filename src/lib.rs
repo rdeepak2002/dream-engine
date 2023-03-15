@@ -111,8 +111,8 @@ pub async fn run() {
 
     // State::new uses async code, so we're going to wait for it to finish
     let scale_factor = window.scale_factor() as f32;
-    let mut state = dream_renderer::RendererWGPU::new(window, &event_loop).await;
-    let mut editor = dream_editor::EditorEGUI::new(&state, scale_factor, &event_loop).await;
+    let mut state = dream_renderer::RendererWgpu::new(window, &event_loop).await;
+    let mut editor = dream_editor::EditorEguiWgpu::new(&state, scale_factor, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {

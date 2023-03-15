@@ -112,7 +112,7 @@ impl CameraUniform {
     }
 }
 
-pub struct RendererWGPU {
+pub struct RendererWgpu {
     pub surface: wgpu::Surface,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -137,7 +137,7 @@ pub struct RendererWGPU {
     pub surface_format: wgpu::TextureFormat,
 }
 
-impl RendererWGPU {
+impl RendererWgpu {
     pub async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
         let size = window.inner_size();
 
