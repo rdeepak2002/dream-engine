@@ -111,15 +111,15 @@ pub async fn run() {
 
     // State::new uses async code, so we're going to wait for it to finish
     let scale_factor = window.scale_factor() as f32;
-    let mut state = dream_renderer::State::new(window, &event_loop).await;
-    let mut editor = dream_editor::EditorState::new(&state, scale_factor, &event_loop).await;
+    let mut state = dream_renderer::RendererWGPU::new(window, &event_loop).await;
+    let mut editor = dream_editor::EditorEGUI::new(&state, scale_factor, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {
             unsafe {
                 if NEED_TO_RESIZE_WINDOW {
                     state
-                        .window()
+                        .window
                         .set_inner_size(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                     state.resize(winit::dpi::PhysicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT));
                     editor.handle_resize(&state);
@@ -128,7 +128,7 @@ pub async fn run() {
             }
         }
         match event {
-            Event::RedrawRequested(window_id) if window_id == state.window().id() => {
+            Event::RedrawRequested(window_id) if window_id == state.window.id() => {
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
@@ -178,7 +178,7 @@ pub async fn run() {
             Event::MainEventsCleared => {
                 // RedrawRequested will only trigger once, unless we manually
                 // request it.
-                state.window().request_redraw();
+                state.window.request_redraw();
             }
             _ => {}
         }

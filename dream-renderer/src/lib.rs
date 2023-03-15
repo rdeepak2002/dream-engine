@@ -112,7 +112,7 @@ impl CameraUniform {
     }
 }
 
-pub struct State {
+pub struct RendererWGPU {
     pub surface: wgpu::Surface,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -137,7 +137,7 @@ pub struct State {
     pub surface_format: wgpu::TextureFormat,
 }
 
-impl State {
+impl RendererWGPU {
     pub async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
         let size = window.inner_size();
 
@@ -437,10 +437,6 @@ impl State {
             camera_bind_group,
             surface_format,
         }
-    }
-
-    pub fn window(&self) -> &Window {
-        &self.window
     }
 
     pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
