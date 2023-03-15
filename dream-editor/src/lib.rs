@@ -1,4 +1,3 @@
-use dream_renderer;
 use egui::Widget;
 use egui_wgpu::Renderer;
 use std::iter;
@@ -39,31 +38,31 @@ pub fn generate_egui_wgpu_depth_texture(state: &dream_renderer::RendererWgpu) ->
 
 impl EditorEguiWgpu {
     pub async fn new(
-        state: &dream_renderer::RendererWgpu,
+        renderer: &dream_renderer::RendererWgpu,
         scale_factor: f32,
         event_loop: &EventLoop<()>,
     ) -> Self {
-        let depth_texture_egui = generate_egui_wgpu_depth_texture(state);
-        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(state);
+        let depth_texture_egui = generate_egui_wgpu_depth_texture(renderer);
+        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(renderer);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(scale_factor);
         let egui_winit_context = egui::Context::default();
 
         let file_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
-            &state.device,
-            &state.file_icon_texture.view,
+            &renderer.device,
+            &renderer.file_icon_texture.view,
             wgpu::FilterMode::Linear,
         );
 
         let directory_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
-            &state.device,
-            &state.directory_icon_texture.view,
+            &renderer.device,
+            &renderer.directory_icon_texture.view,
             wgpu::FilterMode::Linear,
         );
 
         let play_icon_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
-            &state.device,
-            &state.play_icon_texture.view,
+            &renderer.device,
+            &renderer.play_icon_texture.view,
             wgpu::FilterMode::Linear,
         );
 
