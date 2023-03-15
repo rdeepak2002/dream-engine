@@ -678,6 +678,7 @@ dependencies = [
  "console_error_panic_hook",
  "console_log",
  "dream-editor",
+ "dream-renderer",
  "egui 0.21.0",
  "egui-wgpu",
  "egui-winit",
@@ -700,14 +701,43 @@ dependencies = [
 ]
 
 [[package]]
-name = "dream-application"
-version = "0.1.0"
-
-[[package]]
 name = "dream-editor"
 version = "0.1.0"
 dependencies = [
  "egui 0.21.0",
+]
+
+[[package]]
+name = "dream-renderer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "boa_engine",
+ "bytemuck",
+ "cfg-if",
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "dream-editor",
+ "egui 0.21.0",
+ "egui-wgpu",
+ "egui-winit",
+ "egui_demo_lib",
+ "env_logger",
+ "epi",
+ "getrandom",
+ "image",
+ "instant",
+ "log",
+ "pollster",
+ "rapier2d",
+ "rapier3d",
+ "shipyard",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]
