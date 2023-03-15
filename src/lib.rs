@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use dream_editor;
 use dream_renderer;
 
 use winit::{
@@ -109,7 +110,9 @@ pub async fn run() {
     }
 
     // State::new uses async code, so we're going to wait for it to finish
+    let scale_factor = window.scale_factor() as f32;
     let mut state = dream_renderer::State::new(window, &event_loop).await;
+    let mut editor = dream_editor::EditorState::new(&state, scale_factor, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {
@@ -139,20 +142,34 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                match state.render_egui() {
+                match editor.render_wgpu(&state) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size)
+                        // state.resize(state.size)
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     // We're ignoring timeouts
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
+
+                // match state.render_egui() {
+                //     Ok(_) => {}
+                //     // Reconfigure the surface if it's lost or outdated
+                //     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                //         state.resize(state.size)
+                //     }
+                //     // The system is out of memory, we should probably quit
+                //     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                //     // We're ignoring timeouts
+                //     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                // }
             }
             Event::WindowEvent { event, .. } => {
-                let exclusive = state.egui_winit_state.on_event(&state.egui_context, &event);
+                let exclusive = editor
+                    .egui_winit_state
+                    .on_event(&editor.egui_context, &event);
                 if !exclusive.consumed {
                     match event {
                         WindowEvent::Resized(physical_size) => {

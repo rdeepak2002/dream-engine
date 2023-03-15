@@ -1,4 +1,172 @@
+use dream_renderer;
 use egui::Widget;
+use std::iter;
+
+use winit::{
+    event::*,
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
+};
+
+pub struct EditorState {
+    pub egui_wgpu_renderer: egui_wgpu::Renderer,
+    pub egui_context: egui::Context,
+    pub egui_winit_state: egui_winit::State,
+}
+
+impl EditorState {
+    pub async fn new(
+        state: &dream_renderer::State,
+        scale_factor: f32,
+        event_loop: &EventLoop<()>,
+    ) -> Self {
+        let egui_wgpu_renderer = state.get_egui_renderer();
+        let mut egui_winit_state = egui_winit::State::new(&event_loop);
+        egui_winit_state.set_pixels_per_point(scale_factor);
+        let egui_winit_context = egui::Context::default();
+
+        Self {
+            egui_wgpu_renderer,
+            egui_context: egui_winit_context,
+            egui_winit_state,
+        }
+    }
+
+    pub fn render_wgpu(&mut self, state: &dream_renderer::State) -> Result<(), wgpu::SurfaceError> {
+        let output = state.surface.get_current_texture()?;
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let input = self.egui_winit_state.take_egui_input(&state.window);
+        self.egui_context.begin_frame(input);
+        {
+            let file_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &state.device,
+                &state.file_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
+
+            let directory_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &state.device,
+                &state.directory_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
+
+            let play_icon_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
+                &state.device,
+                &state.play_icon_texture.view,
+                wgpu::FilterMode::Linear,
+            );
+
+            let mut render_output_epaint_texture_id: Option<egui::epaint::TextureId> = None;
+
+            if state.frame_texture_view.is_some() {
+                render_output_epaint_texture_id =
+                    Some(self.egui_wgpu_renderer.register_native_texture(
+                        &state.device,
+                        &state.frame_texture_view.as_ref().unwrap(),
+                        wgpu::FilterMode::default(),
+                    ));
+            }
+
+            let new_aspect_ratio = render_egui_editor_content(
+                &self.egui_context,
+                render_output_epaint_texture_id,
+                file_epaint_texture_id,
+                directory_epaint_texture_id,
+                play_icon_epaint_texture_id,
+            );
+
+            // TODO: allow aspect ratio of camera to be changed depending on panel size (maybe expose getter method)
+            // if state.camera.aspect != new_aspect_ratio {
+            //     state.camera.aspect = new_aspect_ratio;
+            //     state.camera.build_view_projection_matrix();
+            //     state.camera_uniform.update_view_proj(&state.camera);
+            //     state.queue.write_buffer(
+            //         &state.camera_buffer,
+            //         0,
+            //         bytemuck::cast_slice(&[state.camera_uniform]),
+            //     );
+            // }
+        }
+        let egui_full_output = self.egui_context.end_frame();
+
+        let egui_paint_jobs = self.egui_context.tessellate(egui_full_output.shapes);
+        let mut encoder = state
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("EGUI Render Encoder"),
+            });
+
+        {
+            for (id, image_delta) in &egui_full_output.textures_delta.set {
+                self.egui_wgpu_renderer.update_texture(
+                    &state.device,
+                    &state.queue,
+                    *id,
+                    image_delta,
+                )
+            }
+
+            let egui_screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
+                size_in_pixels: [state.config.width, state.config.height],
+                pixels_per_point: state.window.scale_factor() as f32,
+            };
+
+            self.egui_wgpu_renderer.update_buffers(
+                &state.device,
+                &state.queue,
+                &mut encoder,
+                &egui_paint_jobs,
+                &egui_screen_descriptor,
+            );
+
+            // draw editor
+            {
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("EGUI Render Pass"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &view,
+                        resolve_target: None,
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.10588235294,
+                                g: 0.10588235294,
+                                b: 0.10588235294,
+                                a: 1.0,
+                            }),
+                            store: true,
+                        },
+                    })],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &state.depth_texture_egui.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
+                });
+
+                self.egui_wgpu_renderer.render(
+                    &mut render_pass,
+                    &egui_paint_jobs,
+                    &egui_screen_descriptor,
+                );
+            }
+
+            state.queue.submit(iter::once(encoder.finish()));
+            output.present();
+        }
+
+        for id in &egui_full_output.textures_delta.free {
+            self.egui_wgpu_renderer.free_texture(id);
+        }
+
+        Ok(())
+    }
+}
 
 pub fn render_egui_editor_content(
     ctx: &egui::Context,

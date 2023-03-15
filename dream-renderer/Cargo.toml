@@ -7,7 +7,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-dream-editor = { path = "../dream-editor", version = "0.1.0" }
 instant = { version = "0.1", features = [ "stdweb" ] }
 cfg-if = "1"
 winit = "0.28"

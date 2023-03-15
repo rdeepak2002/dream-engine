@@ -19,7 +19,6 @@
 pub mod camera;
 pub mod texture;
 
-use dream_editor;
 use std::iter;
 use wgpu::util::DeviceExt;
 
@@ -94,7 +93,7 @@ const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 #[repr(C)]
 // This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct CameraUniform {
+pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
@@ -108,43 +107,47 @@ impl CameraUniform {
         }
     }
 
-    fn update_view_proj(&mut self, camera: &camera::Camera) {
+    pub fn update_view_proj(&mut self, camera: &camera::Camera) {
         self.view_proj = camera.build_view_projection_matrix().into();
     }
 }
 
 pub struct State {
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    pub surface: wgpu::Surface,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+    pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
-    window: Window,
-    egui_wgpu_renderer: egui_wgpu::Renderer,
-    pub egui_context: egui::Context,
-    pub egui_winit_state: egui_winit::State,
-    #[allow(dead_code)]
-    demo_app: egui_demo_lib::DemoWindows,
-    #[allow(dead_code)]
-    diffuse_texture: texture::Texture,
+    pub window: Window,
     depth_texture: texture::Texture,
-    depth_texture_egui: texture::Texture,
+    pub depth_texture_egui: texture::Texture,
     frame_texture: texture::Texture,
-    frame_texture_view: Option<wgpu::TextureView>,
-    play_icon_texture: texture::Texture,
-    file_icon_texture: texture::Texture,
-    directory_icon_texture: texture::Texture,
+    pub frame_texture_view: Option<wgpu::TextureView>,
+    // TODO: move these icons to editor
+    pub play_icon_texture: texture::Texture,
+    pub file_icon_texture: texture::Texture,
+    pub directory_icon_texture: texture::Texture,
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     diffuse_bind_group: wgpu::BindGroup,
-    camera: camera::Camera,
-    camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
+    pub camera: camera::Camera,
+    pub camera_uniform: CameraUniform,
+    pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    pub surface_format: wgpu::TextureFormat,
 }
 
 impl State {
+    pub fn get_egui_renderer(&self) -> egui_wgpu::Renderer {
+        return egui_wgpu::Renderer::new(
+            &self.device,
+            self.surface_format,
+            Some(texture::Texture::DEPTH_FORMAT),
+            1,
+        );
+    }
+
     pub async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
         let size = window.inner_size();
 
@@ -185,7 +188,7 @@ impl State {
         let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
         web_gl_limits.max_texture_dimension_2d = 4096;
 
-        let (device, queue, egui_wgpu_renderer) = adapter
+        let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
@@ -202,13 +205,7 @@ impl State {
             )
             .await
             .map(|(device, queue)| {
-                let egui_wgpu_renderer = egui_wgpu::Renderer::new(
-                    &device,
-                    surface_format,
-                    Some(texture::Texture::DEPTH_FORMAT),
-                    1,
-                );
-                return (device, queue, egui_wgpu_renderer);
+                return (device, queue);
             })
             .unwrap();
 
@@ -430,11 +427,6 @@ impl State {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let mut egui_winit_state = egui_winit::State::new(&event_loop);
-        egui_winit_state.set_pixels_per_point(window.scale_factor() as f32);
-        let egui_winit_context = egui::Context::default();
-        let demo_app = egui_demo_lib::DemoWindows::default();
-
         Self {
             surface,
             device,
@@ -443,11 +435,6 @@ impl State {
             config,
             render_pipeline,
             window,
-            egui_wgpu_renderer,
-            egui_winit_state,
-            egui_context: egui_winit_context,
-            demo_app,
-            diffuse_texture,
             depth_texture,
             depth_texture_egui,
             frame_texture,
@@ -462,6 +449,7 @@ impl State {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
+            surface_format,
         }
     }
 
@@ -554,136 +542,6 @@ impl State {
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         self.frame_texture_view = Some(output_texture_view);
-
-        Ok(())
-    }
-
-    pub fn render_egui(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let input = self.egui_winit_state.take_egui_input(&self.window);
-        self.egui_context.begin_frame(input);
-        {
-            let file_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                &self.device,
-                &self.file_icon_texture.view,
-                wgpu::FilterMode::Linear,
-            );
-
-            let directory_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                &self.device,
-                &self.directory_icon_texture.view,
-                wgpu::FilterMode::Linear,
-            );
-
-            let play_icon_epaint_texture_id = self.egui_wgpu_renderer.register_native_texture(
-                &self.device,
-                &self.play_icon_texture.view,
-                wgpu::FilterMode::Linear,
-            );
-
-            let mut render_output_epaint_texture_id: Option<egui::epaint::TextureId> = None;
-
-            if self.frame_texture_view.is_some() {
-                render_output_epaint_texture_id =
-                    Some(self.egui_wgpu_renderer.register_native_texture(
-                        &self.device,
-                        &self.frame_texture_view.as_ref().unwrap(),
-                        wgpu::FilterMode::default(),
-                    ));
-            }
-
-            let new_aspect_ratio = dream_editor::render_egui_editor_content(
-                &self.egui_context,
-                render_output_epaint_texture_id,
-                file_epaint_texture_id,
-                directory_epaint_texture_id,
-                play_icon_epaint_texture_id,
-            );
-
-            if self.camera.aspect != new_aspect_ratio {
-                self.camera.aspect = new_aspect_ratio;
-                self.camera.build_view_projection_matrix();
-                self.camera_uniform.update_view_proj(&self.camera);
-                self.queue.write_buffer(
-                    &self.camera_buffer,
-                    0,
-                    bytemuck::cast_slice(&[self.camera_uniform]),
-                );
-            }
-        }
-        let egui_full_output = self.egui_context.end_frame();
-
-        let egui_paint_jobs = self.egui_context.tessellate(egui_full_output.shapes);
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("EGUI Render Encoder"),
-            });
-
-        {
-            for (id, image_delta) in &egui_full_output.textures_delta.set {
-                self.egui_wgpu_renderer
-                    .update_texture(&self.device, &self.queue, *id, image_delta)
-            }
-
-            let egui_screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
-                size_in_pixels: [self.config.width, self.config.height],
-                pixels_per_point: self.window.scale_factor() as f32,
-            };
-
-            self.egui_wgpu_renderer.update_buffers(
-                &self.device,
-                &self.queue,
-                &mut encoder,
-                &egui_paint_jobs,
-                &egui_screen_descriptor,
-            );
-
-            // draw editor
-            {
-                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("EGUI Render Pass"),
-                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.10588235294,
-                                g: 0.10588235294,
-                                b: 0.10588235294,
-                                a: 1.0,
-                            }),
-                            store: true,
-                        },
-                    })],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture_egui.view,
-                        depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
-                            store: true,
-                        }),
-                        stencil_ops: None,
-                    }),
-                });
-
-                self.egui_wgpu_renderer.render(
-                    &mut render_pass,
-                    &egui_paint_jobs,
-                    &egui_screen_descriptor,
-                );
-            }
-
-            self.queue.submit(iter::once(encoder.finish()));
-            output.present();
-        }
-
-        for id in &egui_full_output.textures_delta.free {
-            self.egui_wgpu_renderer.free_texture(id);
-        }
 
         Ok(())
     }

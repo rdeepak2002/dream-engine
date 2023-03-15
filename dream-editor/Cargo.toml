@@ -3,5 +3,45 @@ name = "dream-editor"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
+dream-renderer = { path = "../dream-renderer", version = "0.1.0" }
+instant = { version = "0.1", features = [ "stdweb" ] }
+cfg-if = "1"
+winit = "0.28"
+env_logger = "0.10"
+log = "0.4"
+wgpu = "0.15"
+pollster = "0.3.0"
 egui = "0.21.0"
+egui-winit = { version = "0.21.1", default-features = false, features = ["links", "wayland"]}
+egui_demo_lib = "0.21.0"
+egui-wgpu = "0.21.0"
+epi = "0.17.0"
+anyhow = "1.0"
+bytemuck = { version = "1.12", features = [ "derive" ] }
+boa_engine = { version = "0.16.0", features = ["console"]}
+rapier3d = "0.17.2"
+rapier2d = "0.17.2"
+shipyard = "0.6.2"
+cgmath = "0.18"
+
+[dependencies.image]
+version = "0.24"
+default-features = false
+features = ["png", "jpeg"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+console_error_panic_hook = "0.1.6"
+console_log = "1.0.0"
+wgpu = { version = "0.15", features = ["webgl"]}
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.30"
+web-sys = { version = "0.3", features = [
+    "Document",
+    "Window",
+    "Element",
+]}
