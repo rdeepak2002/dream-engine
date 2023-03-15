@@ -111,8 +111,8 @@ pub async fn run() {
 
     // State::new uses async code, so we're going to wait for it to finish
     let scale_factor = window.scale_factor() as f32;
-    let mut state = dream_renderer::RendererWgpu::new(window, &event_loop).await;
-    let mut editor = dream_editor::EditorEguiWgpu::new(&state, scale_factor, &event_loop).await;
+    let mut renderer = dream_renderer::RendererWgpu::new(window, &event_loop).await;
+    let mut editor = dream_editor::EditorEguiWgpu::new(&renderer, scale_factor, &event_loop).await;
     event_loop.run(move |event, _, control_flow| {
         #[cfg(target_arch = "wasm32")]
         {
@@ -128,13 +128,13 @@ pub async fn run() {
             }
         }
         match event {
-            Event::RedrawRequested(window_id) if window_id == state.window.id() => {
-                match state.render() {
+            Event::RedrawRequested(window_id) if window_id == renderer.window.id() => {
+                match renderer.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size);
-                        editor.handle_resize(&state);
+                        renderer.resize(renderer.size);
+                        editor.handle_resize(&renderer);
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -142,12 +142,12 @@ pub async fn run() {
                     Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                 }
 
-                match editor.render_wgpu(&state) {
+                match editor.render_wgpu(&renderer) {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
                     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        state.resize(state.size);
-                        editor.handle_resize(&state);
+                        renderer.resize(renderer.size);
+                        editor.handle_resize(&renderer);
                     }
                     // The system is out of memory, we should probably quit
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -156,20 +156,20 @@ pub async fn run() {
                 }
 
                 // set aspect ratio of camera for renderer after rendering editor and knowing the size of the center panel
-                state.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
             }
             Event::WindowEvent { event, .. } => {
-                if !editor.handle_event(&event, &state) {
+                if !editor.handle_event(&event, &renderer) {
                     match event {
                         WindowEvent::Resized(physical_size) => {
-                            state.resize(physical_size);
-                            editor.handle_resize(&state);
+                            renderer.resize(physical_size);
+                            editor.handle_resize(&renderer);
                         }
                         WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                             // new_inner_size is &mut so w have to dereference it twice
-                            state.resize(*new_inner_size);
-                            editor.handle_resize(&state);
+                            renderer.resize(*new_inner_size);
+                            editor.handle_resize(&renderer);
                         }
                         _ => (),
                     }
@@ -178,7 +178,7 @@ pub async fn run() {
             Event::MainEventsCleared => {
                 // RedrawRequested will only trigger once, unless we manually
                 // request it.
-                state.window.request_redraw();
+                renderer.window.request_redraw();
             }
             _ => {}
         }
