@@ -158,10 +158,7 @@ pub async fn run() {
                 editor.renderer_aspect_ratio;
             }
             Event::WindowEvent { event, .. } => {
-                let exclusive = editor
-                    .egui_winit_state
-                    .on_event(&editor.egui_context, &event);
-                if !exclusive.consumed {
+                if !editor.handle_event(&event) {
                     match event {
                         WindowEvent::Resized(physical_size) => {
                             state.resize(physical_size);

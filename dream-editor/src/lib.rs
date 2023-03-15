@@ -10,13 +10,13 @@ use winit::{
 
 pub struct EditorState {
     pub renderer_aspect_ratio: f32,
-    pub egui_wgpu_renderer: egui_wgpu::Renderer,
-    pub egui_context: egui::Context,
-    pub egui_winit_state: egui_winit::State,
-    pub file_epaint_texture_id: egui::epaint::TextureId,
-    pub play_icon_epaint_texture_id: egui::epaint::TextureId,
-    pub directory_epaint_texture_id: egui::epaint::TextureId,
-    pub render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
+    egui_wgpu_renderer: egui_wgpu::Renderer,
+    egui_context: egui::Context,
+    egui_winit_state: egui_winit::State,
+    file_epaint_texture_id: egui::epaint::TextureId,
+    play_icon_epaint_texture_id: egui::epaint::TextureId,
+    directory_epaint_texture_id: egui::epaint::TextureId,
+    render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
 }
 
 impl EditorState {
@@ -410,5 +410,13 @@ impl EditorState {
         });
 
         return aspect_ratio;
+    }
+
+    pub fn handle_event(&mut self, window_event: &WindowEvent) -> bool {
+        let exclusive = self
+            .egui_winit_state
+            .on_event(&self.egui_context, &window_event);
+        let editor_exclusive_event = exclusive.consumed;
+        return editor_exclusive_event;
     }
 }
