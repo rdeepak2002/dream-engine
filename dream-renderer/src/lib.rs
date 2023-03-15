@@ -139,15 +139,6 @@ pub struct State {
 }
 
 impl State {
-    pub fn get_egui_renderer(&self) -> egui_wgpu::Renderer {
-        return egui_wgpu::Renderer::new(
-            &self.device,
-            self.surface_format,
-            Some(texture::Texture::DEPTH_FORMAT),
-            1,
-        );
-    }
-
     pub async fn new(window: Window, event_loop: &EventLoop<()>) -> Self {
         let size = window.inner_size();
 

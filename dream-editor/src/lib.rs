@@ -1,7 +1,9 @@
 use dream_renderer;
 use egui::Widget;
+use egui_wgpu::Renderer;
 use std::iter;
 
+use dream_renderer::texture;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -19,13 +21,22 @@ pub struct EditorState {
     render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
 }
 
+pub fn get_egui_renderer(state: &dream_renderer::State) -> Renderer {
+    return egui_wgpu::Renderer::new(
+        &state.device,
+        state.surface_format,
+        Some(texture::Texture::DEPTH_FORMAT),
+        1,
+    );
+}
+
 impl EditorState {
     pub async fn new(
         state: &dream_renderer::State,
         scale_factor: f32,
         event_loop: &EventLoop<()>,
     ) -> Self {
-        let mut egui_wgpu_renderer = state.get_egui_renderer();
+        let mut egui_wgpu_renderer = get_egui_renderer(state);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(scale_factor);
         let egui_winit_context = egui::Context::default();
