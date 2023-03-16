@@ -39,7 +39,7 @@ impl Texture {
             height: config.height,
             depth_or_array_layers: 1,
         };
-        #[allow(unused_mut)]
+        #[allow(unused_mut, unused_assignments)]
         let mut fmt: Option<wgpu::TextureFormat> = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {

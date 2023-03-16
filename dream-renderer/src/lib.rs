@@ -22,15 +22,6 @@ pub mod texture;
 use std::iter;
 use wgpu::util::DeviceExt;
 
-use winit::{
-    event::*,
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-
 // lib.rs
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -137,7 +128,7 @@ pub struct RendererWgpu {
 }
 
 impl RendererWgpu {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: &winit::window::Window) -> Self {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU

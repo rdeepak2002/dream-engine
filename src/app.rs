@@ -1,4 +1,5 @@
 pub struct App {
+    #[allow(dead_code)]
     dt: f32,
 }
 

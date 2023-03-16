@@ -1,15 +1,7 @@
 use egui::Widget;
-use std::iter;
-
-use dream_renderer::{texture, RendererWgpu};
-use winit::{
-    event::*,
-    event_loop::EventLoop,
-    window::{Window, WindowBuilder},
-};
 
 pub struct EditorEguiWgpu {
-    pub depth_texture_egui: texture::Texture,
+    pub depth_texture_egui: dream_renderer::texture::Texture,
     pub renderer_aspect_ratio: f32,
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_context: egui::Context,
@@ -24,14 +16,19 @@ pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui
     return egui_wgpu::Renderer::new(
         &state.device,
         state.surface_format,
-        Some(texture::Texture::DEPTH_FORMAT),
+        Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
         1,
     );
 }
 
-pub fn generate_egui_wgpu_depth_texture(state: &dream_renderer::RendererWgpu) -> texture::Texture {
-    let depth_texture_egui =
-        texture::Texture::create_depth_texture(&state.device, &state.config, "depth_texture_egui");
+pub fn generate_egui_wgpu_depth_texture(
+    state: &dream_renderer::RendererWgpu,
+) -> dream_renderer::texture::Texture {
+    let depth_texture_egui = dream_renderer::texture::Texture::create_depth_texture(
+        &state.device,
+        &state.config,
+        "depth_texture_egui",
+    );
     return depth_texture_egui;
 }
 
@@ -39,7 +36,7 @@ impl EditorEguiWgpu {
     pub async fn new(
         renderer: &dream_renderer::RendererWgpu,
         scale_factor: f32,
-        event_loop: &EventLoop<()>,
+        event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
         let depth_texture_egui = generate_egui_wgpu_depth_texture(renderer);
         let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(renderer);
@@ -81,7 +78,7 @@ impl EditorEguiWgpu {
     pub fn render_wgpu(
         &mut self,
         state: &dream_renderer::RendererWgpu,
-        window: &Window,
+        window: &winit::window::Window,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = state.surface.get_current_texture()?;
         let view = output
@@ -168,7 +165,7 @@ impl EditorEguiWgpu {
                 );
             }
 
-            state.queue.submit(iter::once(encoder.finish()));
+            state.queue.submit(std::iter::once(encoder.finish()));
             output.present();
         }
 
@@ -422,20 +419,11 @@ impl EditorEguiWgpu {
         return aspect_ratio;
     }
 
-    pub fn handle_resize(&mut self, state: &RendererWgpu) {
+    pub fn handle_resize(&mut self, state: &dream_renderer::RendererWgpu) {
         self.depth_texture_egui = generate_egui_wgpu_depth_texture(state);
     }
 
-    pub fn handle_event(&mut self, window_event: &WindowEvent, state: &RendererWgpu) -> bool {
-        // match window_event {
-        //     WindowEvent::Resized(physical_size) => {
-        //         self.handle_resize(state);
-        //     }
-        //     WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-        //         self.handle_resize(state);
-        //     }
-        //     _ => (),
-        // }
+    pub fn handle_event(&mut self, window_event: &winit::event::WindowEvent) -> bool {
         let exclusive = self
             .egui_winit_state
             .on_event(&self.egui_context, &window_event);

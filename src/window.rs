@@ -52,11 +52,13 @@ impl Window {
 
     pub async fn start_loop(self) {
         // listen for screen resizing events for web build
+        #[allow(unused_variables)]
         let (tx, rx) = unbounded::<winit::dpi::LogicalSize<f32>>();
 
         #[cfg(target_arch = "wasm32")]
         {
             use wasm_bindgen::JsCast;
+            #[allow(unused_variables)]
             let closure = wasm_bindgen::closure::Closure::wrap(Box::new(move |e: web_sys::Event| {
                 let win = web_sys::window().unwrap();
                 let new_window_size = winit::dpi::LogicalSize::new(
@@ -120,7 +122,7 @@ impl Window {
                     renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
                 }
                 Event::WindowEvent { event, .. } => {
-                    if !editor.handle_event(&event, &renderer) {
+                    if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(physical_size);
