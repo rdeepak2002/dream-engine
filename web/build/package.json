@@ -1,0 +1,12 @@
+{
+  "name": "dream",
+  "version": "0.1.0",
+  "files": [
+    "dream_bg.wasm",
+    "dream.js",
+    "dream.d.ts"
+  ],
+  "module": "dream.js",
+  "types": "dream.d.ts",
+  "sideEffects": false
+}

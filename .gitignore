@@ -1,3 +1,4 @@
+#web/build/*
 !web/index.html
 
 /target
