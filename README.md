@@ -1,4 +1,4 @@
-# Dream Engine
+# Dream Engine [WIP]
 
 ![CI Status](https://github.com/rdeepak2002/dream-rs/actions/workflows/ci.yml/badge.svg?branch=main) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -11,6 +11,10 @@
 ## Author
 
 Deepak Ramalingam
+
+## About
+
+Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust. 
 
 ## Requirements
 
@@ -30,3 +34,13 @@ cargo run
 ```
 
 Serve ``web/index.html``
+
+## Screenshots
+
+### MacOS Desktop Build
+
+![desktop](doc/image/screenshot_0.png)
+
+### Web Assembly (Browser) Build
+
+![web](doc/image/screenshot_1.png)
