@@ -684,7 +684,6 @@ dependencies = [
  "epi",
  "getrandom",
  "image",
- "instant",
  "log",
  "pollster",
  "rapier2d",
