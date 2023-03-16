@@ -21,6 +21,12 @@ Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust.
 - [rust](https://www.rust-lang.org/tools/install) (Version 1.68.0)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (Version 0.10.3)
 
+- wasm32-unknown-unknown target for Rust
+    - Installation command:
+```shell
+rustup target add wasm32-unknown-unknown
+```
+
 ## Get Started (Desktop)
 
 ```shell
@@ -33,7 +39,7 @@ cargo run
 ./tools/build-web.sh
 ```
 
-Serve ``web/index.html``
+Serve ``web/index.html`` from ``web`` folder
 
 ## Screenshots
 
