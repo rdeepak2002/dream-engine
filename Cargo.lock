@@ -677,6 +677,7 @@ dependencies = [
  "cgmath",
  "console_error_panic_hook",
  "console_log",
+ "crossbeam-channel",
  "dream-editor",
  "dream-renderer",
  "env_logger",
