@@ -41,6 +41,14 @@ cargo run
 
 Serve ``web/index.html`` from ``web`` folder
 
+## Troubleshooting
+
+### ``error[E0554]: #![feature] may not be used on the stable release channel``
+
+Recommended solution: ``cargo clean``
+
+Other solutions: [https://stackoverflow.com/questions/53136717/errore0554-feature-may-not-be-used-on-the-stable-release-channel-couldnt](https://stackoverflow.com/questions/53136717/errore0554-feature-may-not-be-used-on-the-stable-release-channel-couldnt)
+
 ## Screenshots
 
 ### MacOS Desktop Build
