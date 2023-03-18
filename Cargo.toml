@@ -9,6 +9,9 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 dream-editor = { path = "./dream-editor", version = "0.1.0" }
 dream-renderer = { path = "./dream-renderer", version = "0.1.0" }
+dream-ecs = { path = "./dream-ecs", version = "0.1.0" }
+dream-resource = { path = "./dream-resource", version = "0.1.0" }
+
 cfg-if = "1"
 winit = "0.28"
 env_logger = "0.10"
@@ -21,7 +24,6 @@ bytemuck = { version = "1.12", features = [ "derive" ] }
 boa_engine = { version = "0.16.0", features = ["console"]}
 rapier3d = "0.17.2"
 rapier2d = "0.17.2"
-shipyard = "0.6.2"
 cgmath = "0.18"
 crossbeam-channel = "0.5"
 
@@ -29,9 +31,11 @@ crossbeam-channel = "0.5"
 version = "0.24"
 default-features = false
 features = ["png", "jpeg"]
+tobj = { version = "3.2", features = ["async"]}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
+reqwest = { version = "0.11" }
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
 wgpu = { version = "0.15", features = ["webgl"]}
@@ -46,5 +50,7 @@ web-sys = { version = "0.3", features = [
 [workspace]
 members = [
     "dream-editor",
-    "dream-renderer"
+    "dream-renderer",
+    "dream-ecs",
+    "dream-resource",
 ]

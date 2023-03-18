@@ -1,16 +1,26 @@
+use dream_ecs;
+
 pub struct App {
     #[allow(dead_code)]
     dt: f32,
+    scene: std::rc::Rc<dream_ecs::Scene>,
 }
 
 impl App {
     pub fn new() -> Self {
         let dt: f32 = 0.0;
+        let scene = std::rc::Rc::new(dream_ecs::Scene::new());
 
-        Self { dt }
+        // TODO: remove this
+        // scene.create_entity();
+
+        Self {
+            dt,
+            scene: scene.clone(),
+        }
     }
 
-    pub fn update(&self) -> f32 {
+    pub fn update(&mut self) -> f32 {
         {
             // example execution of javascript code
             // let js_code = "7 * 8.1";

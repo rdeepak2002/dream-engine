@@ -13,7 +13,7 @@
     <option name="EXECUTE_SCRIPT_FILE" value="true" />
     <envs />
     <method v="2">
-      <option name="LaunchBrowser.Before.Run" url="http://localhost:63342/dream/web/index.html" />
+      <option name="LaunchBrowser.Before.Run" url="http://localhost:63342/dream-rs/web/index.html" />
     </method>
   </configuration>
 </component>

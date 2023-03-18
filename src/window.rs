@@ -81,7 +81,7 @@ impl Window {
             &self.event_loop,
         )
         .await;
-        let app: App = App::new();
+        let mut app: App = App::new();
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -90,7 +90,9 @@ impl Window {
                         self.window.set_inner_size(size);
                     }
 
-                    app.update();
+                    {
+                        app.update();
+                    }
 
                     match renderer.render() {
                         Ok(_) => {}
