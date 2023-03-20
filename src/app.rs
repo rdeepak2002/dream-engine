@@ -10,10 +10,6 @@ impl App {
     pub fn new() -> Self {
         let dt: f32 = 0.0;
         let mut scene = dream_ecs::Scene::new();
-
-        // TODO: remove this test code
-        scene.create_entity();
-
         Self { dt, scene }
     }
 
