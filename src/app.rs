@@ -1,4 +1,5 @@
 use dream_ecs;
+use dream_ecs::Transform;
 
 pub struct App {
     #[allow(dead_code)]
@@ -9,7 +10,13 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let dt: f32 = 0.0;
-        let scene = dream_ecs::Scene::new();
+        let mut scene = dream_ecs::Scene::new();
+
+        let e = scene.create_entity();
+        println!("{}", e.to_string());
+        e.add_transform(Transform::from(1., 1., 1.));
+        println!("{}", e.to_string());
+
         Self { dt, scene }
     }
 

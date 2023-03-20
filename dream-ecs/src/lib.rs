@@ -16,6 +16,14 @@ impl Transform {
             z: 0.0,
         }
     }
+
+    pub fn from(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z }
+    }
+
+    pub fn to_string(&self) -> String {
+        format!("Transform({}, {}, {})", self.x, self.y, self.z)
+    }
 }
 
 pub struct Scene {
@@ -59,16 +67,23 @@ impl Entity {
         Self { scene, handle }
     }
 
-    pub fn add_transform(self) {
-        // reason for unsafe: using raw pointer to scene is fine since removal of a scene should delete all entities from world
-        unsafe {
-            (*self.scene)
-                .handle
-                .add_component(self.handle, Transform::new());
+    pub fn to_string(&self) -> String {
+        let trans = self.get_transform();
+        if trans.is_some() {
+            format!("Entity({})", trans.unwrap().to_string())
+        } else {
+            format!("Entity()")
         }
     }
 
-    pub fn get_transform(self) -> Option<Transform> {
+    pub fn add_transform(&self, transform: Transform) {
+        // reason for unsafe: using raw pointer to scene is fine since removal of a scene should delete all entities from world
+        unsafe {
+            (*self.scene).handle.add_component(self.handle, transform);
+        }
+    }
+
+    pub fn get_transform(&self) -> Option<Transform> {
         let mut transform_opt: Option<Transform> = None;
         // reason for unsafe: using raw pointer to scene is fine since removal of a scene should delete all entities from world
         unsafe {
@@ -82,5 +97,7 @@ impl Entity {
         return transform_opt;
     }
 
-    // pub fn set_transform(self) -> bool {}
+    pub fn has_transform(&self) -> bool {
+        self.get_transform().is_none()
+    }
 }
