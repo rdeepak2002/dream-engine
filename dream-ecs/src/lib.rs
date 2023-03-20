@@ -3,9 +3,9 @@ use shipyard::{Get, IntoIter};
 
 #[derive(shipyard::Component, Debug, Clone)]
 pub struct Transform {
-    x: f32,
-    y: f32,
-    z: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Transform {
@@ -55,7 +55,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn new(scene: &mut Scene) -> Self {
-        let handle = scene.handle.add_entity(());
+        let handle = scene.handle.add_entity((Transform::new()));
         Self { scene, handle }
     }
 
@@ -81,4 +81,6 @@ impl Entity {
         }
         return transform_opt;
     }
+
+    // pub fn set_transform(self) -> bool {}
 }

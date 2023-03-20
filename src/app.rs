@@ -9,7 +9,7 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let dt: f32 = 0.0;
-        let mut scene = dream_ecs::Scene::new();
+        let scene = dream_ecs::Scene::new();
         Self { dt, scene }
     }
 
