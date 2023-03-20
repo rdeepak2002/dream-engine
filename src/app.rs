@@ -3,21 +3,18 @@ use dream_ecs;
 pub struct App {
     #[allow(dead_code)]
     dt: f32,
-    scene: std::rc::Rc<dream_ecs::Scene>,
+    scene: dream_ecs::Scene,
 }
 
 impl App {
     pub fn new() -> Self {
         let dt: f32 = 0.0;
-        let scene = std::rc::Rc::new(dream_ecs::Scene::new());
+        let mut scene = dream_ecs::Scene::new();
 
-        // TODO: remove this
-        // scene.create_entity();
+        // TODO: remove this test code
+        scene.create_entity();
 
-        Self {
-            dt,
-            scene: scene.clone(),
-        }
+        Self { dt, scene }
     }
 
     pub fn update(&mut self) -> f32 {

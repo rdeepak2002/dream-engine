@@ -27,21 +27,20 @@ impl Scene {
         return Self { name, handle };
     }
 
-    pub fn create_entity(mut self) -> Entity {
-        let handle = self.handle.add_entity(());
-        let scene: std::rc::Rc<Scene> = std::rc::Rc::new(self);
-        let entity = Entity::new(scene, handle);
+    pub fn create_entity(&mut self) -> Entity {
+        let entity = Entity::new(self);
         return entity;
     }
 }
 
 pub struct Entity {
-    pub scene: std::rc::Rc<Scene>,
+    pub scene: *mut Scene,
     pub handle: shipyard::EntityId,
 }
 
 impl Entity {
-    pub fn new(scene: std::rc::Rc<Scene>, handle: shipyard::EntityId) -> Self {
+    pub fn new(scene: &mut Scene) -> Self {
+        let handle = scene.handle.add_entity(());
         Self { scene, handle }
     }
 }
