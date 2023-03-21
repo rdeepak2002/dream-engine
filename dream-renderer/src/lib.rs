@@ -16,11 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::iter;
+
+use wgpu::util::DeviceExt;
+
 pub mod camera;
 pub mod texture;
-
-use std::iter;
-use wgpu::util::DeviceExt;
 
 // lib.rs
 #[repr(C)]
@@ -88,13 +89,15 @@ pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
+    model: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
     fn new() -> Self {
         use cgmath::SquareMatrix;
-        Self {
+        cgmath::Self {
             view_proj: cgmath::Matrix4::identity().into(),
+            model: cgmath::Matrix4::identity().into(),
         }
     }
 

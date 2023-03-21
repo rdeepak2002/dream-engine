@@ -2,8 +2,8 @@ use dream_ecs;
 use dream_ecs::Transform;
 
 pub struct App {
-    #[allow(dead_code)]
     dt: f32,
+    #[allow(dead_code)]
     scene: dream_ecs::Scene,
 }
 
@@ -13,14 +13,13 @@ impl App {
         let mut scene = dream_ecs::Scene::new();
 
         let e = scene.create_entity();
-        println!("{}", e.to_string());
         e.add_transform(Transform::from(1., 1., 1.));
-        println!("{}", e.to_string());
 
         Self { dt, scene }
     }
 
     pub fn update(&mut self) -> f32 {
+        self.dt = 1.0 / 60.0;
         {
             // example execution of javascript code
             // let js_code = "7 * 8.1";
@@ -37,7 +36,6 @@ impl App {
             //     }
             // };
         }
-
         return 0.0;
     }
 }

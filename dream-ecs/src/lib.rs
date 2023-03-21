@@ -1,5 +1,4 @@
-use rapier3d::parry::transformation::utils::transform;
-use shipyard::{Get, IntoIter};
+use shipyard::Get;
 
 #[derive(shipyard::Component, Debug, Clone)]
 pub struct Transform {
@@ -50,7 +49,7 @@ impl Drop for Scene {
         self.handle
             .run(|mut all_storages: shipyard::AllStoragesViewMut| {
                 let id = all_storages.add_entity(Transform::new());
-                println!("{}", id.index());
+                println!("Deleting entity {}", id.index());
                 all_storages.delete_entity(id);
             });
     }
@@ -63,7 +62,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn new(scene: &mut Scene) -> Self {
-        let handle = scene.handle.add_entity((Transform::new()));
+        let handle = scene.handle.add_entity(Transform::new());
         Self { scene, handle }
     }
 
