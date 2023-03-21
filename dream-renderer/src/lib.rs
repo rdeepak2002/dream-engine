@@ -95,9 +95,17 @@ pub struct CameraUniform {
 impl CameraUniform {
     fn new() -> Self {
         use cgmath::SquareMatrix;
-        cgmath::Self {
+        let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
+        let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
+        let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
+        let rotation_mat_z: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+        let translation_mat: cgmath::Matrix4<f32> =
+            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
+        let model_mat =
+            scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
+        Self {
             view_proj: cgmath::Matrix4::identity().into(),
-            model: cgmath::Matrix4::identity().into(),
+            model: model_mat.into(),
         }
     }
 
@@ -257,8 +265,8 @@ impl RendererWgpu {
             up: cgmath::Vector3::unit_y(),
             aspect: config.width as f32 / config.height as f32,
             fovy: 45.0,
-            znear: 0.1,
-            zfar: 100.0,
+            znear: 0.01,
+            zfar: 1000.0,
         };
 
         // in new() after creating `camera`
