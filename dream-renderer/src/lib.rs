@@ -21,6 +21,7 @@ use std::iter;
 use wgpu::util::DeviceExt;
 
 pub mod camera;
+pub mod model;
 pub mod texture;
 
 // lib.rs

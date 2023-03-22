@@ -11,7 +11,7 @@ dream-editor = { path = "./dream-editor", version = "0.1.0" }
 dream-renderer = { path = "./dream-renderer", version = "0.1.0" }
 dream-ecs = { path = "./dream-ecs", version = "0.1.0" }
 dream-resource = { path = "./dream-resource", version = "0.1.0" }
-
+anyhow = "1.0"
 cfg-if = "1"
 winit = "0.28"
 env_logger = "0.10"
@@ -19,19 +19,23 @@ log = "0.4"
 wgpu = "0.15"
 pollster = "0.3.0"
 epi = "0.17.0"
-anyhow = "1.0"
-bytemuck = { version = "1.12", features = [ "derive" ] }
-boa_engine = { version = "0.16.0", features = ["console"]}
+bytemuck = { version = "1.12", features = ["derive"] }
+boa_engine = { version = "0.16.0", features = ["console"] }
 rapier3d = "0.17.2"
 rapier2d = "0.17.2"
 cgmath = "0.18"
 crossbeam-channel = "0.5"
+tobj = { version = "3.2", features = ["async"] }
+
+[build-dependencies]
+anyhow = "1.0"
+fs_extra = "1.2"
+glob = "0.3"
 
 [dependencies.image]
 version = "0.24"
 default-features = false
 features = ["png", "jpeg"]
-tobj = { version = "3.2", features = ["async"]}
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 getrandom = { version = "0.2", features = ["js"] }
@@ -45,6 +49,7 @@ web-sys = { version = "0.3", features = [
     "Document",
     "Window",
     "Element",
+    "Location",
 ]}
 
 [workspace]

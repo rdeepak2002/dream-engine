@@ -51,6 +51,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
 dependencies = [
  "cfg-if",
+ "getrandom",
  "once_cell",
  "version_check",
 ]
@@ -678,13 +679,16 @@ dependencies = [
  "dream-resource",
  "env_logger",
  "epi",
+ "fs_extra",
  "getrandom",
+ "glob",
  "image",
  "log",
  "pollster",
  "rapier2d",
  "rapier3d",
  "reqwest",
+ "tobj",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -756,11 +760,32 @@ dependencies = [
 name = "dream-resource"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "boa_engine",
+ "bytemuck",
+ "cfg-if",
  "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "crossbeam-channel",
+ "dream-renderer",
+ "env_logger",
+ "epi",
+ "fs_extra",
+ "getrandom",
+ "glob",
+ "image",
+ "log",
+ "pollster",
  "rapier2d",
  "rapier3d",
- "shipyard",
+ "reqwest",
+ "tobj",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]
@@ -1031,6 +1056,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs_extra"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
+
+[[package]]
 name = "futures-channel"
 version = "0.3.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1117,6 +1148,12 @@ name = "gimli"
 version = "0.27.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
+
+[[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "glow"
@@ -2828,6 +2865,15 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
+name = "tobj"
+version = "3.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d0bde887a49e2e09f30ba3b454cdba3fbc971703e436c527f9f69a035b45b9b"
+dependencies = [
+ "ahash 0.8.3",
+]
 
 [[package]]
 name = "tokio"
