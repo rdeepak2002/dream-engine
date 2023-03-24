@@ -1,6 +1,5 @@
 /// EXAMPLE ON HOW TO REGISTER CLASS WITH BOA SCRIPTING ENGINE
 use boa_engine::class::{Class, ClassBuilder};
-use boa_engine::property::Attribute;
 use boa_engine::{builtins::JsArgs, Context, JsResult, JsValue};
 use boa_gc::{Finalize, Trace};
 
