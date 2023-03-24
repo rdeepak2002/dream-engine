@@ -1,5 +1,3 @@
-use boa_engine::class::{Class, ClassBuilder};
-use boa_engine::{builtins::JsArgs, Context, JsResult, JsValue};
 use boa_gc::{Finalize, Trace};
 
 use dream_math::Vector3;

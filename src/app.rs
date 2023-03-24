@@ -1,6 +1,4 @@
-use std::ops::Deref;
-
-use boa_engine::object::{NativeObject, ObjectInitializer};
+use boa_engine::object::ObjectInitializer;
 use boa_engine::property::Attribute;
 use shipyard::IntoIter;
 
@@ -29,12 +27,12 @@ impl App {
     pub fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         {
+            // example of running script per entity
             self.scene
                 .handle
-                .run(|mut vm_transform: shipyard::ViewMut<Transform>| {
+                .run(|vm_transform: shipyard::ViewMut<Transform>| {
                     for t in vm_transform.iter() {
                         let entity_js = EntityJS::new(t.clone());
-                        // example of running script per entity
                         {
                             let js_code = r#"
                             function update(entity) {
@@ -43,6 +41,8 @@ impl App {
                                 return entity;
                             }
                             "#;
+                            // let res = pollster::block_on(dream_resource::load_string("script.js"));
+                            // let js_code = res.expect("Cannot find script file");
 
                             let mut context = boa_engine::Context::default();
 
@@ -52,57 +52,72 @@ impl App {
 
                             match context.eval(js_code) {
                                 Ok(_res) => {
-                                    // println!("{}", res.to_string(&mut context).unwrap());
-                                    // log::warn!("{}", res.to_string(&mut context).unwrap());
+                                    // script compiled
+                                    let position = ObjectInitializer::new(&mut context)
+                                        .property(
+                                            "x",
+                                            entity_js.transform.position.x,
+                                            Attribute::all(),
+                                        )
+                                        .property(
+                                            "y",
+                                            entity_js.transform.position.y,
+                                            Attribute::all(),
+                                        )
+                                        .property(
+                                            "z",
+                                            entity_js.transform.position.z,
+                                            Attribute::all(),
+                                        )
+                                        .build();
+
+                                    let transform = ObjectInitializer::new(&mut context)
+                                        .property("position", position, Attribute::all())
+                                        .build();
+
+                                    let entity = ObjectInitializer::new(&mut context)
+                                        .property("transform", transform, Attribute::all())
+                                        .build();
+
+                                    context.register_global_property(
+                                        "entity",
+                                        entity,
+                                        Attribute::all(),
+                                    );
+
+                                    let js_code = "update(entity);";
+
+                                    match context.eval(js_code) {
+                                        Ok(res) => {
+                                            let transform_js = res
+                                                .as_object()
+                                                .unwrap()
+                                                .get("transform", &mut context)
+                                                .unwrap();
+                                            let position_js = transform_js
+                                                .as_object()
+                                                .unwrap()
+                                                .get("position", &mut context)
+                                                .unwrap();
+                                            let x_js = position_js
+                                                .as_object()
+                                                .unwrap()
+                                                .get("x", &mut context)
+                                                .unwrap();
+                                            println!("x final: {}", x_js.as_number().unwrap());
+                                            log::warn!("x final: {}", x_js.as_number().unwrap());
+                                        }
+                                        Err(e) => {
+                                            // Pretty print the error
+                                            eprintln!("Uncaught (2) {}", e.display());
+                                            log::error!("Uncaught (2) {}", e.display());
+                                        }
+                                    };
                                 }
                                 Err(e) => {
-                                    // Pretty print the error
+                                    // script could not compile
                                     eprintln!("Uncaught (1) {}", e.display());
                                     log::error!("Uncaught (1) {}", e.display());
-                                }
-                            };
-
-                            let position = ObjectInitializer::new(&mut context)
-                                .property("x", entity_js.transform.position.x, Attribute::all())
-                                .property("y", entity_js.transform.position.y, Attribute::all())
-                                .property("z", entity_js.transform.position.z, Attribute::all())
-                                .build();
-
-                            let transform = ObjectInitializer::new(&mut context)
-                                .property("position", position, Attribute::all())
-                                .build();
-
-                            let entity = ObjectInitializer::new(&mut context)
-                                .property("transform", transform, Attribute::all())
-                                .build();
-
-                            context.register_global_property("entity", entity, Attribute::all());
-
-                            let js_code = "update(entity);";
-
-                            match context.eval(js_code) {
-                                Ok(res) => {
-                                    let transform_js = res
-                                        .as_object()
-                                        .unwrap()
-                                        .get("transform", &mut context)
-                                        .unwrap();
-                                    let position_js = transform_js
-                                        .as_object()
-                                        .unwrap()
-                                        .get("position", &mut context)
-                                        .unwrap();
-                                    let x_js = position_js
-                                        .as_object()
-                                        .unwrap()
-                                        .get("x", &mut context)
-                                        .unwrap();
-                                    println!("x final: {}", x_js.as_number().unwrap());
-                                }
-                                Err(e) => {
-                                    // Pretty print the error
-                                    eprintln!("Uncaught (2) {}", e.display());
-                                    log::error!("Uncaught (2) {}", e.display());
                                 }
                             };
                         }
