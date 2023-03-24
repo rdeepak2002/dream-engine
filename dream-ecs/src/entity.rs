@@ -1,4 +1,4 @@
-use shipyard::Get;
+use shipyard::{EntityId, Get};
 
 use crate::component::Transform;
 use crate::scene::Scene;
@@ -11,6 +11,10 @@ pub struct Entity {
 impl Entity {
     pub fn new(scene: &mut Scene) -> Self {
         let handle = scene.handle.add_entity(Transform::new());
+        Self { scene, handle }
+    }
+
+    pub fn from(scene: &mut Scene, handle: EntityId) -> Self {
         Self { scene, handle }
     }
 
