@@ -689,6 +689,7 @@ dependencies = [
  "rapier2d",
  "rapier3d",
  "reqwest",
+ "shipyard",
  "tobj",
  "wasm-bindgen",
  "wasm-bindgen-futures",

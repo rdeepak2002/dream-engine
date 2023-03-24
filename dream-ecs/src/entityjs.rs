@@ -3,6 +3,7 @@ use boa_engine::{builtins::JsArgs, Context, JsResult, JsValue};
 use boa_gc::{Finalize, Trace};
 
 use crate::component::Transform;
+use crate::entity::Entity;
 
 #[derive(Debug, Trace, Finalize)]
 pub struct EntityJS {
@@ -10,7 +11,27 @@ pub struct EntityJS {
 }
 
 impl EntityJS {
-    fn say_hello(this: &JsValue, _args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
+    pub fn new(transform: Transform) -> Self {
+        return Self { transform };
+    }
+
+    // pub fn from_dream_entity(entity: &Entity) -> JsResult<Self> {
+    //     let mut transform = None;
+    //
+    //     if entity.has_transform() {
+    //         transform = Some(entity.get_transform().unwrap());
+    //     }
+    //
+    //     let entity_js = EntityJS { Some(transform) };
+    //
+    //     Ok(entity_js)
+    // }
+
+    pub fn say_hello(
+        this: &JsValue,
+        _args: &[JsValue],
+        context: &mut Context,
+    ) -> JsResult<JsValue> {
         let this = this
             .as_object()
             .and_then(|obj| obj.downcast_ref::<Self>())
@@ -28,11 +49,11 @@ impl Class for EntityJS {
     const LENGTH: usize = 2;
 
     fn constructor(_this: &JsValue, _args: &[JsValue], _context: &mut Context) -> JsResult<Self> {
-        let entityJS = EntityJS {
+        let entity_js = EntityJS {
             transform: Transform::new(),
         };
 
-        Ok(entityJS)
+        Ok(entity_js)
     }
 
     /// Here is where the class is initialized, to be inserted into the global object.
