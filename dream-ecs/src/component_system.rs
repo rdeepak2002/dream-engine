@@ -15,40 +15,9 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use dream_ecs;
-use dream_ecs::component::Transform;
-use dream_ecs::component_system::ComponentSystem;
-use dream_ecs::scene::Scene;
 
-use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
+use crate::scene::Scene;
 
-pub struct App {
-    dt: f32,
-    scene: Scene,
-    javascript_component_system: JavaScriptScriptComponentSystem,
-}
-
-impl App {
-    pub fn new() -> Self {
-        let dt: f32 = 0.0;
-        let mut scene = Scene::new();
-
-        let e = scene.create_entity();
-        e.add_transform(Transform::from(dream_math::Vector3::from(1., 1., 1.)));
-
-        let javascript_component_system = JavaScriptScriptComponentSystem::new();
-
-        Self {
-            dt,
-            scene,
-            javascript_component_system,
-        }
-    }
-
-    pub fn update(&mut self) -> f32 {
-        self.dt = 1.0 / 60.0;
-        self.javascript_component_system
-            .update(self.dt, &mut self.scene);
-        return 0.0;
-    }
+pub trait ComponentSystem {
+    fn update(&mut self, dt: f32, scene: &mut Scene);
 }

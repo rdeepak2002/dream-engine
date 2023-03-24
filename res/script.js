@@ -1,4 +1,4 @@
-function update(entity) {
-    entity.transform.position.x = 3;
+function update(entity, dt) {
+    entity.transform.position.x += 1 * dt;
     return entity;
 }
