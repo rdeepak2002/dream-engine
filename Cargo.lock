@@ -818,6 +818,7 @@ dependencies = [
  "reqwest",
  "tobj",
  "wasm-bindgen",
+ "wasm-bindgen-file-reader",
  "wasm-bindgen-futures",
  "web-sys",
  "wgpu",
@@ -3163,6 +3164,16 @@ dependencies = [
  "quote",
  "syn",
  "wasm-bindgen-shared",
+]
+
+[[package]]
+name = "wasm-bindgen-file-reader"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4607ab74f2efda80aa1b2944b9ad6225ca2ab57c39ae0b8bef5c00ef65bc0f54"
+dependencies = [
+ "js-sys",
+ "web-sys",
 ]
 
 [[package]]

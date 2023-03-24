@@ -1,9 +1,17 @@
 use std::io::{BufReader, Cursor};
+#[cfg(target_arch = "wasm32")]
+use std::io::{Read, Seek, SeekFrom};
 
 use cfg_if::cfg_if;
 use wgpu::util::DeviceExt;
 
 use dream_renderer::{model, texture};
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen_file_reader::WebSysFile;
+#[cfg(target_arch = "wasm32")]
+use web_sys::console;
 
 #[cfg(target_arch = "wasm32")]
 fn format_url(file_name: &str) -> reqwest::Url {

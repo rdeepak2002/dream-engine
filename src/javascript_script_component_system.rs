@@ -35,12 +35,7 @@ impl ComponentSystem for JavaScriptScriptComponentSystem {
     fn update(&mut self, dt: f32, scene: &mut Scene) {
         let transform_entities = scene.transform_entities();
         for entity in transform_entities {
-            let js_code = r#"
-                    function update(entity, dt) {
-                        entity.transform.position.x += 1 * dt;
-                        return entity;
-                    }
-                    "#;
+            let js_code: String = include_str!("../res/script.js").into();
 
             let mut context = boa_engine::Context::default();
 
