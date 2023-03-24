@@ -21,6 +21,6 @@ impl Transform {
     }
 
     pub fn to_string(&self) -> String {
-        format!("Transform(Position ({}))", self.position.to_string())
+        format!("Transform({})", self.position.to_string())
     }
 }

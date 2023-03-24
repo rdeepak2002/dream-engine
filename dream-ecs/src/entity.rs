@@ -48,12 +48,6 @@ impl Entity {
     }
 
     pub fn has_transform(&self) -> bool {
-        self.get_transform().is_none()
+        self.get_transform().is_some()
     }
-}
-
-#[derive(Debug, Trace, Finalize)]
-pub struct EntityJS {
-    name: String,
-    age: u8,
 }
