@@ -675,6 +675,7 @@ dependencies = [
  "crossbeam-channel",
  "dream-ecs",
  "dream-editor",
+ "dream-math",
  "dream-renderer",
  "dream-resource",
  "env_logger",
@@ -705,6 +706,7 @@ dependencies = [
  "cgmath",
  "console_error_panic_hook",
  "console_log",
+ "dream-math",
  "gc",
  "getrandom",
  "log",
@@ -743,6 +745,28 @@ dependencies = [
  "web-sys",
  "wgpu",
  "winit",
+]
+
+[[package]]
+name = "dream-math"
+version = "0.1.0"
+dependencies = [
+ "boa_engine",
+ "boa_gc",
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "gc",
+ "getrandom",
+ "log",
+ "rapier2d",
+ "rapier3d",
+ "reqwest",
+ "shipyard",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
 ]
 
 [[package]]

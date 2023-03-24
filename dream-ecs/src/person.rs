@@ -5,9 +5,7 @@ use boa_gc::{Finalize, Trace};
 
 #[derive(Debug, Trace, Finalize)]
 pub struct Person {
-    /// The name of the person.
     name: String,
-    /// The age of the person.
     age: u8,
 }
 

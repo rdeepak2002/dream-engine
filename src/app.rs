@@ -15,7 +15,7 @@ impl App {
         let mut scene = Scene::new();
 
         let e = scene.create_entity();
-        e.add_transform(Transform::from(1., 1., 1.));
+        e.add_transform(Transform::from(dream_math::Vector3::from(1., 1., 1.)));
 
         Self { dt, scene }
     }

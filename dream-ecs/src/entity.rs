@@ -1,3 +1,6 @@
+use boa_engine::class::{Class, ClassBuilder};
+use boa_engine::{builtins::JsArgs, Context, JsResult, JsValue};
+use boa_gc::{Finalize, Trace};
 use shipyard::Get;
 
 use crate::component::Transform;
@@ -47,4 +50,10 @@ impl Entity {
     pub fn has_transform(&self) -> bool {
         self.get_transform().is_none()
     }
+}
+
+#[derive(Debug, Trace, Finalize)]
+pub struct EntityJS {
+    name: String,
+    age: u8,
 }
