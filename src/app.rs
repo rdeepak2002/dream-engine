@@ -1,6 +1,5 @@
 use boa_engine::object::ObjectInitializer;
 use boa_engine::property::Attribute;
-use shipyard::IntoIter;
 
 use dream_ecs;
 use dream_ecs::component::Transform;
