@@ -1,6 +1,6 @@
 use dream_ecs;
 use dream_ecs::component::Transform;
-use dream_ecs::entity::Entity;
+use dream_ecs::person::Person;
 use dream_ecs::scene::Scene;
 
 pub struct App {
@@ -24,11 +24,12 @@ impl App {
         self.dt = 1.0 / 60.0;
         {
             // example execution of javascript code
-            let js_code = "7 * 8.1";
+            // let js_code = "7 * 8.1; let person = new Person("John", 28); person.say_hello();";
+            let js_code = "let person = new Person('John', 29); person.say_hello(); 7 * 8.1";
             let mut context = boa_engine::Context::default();
-            // context
-            //     .register_global_class::<Entity>()
-            //     .expect("could not register class");
+            context
+                .register_global_class::<Person>()
+                .expect("could not register class");
             match context.eval(js_code) {
                 Ok(res) => {
                     println!("{}", res.to_string(&mut context).unwrap());

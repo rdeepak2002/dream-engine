@@ -701,10 +701,21 @@ name = "dream-ecs"
 version = "0.1.0"
 dependencies = [
  "boa_engine",
+ "boa_gc",
  "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "gc",
+ "getrandom",
+ "log",
  "rapier2d",
  "rapier3d",
+ "reqwest",
  "shipyard",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "wgpu",
 ]
 
 [[package]]
