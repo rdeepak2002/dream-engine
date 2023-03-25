@@ -16,41 +16,61 @@
 <body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
 <script type="module">
     import init from './build/dream.js';
-    init().then(() => {
-        const canvasElement = document?.getElementsByTagName('canvas')[0];
-        if (canvasElement) {
-            // remove context menu pop-up when right-clicking on canvas
-            canvasElement.addEventListener('contextmenu', function(e) {
-                if (e.button === 2) {
-                    e.preventDefault();
-                    return false;
+    // url of the file system for debugging purposes
+    const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
+    console.log("filesystem URL", filesystemUrl);
+    // request for 1 GB of space
+    const numMB = 1000;
+    navigator.webkitPersistentStorage.requestQuota(numMB * 1024 * 1024, () => {
+        window.webkitRequestFileSystem(window.TEMPORARY, numMB * 1024 * 1024, () => {
+            // TODO: expose functions to rust (or embed this JS code in rust and call it)
+            const fileSysDemo = async () => {
+                const root = await navigator.storage.getDirectory();
+                const draftHandle = await root.getFileHandle("info.txt", {create: true});
+            }
+            fileSysDemo();
+            // initialize web assembly
+            init().then(() => {
+                const canvasElement = document?.getElementsByTagName('canvas')[0];
+                if (canvasElement) {
+                    // remove context menu pop-up when right-clicking on canvas
+                    canvasElement.addEventListener('contextmenu', function (e) {
+                        if (e.button === 2) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }, false);
+                    // handle command s
+                    canvasElement.addEventListener("keydown", function (e) {
+                        if (e.key === 's' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                            e.preventDefault();
+                        }
+                    }, false);
+                    // handle command o
+                    canvasElement.addEventListener("keydown", function (e) {
+                        if (e.key === 'o' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                            e.preventDefault();
+                        }
+                    }, false);
+                    // handle command r
+                    canvasElement.addEventListener("keydown", function (e) {
+                        if (e.key === 'r' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                            e.preventDefault();
+                        }
+                    }, false);
+                    // handle command p
+                    canvasElement.addEventListener("keydown", function (e) {
+                        if (e.key === 'p' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+                            e.preventDefault();
+                        }
+                    }, false);
                 }
-            }, false);
-            // handle command s
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 's' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command o
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'o' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command r
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'r' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command p
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'p' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-        }
+            });
+        }, () => {
+            alert("Unable to initialize 1GB of space for file system");
+        });
+    }, () => {
+        alert("Unable to initialize 1GB of space for file system");
     });
 </script>
 </body>
