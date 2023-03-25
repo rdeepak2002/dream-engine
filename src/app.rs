@@ -29,7 +29,7 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let dt: f32 = 0.0;
         let mut scene = Scene::new();
 

@@ -161,13 +161,13 @@ version = "0.3.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "233d376d6d185f2a3093e58f283f60f880315b6c60075b01f36b3b85154564ca"
 dependencies = [
-    "addr2line",
-    "cc",
-    "cfg-if",
-    "libc",
-    "miniz_oxide",
-    "object",
-    "rustc-demangle",
+ "addr2line",
+ "cc",
+ "cfg-if",
+ "libc",
+ "miniz_oxide",
+ "object",
+ "rustc-demangle",
 ]
 
 [[package]]
@@ -806,27 +806,27 @@ dependencies = [
  "boa_engine",
  "bytemuck",
  "cfg-if",
-    "cgmath",
-    "console_error_panic_hook",
-    "console_log",
-    "crossbeam-channel",
-    "dream-renderer",
-    "env_logger",
-    "epi",
-    "fs_extra",
-    "getrandom",
-    "glob",
-    "gltf",
-    "image",
-    "log",
-    "pollster",
-    "rapier2d",
-    "rapier3d",
-    "reqwest",
-    "tobj",
-    "wasm-bindgen",
-    "wasm-bindgen-file-reader",
-    "wasm-bindgen-futures",
+ "cgmath",
+ "console_error_panic_hook",
+ "console_log",
+ "crossbeam-channel",
+ "dream-renderer",
+ "env_logger",
+ "epi",
+ "fs_extra",
+ "getrandom",
+ "glob",
+ "gltf",
+ "image",
+ "log",
+ "pollster",
+ "rapier2d",
+ "rapier3d",
+ "reqwest",
+ "tobj",
+ "wasm-bindgen",
+ "wasm-bindgen-file-reader",
+ "wasm-bindgen-futures",
  "web-sys",
  "wgpu",
  "winit",
@@ -1205,10 +1205,10 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e007a07a24de5ecae94160f141029e9a347282cfe25d1d58d85d845cf3130f1"
 dependencies = [
-    "js-sys",
-    "slotmap",
-    "wasm-bindgen",
-    "web-sys",
+ "js-sys",
+ "slotmap",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -1217,12 +1217,12 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fd7703af6975def3b32573c60aaa5ebfebfab5d879da1e1315d87155ba57bcd"
 dependencies = [
-    "base64 0.13.1",
-    "byteorder",
-    "gltf-json",
-    "image",
-    "lazy_static",
-    "urlencoding",
+ "base64 0.13.1",
+ "byteorder",
+ "gltf-json",
+ "image",
+ "lazy_static",
+ "urlencoding",
 ]
 
 [[package]]
@@ -1231,10 +1231,10 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b33dbe598480111e3b2e5a1e9a7e52ad5df0f836e04b8c80fc96f52a9c9f2e"
 dependencies = [
-    "inflections",
-    "proc-macro2",
-    "quote",
-    "syn",
+ "inflections",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1243,10 +1243,10 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5511a759d99beeeef064bd6f81e207c77e3a3431c7499d7590929e35de371f31"
 dependencies = [
-    "gltf-derive",
-    "serde",
-    "serde_derive",
-    "serde_json",
+ "gltf-derive",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
@@ -1255,8 +1255,8 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fc59e5f710e310e76e6707f86c561dd646f69a8876da9131703b2f717de818d"
 dependencies = [
-    "bitflags",
-    "gpu-alloc-types",
+ "bitflags",
+ "gpu-alloc-types",
 ]
 
 [[package]]
@@ -1497,8 +1497,8 @@ version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
 dependencies = [
-    "autocfg",
-    "hashbrown",
+ "autocfg",
+ "hashbrown",
 ]
 
 [[package]]
@@ -1513,9 +1513,9 @@ version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
-    "cfg-if",
-    "js-sys",
-    "wasm-bindgen",
+ "cfg-if",
+ "js-sys",
+ "wasm-bindgen",
  "web-sys",
 ]
 
@@ -2504,17 +2504,17 @@ version = "0.11.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21eed90ec8570952d53b772ecf8f206aa1ec9a3d76b2521c56c42973f2d91ee9"
 dependencies = [
-    "base64 0.21.0",
-    "bytes",
-    "encoding_rs",
-    "futures-core",
-    "futures-util",
-    "h2",
-    "http",
-    "http-body",
-    "hyper",
-    "hyper-tls",
-    "ipnet",
+ "base64 0.21.0",
+ "bytes",
+ "encoding_rs",
+ "futures-core",
+ "futures-util",
+ "h2",
+ "http",
+ "http-body",
+ "hyper",
+ "hyper-tls",
+ "ipnet",
  "js-sys",
  "log",
  "mime",
@@ -3136,9 +3136,9 @@ version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d68c799ae75762b8c3fe375feb6600ef5602c883c5d21eb51c09f22b83c4643"
 dependencies = [
-    "form_urlencoded",
-    "idna",
-    "percent-encoding",
+ "form_urlencoded",
+ "idna",
+ "percent-encoding",
 ]
 
 [[package]]

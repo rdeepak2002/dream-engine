@@ -18,6 +18,7 @@
 
 use std::iter;
 
+// use crate::model::ModelVertex;
 use wgpu::util::DeviceExt;
 
 pub mod camera;
@@ -514,8 +515,8 @@ impl RendererWgpu {
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             // camera
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             // vertex drawing
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);

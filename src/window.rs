@@ -1,10 +1,11 @@
-use crate::app::App;
 use crossbeam_channel::unbounded;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+
+use crate::app::App;
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -81,7 +82,7 @@ impl Window {
             &self.event_loop,
         )
         .await;
-        let mut app: App = App::new();
+        let mut app: App = App::new().await;
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
