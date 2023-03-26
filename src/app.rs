@@ -40,11 +40,6 @@ impl App {
 
         let javascript_component_system = JavaScriptScriptComponentSystem::new();
 
-        // let path = "res/cube.glb";
-        // let file =
-        //     std::fs::File::open(&path).expect("Unable to open or find file at specified path");
-        // let reader = std::io::BufReader::new(file);
-        // let gltf = gltf::Gltf::from_reader(reader).expect("Unable to read Gltf file");
         let path = "cube.glb";
         let gltf = gltf::Gltf::from_slice(
             &dream_resource::load_binary(path)
@@ -61,7 +56,6 @@ impl App {
                     };
                 }
                 Source::Uri(uri) => {
-                    // TODO: allow synchronous loading
                     let bin = dream_resource::load_binary(uri)
                         .await
                         .expect("unable to load binary");
@@ -69,6 +63,8 @@ impl App {
                 }
             }
         }
+
+        // let mut meshes = Vec::new();
         for scene in gltf.scenes() {
             println!("scene: {}", scene.name().expect("No name for scene"));
             for node in scene.nodes() {
