@@ -18,8 +18,9 @@
 
 use std::iter;
 
-// use crate::model::{ModelVertex, Vertex};
 use wgpu::util::DeviceExt;
+
+use crate::model::{ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
@@ -27,62 +28,62 @@ pub mod model;
 pub mod texture;
 
 // lib.rs
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
-}
+// #[repr(C)]
+// #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+// struct Vertex {
+//     position: [f32; 3],
+//     tex_coords: [f32; 2],
+// }
 
 // lib.rs
-impl Vertex {
-    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                // position
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                // uv
-                wgpu::VertexAttribute {
-                    offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-            ],
-        }
-    }
-}
+// impl Vertex {
+//     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
+//         wgpu::VertexBufferLayout {
+//             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
+//             step_mode: wgpu::VertexStepMode::Vertex,
+//             attributes: &[
+//                 // position
+//                 wgpu::VertexAttribute {
+//                     offset: 0,
+//                     shader_location: 0,
+//                     format: wgpu::VertexFormat::Float32x3,
+//                 },
+//                 // uv
+//                 wgpu::VertexAttribute {
+//                     offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+//                     shader_location: 1,
+//                     format: wgpu::VertexFormat::Float32x2,
+//                 },
+//             ],
+//         }
+//     }
+// }
 
 // lib.rs
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.0868241, 0.49240386, 0.0],
-        tex_coords: [0.4131759, 0.00759614],
-    }, // A
-    Vertex {
-        position: [-0.49513406, 0.06958647, 0.0],
-        tex_coords: [0.0048659444, 0.43041354],
-    }, // B
-    Vertex {
-        position: [-0.21918549, -0.44939706, 0.0],
-        tex_coords: [0.28081453, 0.949397],
-    }, // C
-    Vertex {
-        position: [0.35966998, -0.3473291, 0.0],
-        tex_coords: [0.85967, 0.84732914],
-    }, // D
-    Vertex {
-        position: [0.44147372, 0.2347359, 0.0],
-        tex_coords: [0.9414737, 0.2652641],
-    }, // E
-];
+// const VERTICES: &[Vertex] = &[
+//     Vertex {
+//         position: [-0.0868241, 0.49240386, 0.0],
+//         tex_coords: [0.4131759, 0.00759614],
+//     }, // A
+//     Vertex {
+//         position: [-0.49513406, 0.06958647, 0.0],
+//         tex_coords: [0.0048659444, 0.43041354],
+//     }, // B
+//     Vertex {
+//         position: [-0.21918549, -0.44939706, 0.0],
+//         tex_coords: [0.28081453, 0.949397],
+//     }, // C
+//     Vertex {
+//         position: [0.35966998, -0.3473291, 0.0],
+//         tex_coords: [0.85967, 0.84732914],
+//     }, // D
+//     Vertex {
+//         position: [0.44147372, 0.2347359, 0.0],
+//         tex_coords: [0.9414737, 0.2652641],
+//     }, // E
+// ];
 
-const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
+// const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
 // We need this for Rust to store our data correctly for the shaders
 #[repr(C)]
@@ -102,8 +103,10 @@ impl CameraUniform {
         let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
         let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
         let rotation_mat_z: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+        // let translation_mat: cgmath::Matrix4<f32> =
+        //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
         let translation_mat: cgmath::Matrix4<f32> =
-            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
+            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -5.0));
         let model_mat =
             scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
         Self {
@@ -131,14 +134,15 @@ pub struct RendererWgpu {
     pub play_icon_texture: texture::Texture,
     pub file_icon_texture: texture::Texture,
     pub directory_icon_texture: texture::Texture,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
+    // vertex_buffer: wgpu::Buffer,
+    // index_buffer: wgpu::Buffer,
     diffuse_bind_group: wgpu::BindGroup,
     pub camera: camera::Camera,
     pub camera_uniform: CameraUniform,
     pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     pub surface_format: wgpu::TextureFormat,
+    pub mesh_list: Vec<crate::model::Mesh>,
 }
 
 impl RendererWgpu {
@@ -214,9 +218,10 @@ impl RendererWgpu {
         };
         surface.configure(&device, &config);
 
-        let diffuse_bytes = include_bytes!("happy-tree.png");
+        // let diffuse_bytes = include_bytes!("happy-tree.png");
+        let diffuse_bytes = include_bytes!("container.jpg");
         let diffuse_texture =
-            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
+            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg").unwrap();
 
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -358,8 +363,8 @@ impl RendererWgpu {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                // buffers: &[ModelVertex::desc()],
-                buffers: &[Vertex::desc()],
+                buffers: &[ModelVertex::desc()],
+                // buffers: &[Vertex::desc()],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -407,20 +412,19 @@ impl RendererWgpu {
             multiview: None,
         });
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Vertex Buffer"),
+        //     contents: bytemuck::cast_slice(VERTICES),
+        //     usage: wgpu::BufferUsages::VERTEX,
+        // });
 
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
+        // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Index Buffer"),
+        //     contents: bytemuck::cast_slice(INDICES),
+        //     usage: wgpu::BufferUsages::INDEX,
+        // });
 
         let mesh_list = gltf_loader::read_gltf("cube.glb", &device).await;
-        let cube_mesh = mesh_list.get(0).expect("No mesh at index 0 for cube mesh");
         // TODO: do something with this cube mesh
 
         // let index_buffer = cube_mesh.index_buffer;
@@ -439,14 +443,15 @@ impl RendererWgpu {
             play_icon_texture,
             file_icon_texture,
             directory_icon_texture,
-            vertex_buffer,
-            index_buffer,
+            // vertex_buffer,
+            // index_buffer,
             diffuse_bind_group,
             camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
             surface_format,
+            mesh_list,
         }
     }
 
@@ -517,7 +522,7 @@ impl RendererWgpu {
             });
 
             // let num_vertices = VERTICES.len() as u32;
-            let num_indices = INDICES.len() as u32;
+            // let num_indices = INDICES.len() as u32;
 
             render_pass.set_pipeline(&self.render_pipeline);
             // diffuse texture
@@ -525,8 +530,13 @@ impl RendererWgpu {
             // camera
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            let cube_mesh = self.mesh_list.get(0).expect("No mesh available at index 0");
+            let num_indices = cube_mesh.num_elements;
+            render_pass.set_vertex_buffer(0, cube_mesh.vertex_buffer.slice(..));
+            render_pass
+                .set_index_buffer(cube_mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.draw_indexed(0..num_indices, 0, 0..1);
         }
 
