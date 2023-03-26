@@ -424,8 +424,10 @@ impl RendererWgpu {
         //     usage: wgpu::BufferUsages::INDEX,
         // });
 
-        // let mesh_list = gltf_loader::read_gltf("ice_cube.glb", &device).await;
         let mesh_list = gltf_loader::read_gltf("cube.glb", &device).await;
+        // let mesh_list = gltf_loader::read_gltf("Box.glb", &device).await;
+        // let mesh_list = gltf_loader::read_gltf("ice_cube.glb", &device).await;
+        // let mesh_list = gltf_loader::read_gltf("cube_sketchfab.glb", &device).await;
         // TODO: do something with this cube mesh
 
         // let index_buffer = cube_mesh.index_buffer;
