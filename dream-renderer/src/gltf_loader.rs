@@ -50,12 +50,13 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
 }
 
 pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Vec<Mesh> {
-    let gltf = gltf::Gltf::from_slice(
-        &load_binary(path)
-            .await
-            .expect("Error loading binary for glb"),
-    )
-    .expect("Error loading from slice for glb");
+    // let gltf = gltf::Gltf::from_slice(
+    //     &load_binary(path)
+    //         .await
+    //         .expect("Error loading binary for glb"),
+    // )
+    // .expect("Error loading from slice for glb");
+    let gltf = gltf::Gltf::open("res/cube.gltf").expect("Unable to open gltf");
     let mut buffer_data = Vec::new();
     for buffer in gltf.buffers() {
         match buffer.source() {

@@ -20,7 +20,7 @@ use std::iter;
 
 use wgpu::util::DeviceExt;
 
-use crate::model::{ModelVertex, Vertex};
+use crate::model::{DrawModel, ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
@@ -424,7 +424,7 @@ impl RendererWgpu {
         //     usage: wgpu::BufferUsages::INDEX,
         // });
 
-        let mesh_list = gltf_loader::read_gltf("cube.glb", &device).await;
+        let mesh_list = gltf_loader::read_gltf("cube.gltf", &device).await;
         // TODO: do something with this cube mesh
 
         // let index_buffer = cube_mesh.index_buffer;
@@ -532,12 +532,15 @@ impl RendererWgpu {
             // vertex drawing
             // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+
             let cube_mesh = self.mesh_list.get(0).expect("No mesh available at index 0");
             let num_indices = cube_mesh.num_elements;
             render_pass.set_vertex_buffer(0, cube_mesh.vertex_buffer.slice(..));
             render_pass
-                .set_index_buffer(cube_mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+                .set_index_buffer(cube_mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
             render_pass.draw_indexed(0..num_indices, 0, 0..1);
+
+            // render_pass.draw_mesh()
         }
 
         self.queue.submit(iter::once(encoder.finish()));
