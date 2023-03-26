@@ -65,6 +65,14 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     Ok(data)
 }
 
+pub fn load_binary_sync(file_name: &str) -> Vec<u8> {
+    let path = std::path::Path::new(env!("OUT_DIR"))
+        .join("res")
+        .join(file_name);
+    let data = std::fs::read(path);
+    return data.expect("Error reading binary file synchronously");
+}
+
 pub async fn load_texture(
     file_name: &str,
     device: &wgpu::Device,

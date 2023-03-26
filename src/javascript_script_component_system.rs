@@ -105,8 +105,8 @@ impl ComponentSystem for JavaScriptScriptComponentSystem {
                             let position = dream_math::Vector3::from(x, y, z);
                             entity.add_transform(Transform::from(position));
 
-                            println!("x final: {}", x_js.as_number().unwrap());
-                            log::warn!("x final: {}", x_js.as_number().unwrap());
+                            // println!("x final: {}", x_js.as_number().unwrap());
+                            // log::warn!("x final: {}", x_js.as_number().unwrap());
                         }
                         Err(e) => {
                             // Pretty print the error

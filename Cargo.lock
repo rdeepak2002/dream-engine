@@ -689,6 +689,7 @@ dependencies = [
  "fs_extra",
  "getrandom",
  "glob",
+ "gltf",
  "image",
  "log",
  "pollster",
