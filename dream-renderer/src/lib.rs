@@ -22,6 +22,7 @@ use std::iter;
 use wgpu::util::DeviceExt;
 
 pub mod camera;
+pub mod gltf_loader;
 pub mod model;
 pub mod texture;
 
@@ -417,6 +418,13 @@ impl RendererWgpu {
             contents: bytemuck::cast_slice(INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
+
+        let mesh_list = gltf_loader::read_gltf("cube.glb", &device).await;
+        let cube_mesh = mesh_list.get(0).expect("No mesh at index 0 for cube mesh");
+        // TODO: do something with this cube mesh
+
+        // let index_buffer = cube_mesh.index_buffer;
+        // let vertex_buffer = cube_mesh.vertex_buffer;
 
         Self {
             surface,

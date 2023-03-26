@@ -3,8 +3,10 @@ use std::io::{BufReader, Cursor};
 use std::io::{Read, Seek, SeekFrom};
 
 use cfg_if::cfg_if;
+use gltf::buffer::Source;
 use wgpu::util::DeviceExt;
 
+use dream_renderer::model::{Mesh, ModelVertex};
 use dream_renderer::{model, texture};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -172,4 +174,15 @@ pub async fn load_model(
         .collect::<Vec<_>>();
 
     Ok(model::Model { meshes, materials })
+}
+
+struct MeshInfo {
+    p0: Vec<ModelVertex>,
+    p1: Vec<u32>,
+}
+
+impl MeshInfo {
+    fn new(p0: Vec<ModelVertex>, p1: Vec<u32>) -> Self {
+        Self { p0, p1 }
+    }
 }
