@@ -22,3 +22,24 @@ impl Transform {
         format!("Transform({})", self.position.to_string())
     }
 }
+
+#[derive(shipyard::Component, Debug, Clone, Trace, Finalize)]
+pub struct Hierarchy {
+    pub parent_runtime_id: u64,
+    pub num_children: usize,
+    pub first_child_runtime_id: u64,
+    pub prev_sibling_runtime_id: u64,
+    pub next_sibling_runtime_id: u64,
+}
+
+impl Hierarchy {
+    pub fn new() -> Self {
+        Self {
+            parent_runtime_id: 0,
+            num_children: 0,
+            first_child_runtime_id: 0,
+            prev_sibling_runtime_id: 0,
+            next_sibling_runtime_id: 0,
+        }
+    }
+}
