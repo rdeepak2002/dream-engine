@@ -1,6 +1,7 @@
-use boa_gc::{Finalize, Trace};
+// use boa_gc::{Finalize, Trace};
 
-#[derive(Debug, Clone, Trace, Finalize)]
+// #[derive(Debug, Clone, Trace, Finalize)]
+#[derive(Debug, Clone)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,

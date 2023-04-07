@@ -711,7 +711,6 @@ dependencies = [
 name = "dream-ecs"
 version = "0.1.0"
 dependencies = [
- "boa_gc",
  "cgmath",
  "console_error_panic_hook",
  "console_log",
@@ -760,7 +759,6 @@ dependencies = [
 name = "dream-math"
 version = "0.1.0"
 dependencies = [
- "boa_gc",
  "cgmath",
  "console_error_panic_hook",
  "console_log",
