@@ -12,6 +12,12 @@ pub struct Window {
     pub event_loop: EventLoop<()>,
 }
 
+pub static mut APP: App = App {
+    dt: 0.0,
+    scene: None,
+    javascript_component_system: None,
+};
+
 impl Window {
     pub fn new() -> Self {
         let event_loop = EventLoop::new();
@@ -82,7 +88,14 @@ impl Window {
             &self.event_loop,
         )
         .await;
-        let mut app: App = App::new().await;
+        // let mut app: App = App::new();
+
+        // using unsafe here because we want app to be a globally available thing so
+        // things like scripting system can easily reference the current game state without
+        // passing around many variables as parameters
+        unsafe {
+            APP = App::new();
+        }
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -91,8 +104,10 @@ impl Window {
                         self.window.set_inner_size(size);
                     }
 
-                    {
-                        app.update();
+                    // using unsafe here for same reason as mentioned
+                    // above for initialization of this App
+                    unsafe {
+                        APP.update();
                     }
 
                     match renderer.render() {

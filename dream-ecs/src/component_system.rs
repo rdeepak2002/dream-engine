@@ -19,5 +19,5 @@
 use crate::scene::Scene;
 
 pub trait ComponentSystem {
-    fn update(&mut self, dt: f32, scene: &mut Scene);
+    fn update(&mut self, dt: f32, scene: &mut Box<Scene>);
 }

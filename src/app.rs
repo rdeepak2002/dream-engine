@@ -23,13 +23,13 @@ use dream_ecs::scene::Scene;
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 
 pub struct App {
-    dt: f32,
-    scene: Scene,
-    javascript_component_system: JavaScriptScriptComponentSystem,
+    pub dt: f32,
+    pub scene: Option<Box<Scene>>,
+    pub javascript_component_system: Option<Box<JavaScriptScriptComponentSystem>>,
 }
 
 impl App {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         let dt: f32 = 0.0;
         let mut scene = Scene::new();
 
@@ -40,15 +40,20 @@ impl App {
 
         Self {
             dt,
-            scene,
-            javascript_component_system,
+            scene: Some(Box::new(scene)),
+            javascript_component_system: Some(Box::new(javascript_component_system)),
         }
     }
 
     pub fn update(&mut self) -> f32 {
-        self.dt = 1.0 / 60.0;
-        self.javascript_component_system
-            .update(self.dt, &mut self.scene);
+        if self.scene.is_some() {
+            self.dt = 1.0 / 60.0;
+            if self.javascript_component_system.is_some() {
+                let jcs = self.javascript_component_system.as_mut().unwrap();
+                jcs.update(self.dt, self.scene.as_mut().unwrap());
+            }
+            return self.dt;
+        }
         return 0.0;
     }
 }
