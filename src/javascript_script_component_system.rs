@@ -41,15 +41,17 @@ impl ComponentSystem for JavaScriptScriptComponentSystem {
         for entity in transform_entities {
             let js_code: String = include_str!("../res/script.js").into();
             let mut context = boa_engine::Context::default();
-            context.register_global_class::<EntityJS>().unwrap();
-            context.register_global_class::<Vector3JS>().unwrap();
 
             // TODO: for persistence instead of saving context we should save a JS value? not sure
             // ^ this would involve storing the resulting compiled javascript class object which seems fine imo
 
-            // evaluate all code
+            // evaluate all code (expects a javascript class object to be returned at the end)
             match context.eval(js_code) {
                 Ok(res) => {
+                    // register global classes
+                    context.register_global_class::<EntityJS>().unwrap();
+                    context.register_global_class::<Vector3JS>().unwrap();
+                    // get script class returned and call its update method
                     let js_obj = res.as_object().expect("No object returned by script");
                     let js_obj_update_func = js_obj
                         .get("update", &mut context)
