@@ -12,8 +12,6 @@
     <option name="EXECUTE_IN_TERMINAL" value="false" />
     <option name="EXECUTE_SCRIPT_FILE" value="true" />
     <envs />
-    <method v="2">
-      <option name="LaunchBrowser.Before.Run" url="http://localhost:63343/dream-rs/dream/web/index.html" />
-    </method>
+    <method v="2" />
   </configuration>
 </component>

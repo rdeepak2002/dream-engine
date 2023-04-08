@@ -15,6 +15,10 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::sync::RwLock;
+
+use once_cell::sync::Lazy;
+
 use dream_ecs;
 use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
@@ -22,6 +26,8 @@ use dream_ecs::entity::Entity;
 use dream_ecs::scene::SCENE;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
+
+pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
 
 pub struct App {
     pub dt: f32,

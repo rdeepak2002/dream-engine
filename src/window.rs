@@ -1,21 +1,16 @@
-use std::sync::RwLock;
-
 use crossbeam_channel::unbounded;
-use once_cell::sync::Lazy;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
 
-use crate::app::App;
+use crate::app::APP;
 
 pub struct Window {
     pub window: winit::window::Window,
     pub event_loop: EventLoop<()>,
 }
-
-pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
 
 impl Window {
     pub fn new() -> Self {
