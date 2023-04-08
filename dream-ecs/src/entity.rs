@@ -22,8 +22,7 @@ use crate::component::{Hierarchy, Transform};
 use crate::scene::{Scene, SCENE};
 
 pub struct Entity {
-    // pub scene: *mut Scene,
-    pub handle: EntityId, // TODO: make this a u64 for more generalization
+    pub handle: u64,
 }
 
 impl Entity {
@@ -35,7 +34,9 @@ impl Entity {
         if handle.inner() == 0 {
             panic!("Entity internal ID cannot be 0");
         }
-        Self { handle }
+        Self {
+            handle: handle.inner(),
+        }
     }
 
     pub fn attach(&self, parent_entity_runtime_id: Option<u64>) {
@@ -54,7 +55,7 @@ impl Entity {
             let mut parent_hierarchy = parent_entity.get_hierarchy().unwrap();
             if parent_hierarchy.first_child_runtime_id == 0 {
                 parent_hierarchy.num_children += 1;
-                parent_hierarchy.first_child_runtime_id = self.handle.inner();
+                parent_hierarchy.first_child_runtime_id = self.handle;
             } else {
                 parent_hierarchy.num_children += 1;
                 // TODO: we are adding a child that is not the first child, so update this by making it the 'previous' of the current child
@@ -66,9 +67,7 @@ impl Entity {
     }
 
     pub fn from_handle(handle: u64) -> Self {
-        Self {
-            handle: EntityId::from_inner(handle).expect("No entity with this id exists"),
-        }
+        Self { handle }
     }
 
     pub fn to_string(&self) -> String {
@@ -81,14 +80,16 @@ impl Entity {
     }
 
     pub fn get_runtime_id(&self) -> u64 {
-        return self.handle.inner();
+        return self.handle;
     }
 
     pub fn get_hierarchy(&self) -> Option<Hierarchy> {
         let mut comp_opt: Option<Hierarchy> = None;
         let scene = SCENE.read().unwrap();
         scene.handle.run(|vm_pos: shipyard::ViewMut<Hierarchy>| {
-            let comp = vm_pos.get(self.handle).unwrap();
+            let comp = vm_pos
+                .get(EntityId::from_inner(self.handle).unwrap())
+                .unwrap();
             comp_opt = Some(comp.clone());
         });
         return comp_opt;
@@ -96,19 +97,25 @@ impl Entity {
 
     pub fn add_hierarchy(&self, hierarchy: Hierarchy) {
         let mut scene = SCENE.write().unwrap();
-        scene.handle.add_component(self.handle, hierarchy);
+        scene
+            .handle
+            .add_component(EntityId::from_inner(self.handle).unwrap(), hierarchy);
     }
 
     pub fn add_transform(&self, transform: Transform) {
         let mut scene = SCENE.write().unwrap();
-        scene.handle.add_component(self.handle, transform);
+        scene
+            .handle
+            .add_component(EntityId::from_inner(self.handle).unwrap(), transform);
     }
 
     pub fn get_transform(&self) -> Option<Transform> {
         let mut comp_opt: Option<Transform> = None;
         let scene = SCENE.read().unwrap();
         scene.handle.run(|vm_pos: shipyard::ViewMut<Transform>| {
-            let comp = vm_pos.get(self.handle).unwrap();
+            let comp = vm_pos
+                .get(EntityId::from_inner(self.handle).unwrap())
+                .unwrap();
             comp_opt = Some(comp.clone());
         });
         return comp_opt;

@@ -28,8 +28,6 @@ use dream_ecs::scene::{Scene, SCENE};
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 
-// 1.3.1
-
 pub struct App {
     pub dt: f32,
     // pub scene: Option<Box<Scene>>,

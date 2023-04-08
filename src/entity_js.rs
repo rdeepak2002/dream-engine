@@ -124,8 +124,8 @@ impl EntityJS {
             let transform = entity.get_transform();
             return if transform.is_some() {
                 let transform = transform.unwrap().clone();
-                println!("Entity transform {}", transform.to_string());
-                log::warn!("Entity transform {}", transform.to_string());
+                // println!("Entity transform {}", transform.to_string());
+                // log::warn!("Entity transform {}", transform.to_string());
                 let position = transform.position.clone();
                 let position_js = Vector3JS::new(position);
                 let position_js_obj = position_js.js_object(context);

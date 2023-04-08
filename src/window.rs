@@ -1,6 +1,3 @@
-use std::ops::Deref;
-// 1.3.1
-use std::sync::Mutex;
 use std::sync::RwLock;
 
 use crossbeam_channel::unbounded;
@@ -18,24 +15,7 @@ pub struct Window {
     pub event_loop: EventLoop<()>,
 }
 
-// use lazy_static::lazy_static; // 1.4.0
-// use std::sync::Mutex;
-//
-// lazy_static! {
-//     pub static ref APP: Mutex<App> = Mutex::new(App {
-//         dt: 0.0,
-//         scene: None,
-//         javascript_component_system: None,
-//     });
-// }
-
-// pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
-
-// pub static mut APP: App = App {
-//     dt: 0.0,
-//     scene: None,
-//     javascript_component_system: None,
-// };
+pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
 
 impl Window {
     pub fn new() -> Self {
@@ -108,8 +88,9 @@ impl Window {
         )
         .await;
 
-        let mut app: App = App::new();
-        app.initialize();
+        {
+            APP.write().unwrap().initialize();
+        }
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -121,7 +102,7 @@ impl Window {
                     // using unsafe here for same reason as mentioned
                     // above for initialization of this App
                     {
-                        app.update();
+                        APP.write().unwrap().update();
                     }
 
                     match renderer.render() {
