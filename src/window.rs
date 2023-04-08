@@ -5,7 +5,8 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::app::APP;
+use crate::app::initialize_app;
+use crate::app::update_app;
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -84,7 +85,7 @@ impl Window {
         .await;
 
         {
-            APP.write().unwrap().initialize();
+            initialize_app();
         }
 
         self.event_loop.run(move |event, _, control_flow| {
@@ -97,7 +98,7 @@ impl Window {
                     // using unsafe here for same reason as mentioned
                     // above for initialization of this App
                     {
-                        APP.write().unwrap().update();
+                        update_app();
                     }
 
                     match renderer.render() {

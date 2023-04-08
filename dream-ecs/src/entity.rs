@@ -19,7 +19,7 @@
 use shipyard::{EntityId, Get};
 
 use crate::component::{Hierarchy, Transform};
-use crate::scene::{Scene, SCENE};
+use crate::scene::{get_current_scene, get_current_scene_read_only, Scene};
 
 pub struct Entity {
     pub handle: u64,
@@ -85,7 +85,7 @@ impl Entity {
 
     pub fn get_hierarchy(&self) -> Option<Hierarchy> {
         let mut comp_opt: Option<Hierarchy> = None;
-        let scene = SCENE.read().unwrap();
+        let scene = get_current_scene_read_only();
         scene.handle.run(|vm_pos: shipyard::ViewMut<Hierarchy>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())
@@ -96,14 +96,14 @@ impl Entity {
     }
 
     pub fn add_hierarchy(&self, hierarchy: Hierarchy) {
-        let mut scene = SCENE.write().unwrap();
+        let mut scene = get_current_scene();
         scene
             .handle
             .add_component(EntityId::from_inner(self.handle).unwrap(), hierarchy);
     }
 
     pub fn add_transform(&self, transform: Transform) {
-        let mut scene = SCENE.write().unwrap();
+        let mut scene = get_current_scene();
         scene
             .handle
             .add_component(EntityId::from_inner(self.handle).unwrap(), transform);
@@ -111,7 +111,7 @@ impl Entity {
 
     pub fn get_transform(&self) -> Option<Transform> {
         let mut comp_opt: Option<Transform> = None;
-        let scene = SCENE.read().unwrap();
+        let scene = get_current_scene_read_only();
         scene.handle.run(|vm_pos: shipyard::ViewMut<Transform>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())

@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::sync::RwLock;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
 use shipyard::{IntoIter, IntoWithId};
@@ -24,7 +24,15 @@ use shipyard::{IntoIter, IntoWithId};
 use crate::component::Transform;
 use crate::entity::Entity;
 
-pub static SCENE: Lazy<RwLock<Scene>> = Lazy::new(|| RwLock::new(Scene::new()));
+static SCENE: Lazy<RwLock<Scene>> = Lazy::new(|| RwLock::new(Scene::new()));
+
+pub fn get_current_scene_read_only() -> RwLockReadGuard<'static, Scene> {
+    return SCENE.read().unwrap();
+}
+
+pub fn get_current_scene() -> RwLockWriteGuard<'static, Scene> {
+    return SCENE.write().unwrap();
+}
 
 pub struct Scene {
     pub name: &'static str,

@@ -21,7 +21,7 @@ use epi::egui::emath::Numeric;
 
 use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::SCENE;
+use dream_ecs::scene::get_current_scene_read_only;
 
 use crate::entity_js::{EntityJS, Vector3JS};
 
@@ -38,7 +38,8 @@ impl ComponentSystem for JavaScriptScriptComponentSystem {
         // let scene = SCENE.read().unwrap();
         let transform_entities: Vec<u64>;
         {
-            let scene = SCENE.read().unwrap();
+            // let scene = SCENE.read().unwrap();
+            let scene = get_current_scene_read_only();
             transform_entities = scene.transform_entities().clone();
         }
         for entity_id in transform_entities {

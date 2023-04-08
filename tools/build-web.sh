@@ -12,7 +12,6 @@ if [ $? -eq 0 ]; then
   fi
   echo "Build succeeded"
   # start server
-  cd web
   http-server -o web
 else
   # build failed

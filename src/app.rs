@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use std::sync::RwLock;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
 
@@ -23,11 +23,27 @@ use dream_ecs;
 use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::SCENE;
+use dream_ecs::scene::get_current_scene;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 
-pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
+static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
+
+pub fn initialize_app() {
+    APP.write().unwrap().initialize();
+}
+
+pub fn update_app() {
+    APP.write().unwrap().update();
+}
+
+pub fn get_app_read_only() -> RwLockReadGuard<'static, App> {
+    return APP.read().unwrap();
+}
+
+pub fn get_app() -> RwLockWriteGuard<'static, App> {
+    return APP.write().unwrap();
+}
 
 pub struct App {
     pub dt: f32,
@@ -35,18 +51,18 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             dt: 0.0,
             javascript_component_system: None,
         }
     }
 
-    pub fn initialize(&mut self) {
+    fn initialize(&mut self) {
         // init scene
         let mut e: Option<Entity> = None;
         {
-            let mut scene = SCENE.write().unwrap();
+            let mut scene = get_current_scene();
             e = Some(scene.create_entity());
         }
         {
@@ -58,7 +74,7 @@ impl App {
         self.javascript_component_system = Some(Box::new(javascript_component_system));
     }
 
-    pub fn update(&mut self) -> f32 {
+    fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         if self.javascript_component_system.is_some() {
             let jcs = self.javascript_component_system.as_mut().unwrap();
