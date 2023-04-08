@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use crate::scene::Scene;
-
 pub trait ComponentSystem {
-    fn update(&mut self, dt: f32, scene: &mut Box<Scene>);
+    fn update(&mut self, dt: f32);
 }

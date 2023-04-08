@@ -16,10 +16,15 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::sync::RwLock;
+
+use once_cell::sync::Lazy;
 use shipyard::{IntoIter, IntoWithId};
 
 use crate::component::Transform;
 use crate::entity::Entity;
+
+pub static SCENE: Lazy<RwLock<Scene>> = Lazy::new(|| RwLock::new(Scene::new()));
 
 pub struct Scene {
     pub name: &'static str,
@@ -47,7 +52,7 @@ impl Scene {
         return entity;
     }
 
-    pub fn transform_entities(&mut self) -> Vec<Entity> {
+    pub fn transform_entities(&self) -> Vec<u64> {
         let mut entity_id_vec = Vec::new();
         self.handle
             .run(|vm_transform: shipyard::ViewMut<Transform>| {
@@ -58,7 +63,7 @@ impl Scene {
             });
         let mut entity_vec = Vec::new();
         for entity_id in &entity_id_vec {
-            entity_vec.push(Entity::from_mut_ref(self, entity_id.clone()));
+            entity_vec.push(entity_id.inner());
         }
         return entity_vec;
     }

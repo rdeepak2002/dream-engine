@@ -16,14 +16,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use boa_engine::object::{JsObject, ObjectInitializer};
-use boa_engine::property::Attribute;
 use boa_engine::JsValue;
 use epi::egui::emath::Numeric;
 
-use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
-use dream_ecs::scene::Scene;
+use dream_ecs::entity::Entity;
+use dream_ecs::scene::SCENE;
 
 use crate::entity_js::{EntityJS, Vector3JS};
 
@@ -36,9 +34,15 @@ impl JavaScriptScriptComponentSystem {
 }
 
 impl ComponentSystem for JavaScriptScriptComponentSystem {
-    fn update(&mut self, dt: f32, scene: &mut Box<Scene>) {
-        let transform_entities = scene.transform_entities();
-        for entity in transform_entities {
+    fn update(&mut self, dt: f32) {
+        // let scene = SCENE.read().unwrap();
+        let transform_entities: Vec<u64>;
+        {
+            let scene = SCENE.read().unwrap();
+            transform_entities = scene.transform_entities().clone();
+        }
+        for entity_id in transform_entities {
+            let entity = Entity::from_handle(entity_id);
             let js_code: String = include_str!("../res/script.js").into();
             let mut context = boa_engine::Context::default();
 

@@ -1,15 +1,12 @@
 use boa_engine::class::{Class, ClassBuilder};
 use boa_engine::object::{JsObject, ObjectInitializer};
 use boa_engine::property::Attribute;
-use boa_engine::{builtins::JsArgs, Context, JsResult, JsValue};
+use boa_engine::{Context, JsResult, JsValue};
 use boa_gc::{Finalize, Trace};
 use cgmath::num_traits::ToPrimitive;
-use shipyard::EntityId;
 
 use dream_ecs::entity::Entity;
 use dream_math::Vector3;
-
-use crate::window::APP;
 
 #[derive(Debug, Trace, Finalize)]
 pub struct Vector3JS {
@@ -93,20 +90,7 @@ impl EntityJS {
             .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
 
         let entity_inner_id = this.handle;
-        let mut entity: Option<Entity> = None;
-
-        // using unsafe since APP is globally available which allows custom scripting implementations
-        // to easily access its attributes such as the current scene
-        unsafe {
-            if APP.scene.is_some() {
-                let scene = APP.scene.as_mut().unwrap();
-                entity = Some(Entity::from_mut_ref(
-                    scene,
-                    EntityId::from_inner(entity_inner_id)
-                        .expect("Unable to unwrap entity inner id"),
-                ));
-            }
-        }
+        let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
 
         if entity.is_some() {
             let entity = entity.unwrap();
@@ -134,28 +118,14 @@ impl EntityJS {
             .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
 
         let entity_inner_id = this.handle;
-        let mut entity: Option<Entity> = None;
-
-        // using unsafe since APP is globally available which allows custom scripting implementations
-        // to easily access its attributes such as the current scene
-        unsafe {
-            if APP.scene.is_some() {
-                let scene = APP.scene.as_mut().unwrap();
-                entity = Some(Entity::from_mut_ref(
-                    scene,
-                    EntityId::from_inner(entity_inner_id)
-                        .expect("Unable to unwrap entity inner id"),
-                ));
-            }
-        }
-
+        let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
         if entity.is_some() {
             let entity = entity.unwrap();
             let transform = entity.get_transform();
             return if transform.is_some() {
-                let transform = transform.unwrap();
-                // println!("Entity transform {}", transform.to_string());
-                // log::warn!("Entity transform {}", transform.to_string());
+                let transform = transform.unwrap().clone();
+                println!("Entity transform {}", transform.to_string());
+                log::warn!("Entity transform {}", transform.to_string());
                 let position = transform.position.clone();
                 let position_js = Vector3JS::new(position);
                 let position_js_obj = position_js.js_object(context);

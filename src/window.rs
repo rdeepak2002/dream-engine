@@ -1,4 +1,10 @@
+use std::ops::Deref;
+// 1.3.1
+use std::sync::Mutex;
+use std::sync::RwLock;
+
 use crossbeam_channel::unbounded;
+use once_cell::sync::Lazy;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -12,11 +18,24 @@ pub struct Window {
     pub event_loop: EventLoop<()>,
 }
 
-pub static mut APP: App = App {
-    dt: 0.0,
-    scene: None,
-    javascript_component_system: None,
-};
+// use lazy_static::lazy_static; // 1.4.0
+// use std::sync::Mutex;
+//
+// lazy_static! {
+//     pub static ref APP: Mutex<App> = Mutex::new(App {
+//         dt: 0.0,
+//         scene: None,
+//         javascript_component_system: None,
+//     });
+// }
+
+// pub static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
+
+// pub static mut APP: App = App {
+//     dt: 0.0,
+//     scene: None,
+//     javascript_component_system: None,
+// };
 
 impl Window {
     pub fn new() -> Self {
@@ -88,14 +107,9 @@ impl Window {
             &self.event_loop,
         )
         .await;
-        // let mut app: App = App::new();
 
-        // using unsafe here because we want app to be a globally available thing so
-        // things like scripting system can easily reference the current game state without
-        // passing around many variables as parameters
-        unsafe {
-            APP = App::new();
-        }
+        let mut app: App = App::new();
+        app.initialize();
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -106,8 +120,8 @@ impl Window {
 
                     // using unsafe here for same reason as mentioned
                     // above for initialization of this App
-                    unsafe {
-                        APP.update();
+                    {
+                        app.update();
                     }
 
                     match renderer.render() {

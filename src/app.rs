@@ -15,45 +15,78 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::sync::{Arc, RwLock};
+
+use once_cell::sync::Lazy;
+use shipyard::EntityId;
+
 use dream_ecs;
 use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
-use dream_ecs::scene::Scene;
+use dream_ecs::entity::Entity;
+use dream_ecs::scene::{Scene, SCENE};
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 
+// 1.3.1
+
 pub struct App {
     pub dt: f32,
-    pub scene: Option<Box<Scene>>,
+    // pub scene: Option<Box<Scene>>,
+    // pub scene: Option<RwLock<Box<Scene>>>,
     pub javascript_component_system: Option<Box<JavaScriptScriptComponentSystem>>,
 }
 
 impl App {
     pub fn new() -> Self {
-        let dt: f32 = 0.0;
-        let mut scene = Scene::new();
-
-        let e = scene.create_entity();
-        e.add_transform(Transform::from(dream_math::Vector3::from(1., 1., 1.)));
-
-        let javascript_component_system = JavaScriptScriptComponentSystem::new();
-
         Self {
-            dt,
-            scene: Some(Box::new(scene)),
-            javascript_component_system: Some(Box::new(javascript_component_system)),
+            dt: 0.0,
+            javascript_component_system: None,
         }
+    }
+
+    pub fn initialize(&mut self) {
+        // init scene
+        let mut e: Option<Entity> = None;
+        {
+            let mut scene = SCENE.write().unwrap();
+            e = Some(scene.create_entity());
+        }
+        {
+            e.unwrap()
+                .add_transform(Transform::from(dream_math::Vector3::from(2., 1., 1.)));
+        }
+        // init component systems
+        let javascript_component_system = JavaScriptScriptComponentSystem::new();
+        self.javascript_component_system = Some(Box::new(javascript_component_system));
     }
 
     pub fn update(&mut self) -> f32 {
-        if self.scene.is_some() {
-            self.dt = 1.0 / 60.0;
-            if self.javascript_component_system.is_some() {
-                let jcs = self.javascript_component_system.as_mut().unwrap();
-                jcs.update(self.dt, self.scene.as_mut().unwrap());
-            }
-            return self.dt;
+        self.dt = 1.0 / 60.0;
+        if self.javascript_component_system.is_some() {
+            let jcs = self.javascript_component_system.as_mut().unwrap();
+            jcs.update(self.dt);
         }
-        return 0.0;
+        return self.dt;
+        // if self.scene.is_some() {
+        //     self.dt = 1.0 / 60.0;
+        //     if self.javascript_component_system.is_some() {
+        //         let jcs = self.javascript_component_system.as_mut().unwrap();
+        //         jcs.update(self.dt, self.scene.as_mut().unwrap());
+        //     }
+        //     return self.dt;
+        // }
+        // return 0.0;
     }
+
+    // pub fn get_entity_from_inner(&mut self, inner: u64) -> Option<Entity> {
+    //     if self.scene.is_some() {
+    //         let entity = Some(Entity::from_mut_ref(
+    //             self.scene.as_mut().unwrap(),
+    //             EntityId::from_inner(inner).expect("Unable to unwrap entity inner id"),
+    //         ));
+    //         return entity;
+    //     }
+    //     return None;
+    // }
 }
