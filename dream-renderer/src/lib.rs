@@ -20,7 +20,7 @@ use std::iter;
 
 use wgpu::util::DeviceExt;
 
-use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::model::{ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
