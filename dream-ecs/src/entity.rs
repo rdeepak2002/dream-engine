@@ -45,7 +45,7 @@ impl Entity {
             let mut hierarchy_component = self.get_hierarchy().expect("No hierarchy component");
             hierarchy_component.parent_runtime_id =
                 parent_entity_runtime_id.expect("No parent runtime id");
-            self.add_hierarchy(hierarchy_component);
+            self.add_component(hierarchy_component);
             // add to child collection of parent
             let parent_shipyard_id =
                 shipyard::EntityId::from_inner(parent_entity_runtime_id.unwrap()).unwrap();
@@ -62,7 +62,7 @@ impl Entity {
                 // basically just append to start of list for easiest implementation
                 todo!()
             }
-            parent_entity.add_hierarchy(parent_hierarchy);
+            parent_entity.add_component(parent_hierarchy);
         }
     }
 
@@ -83,6 +83,13 @@ impl Entity {
         return self.handle;
     }
 
+    pub fn add_component<C: shipyard::TupleAddComponent>(&self, component: C) {
+        let mut scene = get_current_scene();
+        scene
+            .handle
+            .add_component(EntityId::from_inner(self.handle).unwrap(), component);
+    }
+
     pub fn get_hierarchy(&self) -> Option<Hierarchy> {
         let mut comp_opt: Option<Hierarchy> = None;
         let scene = get_current_scene_read_only();
@@ -93,20 +100,6 @@ impl Entity {
             comp_opt = Some(comp.clone());
         });
         return comp_opt;
-    }
-
-    pub fn add_hierarchy(&self, hierarchy: Hierarchy) {
-        let mut scene = get_current_scene();
-        scene
-            .handle
-            .add_component(EntityId::from_inner(self.handle).unwrap(), hierarchy);
-    }
-
-    pub fn add_transform(&self, transform: Transform) {
-        let mut scene = get_current_scene();
-        scene
-            .handle
-            .add_component(EntityId::from_inner(self.handle).unwrap(), transform);
     }
 
     pub fn get_transform(&self) -> Option<Transform> {
@@ -124,4 +117,43 @@ impl Entity {
     pub fn has_transform(&self) -> bool {
         self.get_transform().is_some()
     }
+
+    // pub fn get_component<T: shipyard::TupleAddComponent + shipyard::Component>(&self) -> Option<T> {
+    //     let mut comp_opt: Option<T> = None;
+    //     let scene = get_current_scene_read_only();
+    //     // let y = |vm_pos: shipyard::ViewMut<Transform>| {
+    //     //     let comp = vm_pos
+    //     //         .get(EntityId::from_inner(self.handle).unwrap())
+    //     //         .unwrap();
+    //     //     let c = comp.clone();
+    //     //     // comp_opt = Some(c.clone());
+    //     // };
+    //     let x: dyn Test<Transform> = |vm_pos: shipyard::ViewMut<Transform>| {
+    //         let comp = vm_pos
+    //             .get(EntityId::from_inner(self.handle).unwrap())
+    //             .unwrap();
+    //         let c = comp.clone();
+    //         // comp_opt = Some(c.clone());
+    //     };
+    //     scene.handle.run(x);
+    //     return comp_opt;
+    // }
+    //
+    // // pub fn get_component<T: DreamComponent>(&self, component_type: T) -> Option<T> {
+    // //     let mut comp_opt: Option<T> = None;
+    // //     let scene = get_current_scene_read_only();
+    // //     scene.handle.run(|vm_pos: shipyard::ViewMut<Transform>| {
+    // //         let comp = vm_pos
+    // //             .get(EntityId::from_inner(self.handle).unwrap())
+    // //             .unwrap();
+    // //         let c = comp.clone();
+    // //         comp_opt = Some(c);
+    // //     });
+    // //     return comp_opt;
+    // // }
+    // //
+    // // pub fn has_component<T: shipyard::Component>(&self, component_type: T) -> bool {
+    // //     let c = self.get_component(component_type);
+    // //     return c.is_some();
+    // // }
 }

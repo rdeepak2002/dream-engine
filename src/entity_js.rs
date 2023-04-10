@@ -104,7 +104,7 @@ impl EntityJS {
                     .and_then(|obj| obj.downcast_ref::<Vector3JS>())
                     .ok_or_else(|| context.construct_type_error("Not a `Vector3` object"))?;
                 transform.position = new_position.get_vector3();
-                entity.add_transform(transform);
+                entity.add_component(transform);
             }
         }
 

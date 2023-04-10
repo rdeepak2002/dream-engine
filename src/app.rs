@@ -67,7 +67,7 @@ impl App {
         }
         {
             e.unwrap()
-                .add_transform(Transform::from(dream_math::Vector3::from(2., 1., 1.)));
+                .add_component(Transform::from(dream_math::Vector3::from(2., 1., 1.)));
         }
         // init component systems
         let javascript_component_system = JavaScriptScriptComponentSystem::new();

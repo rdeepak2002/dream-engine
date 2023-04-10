@@ -1,8 +1,7 @@
-// use boa_gc::{Finalize, Trace};
+use std::fmt::Debug;
 
 use dream_math::Vector3;
 
-// #[derive(shipyard::Component, Debug, Clone, Trace, Finalize)]
 #[derive(shipyard::Component, Debug, Clone)]
 pub struct Transform {
     pub position: Vector3,
@@ -24,7 +23,6 @@ impl Transform {
     }
 }
 
-// #[derive(shipyard::Component, Debug, Clone, Trace, Finalize)]
 #[derive(shipyard::Component, Debug, Clone)]
 pub struct Hierarchy {
     pub parent_runtime_id: u64,
