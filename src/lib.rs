@@ -21,6 +21,7 @@ use crate::window::Window;
 mod app;
 mod entity_js;
 mod javascript_script_component_system;
+mod python_script_component_system;
 mod window;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]

@@ -88,6 +88,10 @@ impl Window {
             initialize_app();
         }
 
+        {
+            crate::python_script_component_system::test_python();
+        }
+
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {
