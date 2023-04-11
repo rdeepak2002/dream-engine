@@ -49,9 +49,8 @@ impl Entity {
             self.add_component(hierarchy_component);
             // add to child collection of parent
             let parent_shipyard_id =
-                shipyard::EntityId::from_inner(parent_entity_runtime_id.unwrap()).unwrap();
+                EntityId::from_inner(parent_entity_runtime_id.unwrap()).unwrap();
             let parent_entity: Entity;
-            // parent_entity = Entity::from_ptr(self.scene, parent_shipyard_id);
             parent_entity = Entity::from_handle(parent_shipyard_id.inner());
             let mut parent_hierarchy: Hierarchy = parent_entity.get_component().unwrap();
             if parent_hierarchy.first_child_runtime_id == 0 {
@@ -84,11 +83,18 @@ impl Entity {
         return self.handle;
     }
 
-    pub fn add_component<C: shipyard::TupleAddComponent>(&self, component: C) {
+    pub fn add_component<T: shipyard::TupleAddComponent>(&self, component: T) {
         let mut scene = get_current_scene();
         scene
             .handle
             .add_component(EntityId::from_inner(self.handle).unwrap(), component);
+    }
+
+    pub fn remove_component<T: shipyard::TupleRemove>(&self) {
+        let mut scene = get_current_scene();
+        scene
+            .handle
+            .remove::<T>(EntityId::from_inner(self.handle).unwrap());
     }
 
     pub fn get_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> Option<T> {
