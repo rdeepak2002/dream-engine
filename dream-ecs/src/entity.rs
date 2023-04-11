@@ -104,8 +104,8 @@ impl Entity {
         return comp_opt;
     }
 
-    pub fn has_transform(&self) -> bool {
-        let c: Option<Transform> = self.get_component();
-        c.is_some()
+    pub fn has_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> bool {
+        let comp: Option<T> = self.get_component();
+        return comp.is_some();
     }
 }
