@@ -5,6 +5,7 @@ use boa_engine::{Context, JsResult, JsValue};
 use boa_gc::{Finalize, Trace};
 use cgmath::num_traits::ToPrimitive;
 
+use dream_ecs::component::Transform;
 use dream_ecs::entity::Entity;
 use dream_math::Vector3;
 
@@ -94,7 +95,7 @@ impl EntityJS {
 
         if entity.is_some() {
             let entity = entity.unwrap();
-            let transform = entity.get_transform();
+            let transform: Option<Transform> = entity.get_component();
             if transform.is_some() {
                 let mut transform = transform.unwrap();
                 let new_position = args
@@ -121,7 +122,7 @@ impl EntityJS {
         let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
         if entity.is_some() {
             let entity = entity.unwrap();
-            let transform = entity.get_transform();
+            let transform: Option<Transform> = entity.get_component();
             return if transform.is_some() {
                 let transform = transform.unwrap().clone();
                 // println!("Entity transform {}", transform.to_string());

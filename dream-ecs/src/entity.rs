@@ -42,7 +42,8 @@ impl Entity {
     pub fn attach(&self, parent_entity_runtime_id: Option<u64>) {
         if parent_entity_runtime_id.is_some() {
             // define parent of child component for this entity
-            let mut hierarchy_component = self.get_hierarchy().expect("No hierarchy component");
+            let mut hierarchy_component: Hierarchy =
+                self.get_component().expect("No hierarchy component");
             hierarchy_component.parent_runtime_id =
                 parent_entity_runtime_id.expect("No parent runtime id");
             self.add_component(hierarchy_component);
@@ -52,7 +53,7 @@ impl Entity {
             let parent_entity: Entity;
             // parent_entity = Entity::from_ptr(self.scene, parent_shipyard_id);
             parent_entity = Entity::from_handle(parent_shipyard_id.inner());
-            let mut parent_hierarchy = parent_entity.get_hierarchy().unwrap();
+            let mut parent_hierarchy: Hierarchy = parent_entity.get_component().unwrap();
             if parent_hierarchy.first_child_runtime_id == 0 {
                 parent_hierarchy.num_children += 1;
                 parent_hierarchy.first_child_runtime_id = self.handle;
@@ -71,7 +72,7 @@ impl Entity {
     }
 
     pub fn to_string(&self) -> String {
-        let trans = self.get_transform();
+        let trans: Option<Transform> = self.get_component();
         if trans.is_some() {
             format!("Entity({})", trans.unwrap().to_string())
         } else {
@@ -90,70 +91,21 @@ impl Entity {
             .add_component(EntityId::from_inner(self.handle).unwrap(), component);
     }
 
-    pub fn get_hierarchy(&self) -> Option<Hierarchy> {
-        let mut comp_opt: Option<Hierarchy> = None;
+    pub fn get_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> Option<T> {
+        let mut comp_opt: Option<T> = None;
         let scene = get_current_scene_read_only();
-        scene.handle.run(|vm_pos: shipyard::ViewMut<Hierarchy>| {
+        let system = |vm_pos: shipyard::ViewMut<T>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())
                 .unwrap();
             comp_opt = Some(comp.clone());
-        });
-        return comp_opt;
-    }
-
-    pub fn get_transform(&self) -> Option<Transform> {
-        let mut comp_opt: Option<Transform> = None;
-        let scene = get_current_scene_read_only();
-        scene.handle.run(|vm_pos: shipyard::ViewMut<Transform>| {
-            let comp = vm_pos
-                .get(EntityId::from_inner(self.handle).unwrap())
-                .unwrap();
-            comp_opt = Some(comp.clone());
-        });
+        };
+        scene.handle.run(system);
         return comp_opt;
     }
 
     pub fn has_transform(&self) -> bool {
-        self.get_transform().is_some()
+        let c: Option<Transform> = self.get_component();
+        c.is_some()
     }
-
-    // pub fn get_component<T: shipyard::TupleAddComponent + shipyard::Component>(&self) -> Option<T> {
-    //     let mut comp_opt: Option<T> = None;
-    //     let scene = get_current_scene_read_only();
-    //     // let y = |vm_pos: shipyard::ViewMut<Transform>| {
-    //     //     let comp = vm_pos
-    //     //         .get(EntityId::from_inner(self.handle).unwrap())
-    //     //         .unwrap();
-    //     //     let c = comp.clone();
-    //     //     // comp_opt = Some(c.clone());
-    //     // };
-    //     let x: dyn Test<Transform> = |vm_pos: shipyard::ViewMut<Transform>| {
-    //         let comp = vm_pos
-    //             .get(EntityId::from_inner(self.handle).unwrap())
-    //             .unwrap();
-    //         let c = comp.clone();
-    //         // comp_opt = Some(c.clone());
-    //     };
-    //     scene.handle.run(x);
-    //     return comp_opt;
-    // }
-    //
-    // // pub fn get_component<T: DreamComponent>(&self, component_type: T) -> Option<T> {
-    // //     let mut comp_opt: Option<T> = None;
-    // //     let scene = get_current_scene_read_only();
-    // //     scene.handle.run(|vm_pos: shipyard::ViewMut<Transform>| {
-    // //         let comp = vm_pos
-    // //             .get(EntityId::from_inner(self.handle).unwrap())
-    // //             .unwrap();
-    // //         let c = comp.clone();
-    // //         comp_opt = Some(c);
-    // //     });
-    // //     return comp_opt;
-    // // }
-    // //
-    // // pub fn has_component<T: shipyard::Component>(&self, component_type: T) -> bool {
-    // //     let c = self.get_component(component_type);
-    // //     return c.is_some();
-    // // }
 }
