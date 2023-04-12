@@ -46,7 +46,16 @@ web-sys = { version = "0.3", features = [
     "FileSystem",
     "FileSystemDirectoryEntry",
     "FileSystemDirectoryReader",
-    "FileSystemFlags"
+    "FileSystemFlags",
+    "Navigator",
+    "Permissions",
+    "MimeTypeArray",
+    "PluginArray",
+    "MediaCapabilities",
+    "ServiceWorkerContainer",
+    "Presentation",
+    "CredentialsContainer",
+    "Clipboard"
 ] }
 
 [build-dependencies]
