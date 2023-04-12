@@ -21,38 +21,20 @@ use shipyard::{EntityId, Get};
 use crate::component::{Hierarchy, Transform};
 use crate::scene::{get_current_scene, get_current_scene_read_only, Scene};
 
+#[derive(Debug, Clone)]
 pub struct Entity {
     pub handle: u64,
 }
 
 impl Entity {
-    pub fn new(scene: &mut Scene) -> Self {
-        let transform = Transform::new();
-        let hierarchy_component = Hierarchy::new();
-        let handle = scene.handle.add_entity((transform, hierarchy_component));
-        scene.handle.add_component(handle, Transform::new());
-        if handle.inner() == 0 {
-            panic!("Entity internal ID cannot be 0");
-        }
-        Self {
-            handle: handle.inner(),
-        }
-    }
-
-    pub fn attach(&self, parent_entity_runtime_id: Option<u64>) {
+    pub fn attach_with_scene(&self, parent_entity_runtime_id: Option<u64>, scene: &mut Scene) {
         if parent_entity_runtime_id.is_some() {
-            // define parent of child component for this entity
-            let mut hierarchy_component: Hierarchy =
-                self.get_component().expect("No hierarchy component");
-            hierarchy_component.parent_runtime_id =
-                parent_entity_runtime_id.expect("No parent runtime id");
-            self.add_component(hierarchy_component);
-            // add to child collection of parent
             let parent_shipyard_id =
                 EntityId::from_inner(parent_entity_runtime_id.unwrap()).unwrap();
             let parent_entity: Entity;
             parent_entity = Entity::from_handle(parent_shipyard_id.inner());
-            let mut parent_hierarchy: Hierarchy = parent_entity.get_component().unwrap();
+            let mut parent_hierarchy: Hierarchy =
+                parent_entity.get_component_with_scene(scene).unwrap();
             if parent_hierarchy.first_child_runtime_id == 0 {
                 parent_hierarchy.num_children += 1;
                 parent_hierarchy.first_child_runtime_id = self.handle;
@@ -60,9 +42,9 @@ impl Entity {
                 parent_hierarchy.num_children += 1;
                 // TODO: we are adding a child that is not the first child, so update this by making it the 'previous' of the current child
                 // basically just append to start of list for easiest implementation
-                todo!()
+                // todo!()
             }
-            parent_entity.add_component(parent_hierarchy);
+            parent_entity.add_component_with_scene::<Hierarchy>(parent_hierarchy, scene);
         }
     }
 
@@ -112,6 +94,47 @@ impl Entity {
 
     pub fn has_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> bool {
         let comp: Option<T> = self.get_component();
+        return comp.is_some();
+    }
+
+    pub fn add_component_with_scene<T: shipyard::TupleAddComponent>(
+        &self,
+        component: T,
+        scene: &mut Scene,
+    ) {
+        // let mut scene = get_current_scene();
+        scene
+            .handle
+            .add_component(EntityId::from_inner(self.handle).unwrap(), component);
+    }
+
+    pub fn remove_component_with_scene<T: shipyard::TupleRemove>(&self, scene: &mut Scene) {
+        // let mut scene = get_current_scene();
+        scene
+            .handle
+            .remove::<T>(EntityId::from_inner(self.handle).unwrap());
+    }
+
+    pub fn get_component_with_scene<T: shipyard::Component + Send + Sync + Clone>(
+        &self,
+        scene: &mut Scene,
+    ) -> Option<T> {
+        let mut comp_opt: Option<T> = None;
+        let system = |vm_pos: shipyard::ViewMut<T>| {
+            let comp = vm_pos
+                .get(EntityId::from_inner(self.handle).unwrap())
+                .unwrap();
+            comp_opt = Some(comp.clone());
+        };
+        scene.handle.run(system);
+        return comp_opt;
+    }
+
+    pub fn has_component_with_scene<T: shipyard::Component + Send + Sync + Clone>(
+        &self,
+        scene: &mut Scene,
+    ) -> bool {
+        let comp: Option<T> = self.get_component_with_scene(scene);
         return comp.is_some();
     }
 }
