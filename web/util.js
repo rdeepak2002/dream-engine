@@ -39,22 +39,22 @@ function disableWebKeyboardEvents() {
     }
 }
 
-const fetchResourceFiles = async () => {
+const fetchResourceFile = async (root, resourceFileDescriptor) => {
     // url of the file system for debugging purposes
     const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
-    // get root directory of file system
-    let root;
-    try {
-        root = await navigator.storage.getDirectory();
-    } catch (e) {
-        console.error(`Unable to get root directory of temporary file system`, e);
-        throw new Error(`Unable to get root directory of temporary file system`);
+    const filepath_arr = resourceFileDescriptor.filepath.split('/');
+    // create the necessary directories to place the file into
+    let curDir = root;
+    for (let i = 0; i < filepath_arr.length - 1; i++) {
+        const dirName = filepath_arr[i];
+        if (dirName && dirName !== "") {
+            curDir = await curDir.getDirectoryHandle(dirName, {create: true});
+            console.log('Created directory ', dirName);
+        }
     }
-    // get url of file to fetch
-    // TODO: we need to iterate through all files rather than just one
-    const fileName = `cube.glb`;
+    const fileName = filepath_arr[filepath_arr.length - 1];
     const filePath = `/${fileName}`;
-    const fileUrl = `/res${filePath}`;
+    const fileUrl = resourceFileDescriptor?.fileUrl || `/res${filePath}`;
     // fetch the file from the URL and get the blob data
     let fetchedFileBlob;
     try {
@@ -68,7 +68,7 @@ const fetchResourceFiles = async () => {
     // write the file to webkit persistent storage
     try {
         console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`)
-        const fileHandle = await root.getFileHandle(fileName, {create: true});
+        const fileHandle = await curDir.getFileHandle(fileName, {create: true});
         const writable = await fileHandle.createWritable();
         await writable.write(fetchedFileBlob);
         await writable.close();
@@ -76,6 +76,36 @@ const fetchResourceFiles = async () => {
         console.error(`Unable to write ${filePath} to file system`, e);
         throw new Error(`Unable to write ${filePath} to file system`)
     }
+}
+
+const fetchResourceFiles = async () => {
+    // get root directory of file system
+    let root;
+    try {
+        root = await navigator.storage.getDirectory();
+    } catch (e) {
+        console.error(`Unable to get root directory of temporary file system`, e);
+        throw new Error(`Unable to get root directory of temporary file system`);
+    }
+    // clear file system by clearing root directory
+    root.remove();
+    root = await navigator.storage.getDirectory();
+
+    // TODO: in long run we want users to toggle between a local and cloud saved project
+    // TODO: have JSON file (or db thingy) that specifies what files are a part of the project & urls (so in future we can do google docs approach if user chooses to do a cloud synced project)
+    // TODO: stream read json file that describes each resourceFileDescriptor (or read from db for cloud saved projects)
+    // TODO: use await navigator.storage.estimate() to ensure we have enough storage space available
+    // fetch each resource file
+    await fetchResourceFile(root, {
+        filepath: "cube.glb",
+        fileUrl: undefined,
+    });
+    // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)
+    // and the filepath + url can be stored in a db collection as a single db entry
+    // await fetchResourceFile(root, {
+    //     filepath: "foo/bar/Box.glb",
+    //     fileUrl: "http://127.0.0.1:8080/res/Box.glb",
+    // });
 }
 
 const startApplication = (numMB = 1024) => {
@@ -88,7 +118,7 @@ const startApplication = (numMB = 1024) => {
                 });
             }).catch((error) => {
                 console.error('Unable to fetch resource files', error);
-                alert('Unable to fetch resource files');
+                alert('Unable to fetch resource files, please try again later');
             });
         }, () => {
             alert(`Unable to initialize ${numMB} MB of space for temporary file system`);
