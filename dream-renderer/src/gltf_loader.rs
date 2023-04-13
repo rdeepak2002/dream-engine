@@ -3,46 +3,22 @@ use std::io::{Read, Seek, SeekFrom};
 
 use cfg_if::cfg_if;
 use gltf::buffer::Source;
-use wgpu::util::DeviceExt;
-
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen_file_reader::WebSysFile;
 #[cfg(target_arch = "wasm32")]
 use web_sys::console;
-
-use crate::model::{Mesh, ModelVertex};
-use crate::{model, texture};
+use wgpu::util::DeviceExt;
 
 #[cfg(target_arch = "wasm32")]
-fn format_url(file_name: &str) -> reqwest::Url {
-    let window = web_sys::window().unwrap();
-    let location = window.location();
-    let base = reqwest::Url::parse(&format!(
-        "{}/{}/",
-        location.origin().unwrap(),
-        option_env!("RES_PATH").unwrap_or("res"),
-    ))
-    .unwrap();
-    base.join(file_name).unwrap()
-}
+use crate::js_fs::read_file_from_web_storage;
+use crate::model::Mesh;
 
 pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            let url = format_url(file_name);
-            let data = reqwest::get(url)
-                .await?
-                .bytes()
-                .await?
-                .to_vec();
-            // let data = reqwest::get(file_name)
-            //     .await?
-            //     .bytes()
-            //     .await?
-            //     .to_vec();
-            // TODO: maybe utilize formatting to set a url variable
+            let data = read_file_from_web_storage(file_name).await;
         } else {
             let path = std::path::Path::new(env!("OUT_DIR"))
                 .join("res")

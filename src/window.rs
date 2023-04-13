@@ -8,13 +8,6 @@ use winit::{
 use crate::app::initialize_app;
 use crate::app::update_app;
 
-// TODO: only use this during wasm build
-// use wasm_bindgen::prelude::*;
-// #[wasm_bindgen(inline_js = "export function add(a, b) { return a + b; }")]
-// extern "C" {
-//     fn add(a: u32, b: u32) -> u32;
-// }
-
 pub struct Window {
     pub window: winit::window::Window,
     pub event_loop: EventLoop<()>,
@@ -63,17 +56,6 @@ impl Window {
         // listen for screen resizing events for web build
         #[allow(unused_variables)]
         let (tx, rx) = unbounded::<winit::dpi::LogicalSize<f32>>();
-
-        // TODO: only do this during wasm build
-        {
-            // let x = add(1, 1);
-            // log::warn!("{}", x);
-        }
-        // let win = web_sys::window().unwrap();
-        // let navigator = win.navigator();
-        // let storage: StorageManager = navigator.storage();
-        // let root_directory_1 = storage.get_directory();
-        // let root_directory_2 = storage.getDirectory();
 
         #[cfg(target_arch = "wasm32")]
         {

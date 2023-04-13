@@ -78,14 +78,6 @@ const fetchResourceFiles = async () => {
     }
 }
 
-const readFileFromStorage = async (filePath) => {
-    let root = await navigator.storage.getDirectory();
-    let fileHandle = await root.getFileHandle(filePath);
-    const file = await fileHandle.getFile();
-    const buffer = await file.arrayBuffer();
-    return new Uint8Array(buffer);
-}
-
 const startApplication = (numMB = 1024) => {
     navigator.webkitPersistentStorage.requestQuota(numMB * 1024 * 1024, () => {
         window.webkitRequestFileSystem(window.TEMPORARY, numMB * 1024 * 1024, () => {

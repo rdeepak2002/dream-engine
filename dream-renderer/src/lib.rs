@@ -24,6 +24,7 @@ use crate::model::{ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
+pub mod js_fs;
 pub mod model;
 pub mod texture;
 
