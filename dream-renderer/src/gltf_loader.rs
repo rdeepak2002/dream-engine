@@ -37,6 +37,12 @@ pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
                 .bytes()
                 .await?
                 .to_vec();
+            // let data = reqwest::get(file_name)
+            //     .await?
+            //     .bytes()
+            //     .await?
+            //     .to_vec();
+            // TODO: maybe utilize formatting to set a url variable
         } else {
             let path = std::path::Path::new(env!("OUT_DIR"))
                 .join("res")

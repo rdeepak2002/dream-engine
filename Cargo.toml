@@ -38,7 +38,9 @@ rustpython-parser = { git = "https://github.com/RustPython/RustPython", tag = "v
 rustpython-pylib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
 rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
 rustpython-vm = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, features = ["compiler", "encodings"] }
-web-sys = { version = "0.3", features = [
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.30"
+web-sys = { version = "0.3.61", features = [
     "Document",
     "Window",
     "Element",
@@ -55,7 +57,14 @@ web-sys = { version = "0.3", features = [
     "ServiceWorkerContainer",
     "Presentation",
     "CredentialsContainer",
-    "Clipboard"
+    "Clipboard",
+    "StorageManager",
+    "Storage",
+    "StorageType",
+    "StorageEventInit",
+    "StorageEvent",
+    "StorageEstimate",
+    "CacheStorage"
 ] }
 
 [build-dependencies]
@@ -74,9 +83,9 @@ reqwest = { version = "0.11" }
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
 wgpu = { version = "0.15", features = ["webgl"] }
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
-#web-sys = { version = "0.3", features = [
+#wasm-bindgen = "0.2"
+#wasm-bindgen-futures = "0.4.30"
+#web-sys = { version = "0.3.61", features = [
 #    "Document",
 #    "Window",
 #    "Element",

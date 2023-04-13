@@ -51,7 +51,8 @@ const fetchResourceFiles = async () => {
         throw new Error(`Unable to get root directory of temporary file system`);
     }
     // get url of file to fetch
-    const fileName = `Box.glb`;
+    // TODO: we need to iterate through all files rather than just one
+    const fileName = `cube.glb`;
     const filePath = `/${fileName}`;
     const fileUrl = `/res${filePath}`;
     // fetch the file from the URL and get the blob data
@@ -75,6 +76,14 @@ const fetchResourceFiles = async () => {
         console.error(`Unable to write ${filePath} to file system`, e);
         throw new Error(`Unable to write ${filePath} to file system`)
     }
+}
+
+const readFileFromStorage = async (filePath) => {
+    let root = await navigator.storage.getDirectory();
+    let fileHandle = await root.getFileHandle(filePath);
+    const file = await fileHandle.getFile();
+    const buffer = await file.arrayBuffer();
+    return new Uint8Array(buffer);
 }
 
 const startApplication = (numMB = 1024) => {

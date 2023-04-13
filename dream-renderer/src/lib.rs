@@ -424,7 +424,9 @@ impl RendererWgpu {
         //     usage: wgpu::BufferUsages::INDEX,
         // });
 
-        let mesh_list = gltf_loader::read_gltf("cube.glb", &device).await;
+        // let cube_path = "filesystem:http://127.0.0.1:8080/temporary/Box.glb";
+        let cube_path = "cube.glb";
+        let mesh_list = gltf_loader::read_gltf(cube_path, &device).await;
         // let mesh_list = gltf_loader::read_gltf("Box.glb", &device).await;
         // let mesh_list = gltf_loader::read_gltf("ice_cube.glb", &device).await;
         // let mesh_list = gltf_loader::read_gltf("cube_sketchfab.glb", &device).await;
