@@ -78,6 +78,10 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
     }
 }
 
+// TODO: in long run we want to move all this logic to be called directly by Rust like what we are doing in dream-fs/js/dream-fs.js
+// ^ so whenever project starts up in general we want to read through the JSON file or query db to get all the file resource descriptors
+// then for each one 'download' it to our project (if its locally stored, dont do anything on desktop build when downloading a file)
+// but ofc for web build we want to run above fetchResource() method when downloading a file
 const fetchResourceFiles = async () => {
     // get root directory of file system
     let root;
