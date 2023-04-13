@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/dream-renderer/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/dream-ecs/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/dream-math/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dream-fs/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/dream-resource/target" />
       <excludeFolder url="file://$MODULE_DIR$/dream-editor/target" />

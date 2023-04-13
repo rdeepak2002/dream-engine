@@ -71,5 +71,6 @@ members = [
     "dream-renderer",
     "dream-ecs",
     "dream-resource",
-    "dream-math"
+    "dream-math",
+    "dream-fs"
 ]
