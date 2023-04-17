@@ -14,7 +14,9 @@ Deepak Ramalingam
 
 ## About
 
-Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust. 
+Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust.
+
+DREAM stands for D(eepaks game engine is) REA(lly a) M(azing).
 
 ## Requirements
 
@@ -22,7 +24,8 @@ Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust.
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (Version 0.10.3)
 
 - wasm32-unknown-unknown target for Rust
-    - Installation command:
+  - Installation command:
+
 ```shell
 rustup target add wasm32-unknown-unknown
 ```

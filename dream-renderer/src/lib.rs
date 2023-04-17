@@ -16,72 +16,35 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::cell::RefCell;
 use std::iter;
+use std::rc::Rc;
 
 use wgpu::util::DeviceExt;
 
-use crate::model::{ModelVertex, Vertex};
+use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
 pub mod model;
 pub mod texture;
 
-// lib.rs
-// #[repr(C)]
-// #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-// struct Vertex {
-//     position: [f32; 3],
-//     tex_coords: [f32; 2],
-// }
+// Define our error types. These may be customized for our error handling cases.
+// Now we will be able to write our own errors, defer to an underlying error
+// implementation, or do something in between.
+#[derive(Debug, Clone)]
+pub struct PathNotFoundError;
 
-// lib.rs
-// impl Vertex {
-//     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
-//         wgpu::VertexBufferLayout {
-//             array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-//             step_mode: wgpu::VertexStepMode::Vertex,
-//             attributes: &[
-//                 // position
-//                 wgpu::VertexAttribute {
-//                     offset: 0,
-//                     shader_location: 0,
-//                     format: wgpu::VertexFormat::Float32x3,
-//                 },
-//                 // uv
-//                 wgpu::VertexAttribute {
-//                     offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-//                     shader_location: 1,
-//                     format: wgpu::VertexFormat::Float32x2,
-//                 },
-//             ],
-//         }
-//     }
-// }
-
-// lib.rs
-// const VERTICES: &[Vertex] = &[
-//     Vertex {
-//         position: [-0.0868241, 0.49240386, 0.0],
-//         tex_coords: [0.4131759, 0.00759614],
-//     }, // A
-//     Vertex {
-//         position: [-0.49513406, 0.06958647, 0.0],
-//         tex_coords: [0.0048659444, 0.43041354],
-//     }, // B
-//     Vertex {
-//         position: [-0.21918549, -0.44939706, 0.0],
-//         tex_coords: [0.28081453, 0.949397],
-//     }, // C
-//     Vertex {
-//         position: [0.35966998, -0.3473291, 0.0],
-//         tex_coords: [0.85967, 0.84732914],
-//     }, // D
-//     Vertex {
-//         position: [0.44147372, 0.2347359, 0.0],
-//         tex_coords: [0.9414737, 0.2652641],
-//     }, // E
-// ];
+// Generation of an error is completely separate from how it is displayed.
+// There's no need to be concerned about cluttering complex logic with the display style.
+//
+// Note that we don't store any extra info about the errors. This means we can't state
+// which string failed to parse without modifying our types to carry that information.
+impl std::fmt::Display for PathNotFoundError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "unable to find file at path")
+    }
+}
 
 // const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
@@ -142,7 +105,9 @@ pub struct RendererWgpu {
     pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     pub surface_format: wgpu::TextureFormat,
-    pub mesh_list: Vec<crate::model::Mesh>,
+    // pub mesh_list: Vec<model::Mesh>,
+    // pub mesh_guids: std::collections::HashMap<String, Rc<Model>>,
+    pub model_guids: std::collections::HashMap<String, Model>,
 }
 
 impl RendererWgpu {
@@ -425,8 +390,9 @@ impl RendererWgpu {
         // });
 
         // let cube_path = "filesystem:http://127.0.0.1:8080/temporary/Box.glb";
-        let cube_path = "cube.glb";
-        let mesh_list = gltf_loader::read_gltf(cube_path, &device).await;
+        // let mesh_path = "cube.glb";
+        // let mesh_list = gltf_loader::read_gltf(mesh_path, &device).await;
+        // let model = Model::new(Vec::new(), Vec::new());
         // let mesh_list = gltf_loader::read_gltf("Box.glb", &device).await;
         // let mesh_list = gltf_loader::read_gltf("ice_cube.glb", &device).await;
         // let mesh_list = gltf_loader::read_gltf("cube_sketchfab.glb", &device).await;
@@ -456,7 +422,8 @@ impl RendererWgpu {
             camera_buffer,
             camera_bind_group,
             surface_format,
-            mesh_list,
+            // mesh_list,
+            model_guids: Default::default(),
         }
     }
 
@@ -485,6 +452,37 @@ impl RendererWgpu {
             self.depth_texture =
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
+    }
+
+    pub fn draw_model(&mut self, model_guid: &str) -> bool {
+        todo!();
+        return true;
+    }
+
+    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32) -> bool {
+        todo!();
+        return true;
+    }
+
+    pub async fn store_model(
+        &mut self,
+        model_guid_in: Option<&str>,
+        model_path: &str,
+    ) -> Result<String, PathNotFoundError> {
+        // let model_guid = "dummy_guid";
+        // let mesh_path = "cube.glb";
+        let model_guid;
+        if model_guid_in.is_some() {
+            model_guid = model_guid_in.unwrap();
+        } else {
+            // TODO: auto-generate guid
+            todo!();
+            model_guid = "dummy_guid";
+        }
+        let mesh_list = gltf_loader::read_gltf(model_path, &self.device).await;
+        let model = Model::new(mesh_list, Vec::new());
+        self.model_guids.insert(model_guid.parse().unwrap(), model);
+        return Ok(model_guid.parse().unwrap());
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -538,12 +536,44 @@ impl RendererWgpu {
             // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
-            let cube_mesh = self.mesh_list.get(0).expect("No mesh available at index 0");
-            let num_indices = cube_mesh.num_elements;
-            render_pass.set_vertex_buffer(0, cube_mesh.vertex_buffer.slice(..));
-            render_pass
-                .set_index_buffer(cube_mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
-            render_pass.draw_indexed(0..num_indices, 0, 0..1);
+            // TODO: actually add a model with string key 'dummy_guid'
+            let model_guid = "dummy_guid";
+            let model = self.model_guids.get(model_guid).expect(&*format!(
+                "no model loaded in renderer with guid {}",
+                model_guid
+            ));
+            let mesh_index = 0;
+            render_pass.draw_mesh(model.meshes.get(mesh_index).expect(&*format!(
+                "no mesh at index {} for model with guid {}",
+                mesh_index, model_guid
+            )));
+            // let weak_model = Rc::downgrade(self.mesh_guids.get(mesh_guid).expect(&*format!(
+            //     "No mesh with guid {} is loaded in the renderer",
+            //     mesh_guid
+            // )));
+            // let model = self
+            //     .mesh_guids
+            //     .get(mesh_guid)
+            //     .expect(
+            //         format!(
+            //             "mesh with guid {} not stored in renderer resources",
+            //             mesh_guid
+            //         )
+            //         .as_mut_str(),
+            //     )
+            //     .clone();
+            // let mesh_list = model.meshes.clone();
+            // let cube_mesh = mesh_list
+            //     .get(0)
+            //     .expect("No mesh available at index 0")
+            //     .clone();
+            // let num_indices = cube_mesh.num_elements;
+            // let vertex_buffer_slice = cube_mesh.vertex_buffer.slice(..).clone();
+            // let index_buffer_slice = cube_mesh.index_buffer.slice(..).clone();
+            // render_pass.draw_mesh(cube_mesh.clone());
+            // render_pass.set_vertex_buffer(0, vertex_buffer_slice);
+            // render_pass.set_index_buffer(index_buffer_slice, wgpu::IndexFormat::Uint32);
+            // render_pass.draw_indexed(0..num_indices, 0, 0..1);
 
             // render_pass.draw_mesh()
         }

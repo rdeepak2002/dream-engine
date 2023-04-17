@@ -84,6 +84,14 @@ impl Window {
         )
         .await;
 
+        // TODO: in render method allow us to call renderer.draw_mesh("dummy_guid", 0)
+        // ^ cuz rn the code is always just drawing whatever has id "dummy_guid"
+        // TODO: remove this
+        renderer
+            .store_model(Some("dummy_guid"), "cube.glb")
+            .await
+            .expect("Error loading model");
+
         {
             initialize_app();
         }
