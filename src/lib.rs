@@ -3,6 +3,7 @@ use dream_renderer::RendererWgpu;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
+use crate::app::App;
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///
@@ -18,7 +19,6 @@ use wasm_bindgen::prelude::*;
 ///
 /// You should have received a copy of the GNU Affero General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-use crate::app::update_app;
 use crate::window::Window;
 
 mod app;
@@ -29,12 +29,13 @@ mod window;
 
 /// Update function called every update loop which returns true when the application should close
 fn update(
+    app: &mut App,
     renderer: &mut RendererWgpu,
     editor: &mut EditorEguiWgpu,
     window: &winit::window::Window,
 ) -> bool {
     // update component systems (scripts, physics, etc.)
-    update_app();
+    app.update();
 
     // draw the scene (to texture)
     match renderer.render() {
@@ -76,6 +77,7 @@ pub async fn run() {
         }
     }
 
+    let app = Box::new(App::new());
     let window = Window::new();
-    window.run(update).await;
+    window.run(app, update).await;
 }

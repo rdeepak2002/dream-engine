@@ -28,29 +28,16 @@ use dream_ecs::scene::get_current_scene;
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
 
-static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
-
-pub fn update_app() {
-    APP.write().unwrap().update();
-}
-
-pub fn get_app_read_only() -> RwLockReadGuard<'static, App> {
-    return APP.read().unwrap();
-}
-
-pub fn get_app() -> RwLockWriteGuard<'static, App> {
-    return APP.write().unwrap();
-}
-
 pub struct App {
     should_init: bool,
     pub dt: f32,
     pub javascript_component_system: Option<Box<JavaScriptScriptComponentSystem>>,
     pub python_component_system: Option<Box<PythonScriptComponentSystem>>,
+    // pub component_systems: Vec<Option<Box<dyn ComponentSystem>>>, <- to do this, we might have to not use RwLock for App, but tbh that seems fine cuz we only have one instance anyway
 }
 
 impl App {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             should_init: true,
             dt: 0.0,
@@ -75,7 +62,7 @@ impl App {
         self.python_component_system = Some(Box::new(PythonScriptComponentSystem::new()));
     }
 
-    fn update(&mut self) -> f32 {
+    pub fn update(&mut self) -> f32 {
         if self.should_init {
             self.initialize();
             self.should_init = false;

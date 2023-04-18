@@ -6,11 +6,15 @@ use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene_read_only;
 
-pub struct PythonScriptComponentSystem {}
+pub struct PythonScriptComponentSystem {
+    pub interpreter: rustpython_vm::Interpreter,
+}
 
 impl PythonScriptComponentSystem {
     pub fn new() -> Self {
-        Self {}
+        Self {
+            interpreter: vm::Interpreter::without_stdlib(Default::default()),
+        }
     }
 }
 
@@ -23,7 +27,7 @@ impl ComponentSystem for PythonScriptComponentSystem {
         }
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
-            vm::Interpreter::without_stdlib(Default::default()).enter(|vm| {
+            self.interpreter.enter(|vm| {
                 let scope = vm.new_scope_with_builtins();
                 let mut source_path = "<embedded>";
                 #[cfg(target_arch = "wasm32")]
@@ -41,8 +45,8 @@ impl ComponentSystem for PythonScriptComponentSystem {
                     .try_int(vm)
                     .expect("Error getting python result")
                     .to_string();
-                println!("Result from Python: {}", res);
-                log::warn!("Result from Python: {}", res);
+                // println!("Result from Python: {}", res);
+                // log::warn!("Result from Python: {}", res);
             })
         }
     }

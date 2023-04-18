@@ -8,7 +8,7 @@ use winit::{
 use dream_editor::EditorEguiWgpu;
 use dream_renderer::RendererWgpu;
 
-use crate::app::update_app;
+use crate::app::App;
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -56,7 +56,13 @@ impl Window {
 
     pub async fn run(
         self,
-        update_func: fn(&mut RendererWgpu, &mut EditorEguiWgpu, &winit::window::Window) -> bool,
+        mut app: Box<App>,
+        update_func: fn(
+            &mut App,
+            &mut RendererWgpu,
+            &mut EditorEguiWgpu,
+            &winit::window::Window,
+        ) -> bool,
     ) {
         // listen for screen resizing events for web build
         #[allow(unused_variables)]
@@ -104,7 +110,7 @@ impl Window {
                         self.window.set_inner_size(size);
                     }
 
-                    if update_func(&mut renderer, &mut editor, &self.window) {
+                    if update_func(app.as_mut(), &mut renderer, &mut editor, &self.window) {
                         *control_flow = ControlFlow::Exit;
                     }
                 }
