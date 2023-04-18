@@ -30,6 +30,7 @@ fn update(
 ) -> bool {
     // update component systems (scripts, physics, etc.)
     app.update();
+    app.draw(renderer);
 
     // draw the scene (to texture)
     match renderer.render() {

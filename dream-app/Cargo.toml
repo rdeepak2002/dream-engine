@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 dream-math = { path = "../dream-math", version = "0.1.0" }
 dream-ecs = { path = "../dream-ecs", version = "0.1.0" }
+dream-renderer = { path = "../dream-renderer", version = "0.1.0" }
 shipyard = "0.6.2"
 anyhow = "1.0"
 cfg-if = "1"

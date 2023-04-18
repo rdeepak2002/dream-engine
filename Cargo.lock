@@ -914,6 +914,7 @@ dependencies = [
  "crossbeam-channel",
  "dream-ecs",
  "dream-math",
+ "dream-renderer",
  "env_logger",
  "epi",
  "fs_extra",

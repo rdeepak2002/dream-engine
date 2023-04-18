@@ -23,6 +23,7 @@ use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene;
+use dream_renderer::RendererWgpu;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
@@ -76,5 +77,11 @@ impl App {
             pcs.update(self.dt);
         }
         return self.dt;
+    }
+
+    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
+        // TODO: implement this (look at email for details)
+        todo!();
+        // renderer.draw_mesh("dummy_guid", 0); // TODO: also pass in transform matrix after testing this with other models
     }
 }
