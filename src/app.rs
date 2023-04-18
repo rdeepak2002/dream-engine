@@ -26,12 +26,9 @@ use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
+use crate::python_script_component_system::PythonScriptComponentSystem;
 
 static APP: Lazy<RwLock<App>> = Lazy::new(|| RwLock::new(App::new()));
-
-pub fn initialize_app() {
-    APP.write().unwrap().initialize();
-}
 
 pub fn update_app() {
     APP.write().unwrap().update();
@@ -46,15 +43,19 @@ pub fn get_app() -> RwLockWriteGuard<'static, App> {
 }
 
 pub struct App {
+    should_init: bool,
     pub dt: f32,
     pub javascript_component_system: Option<Box<JavaScriptScriptComponentSystem>>,
+    pub python_component_system: Option<Box<PythonScriptComponentSystem>>,
 }
 
 impl App {
     fn new() -> Self {
         Self {
+            should_init: true,
             dt: 0.0,
             javascript_component_system: None,
+            python_component_system: None,
         }
     }
 
@@ -70,15 +71,23 @@ impl App {
                 .add_component(Transform::from(dream_math::Vector3::from(2., 1., 1.)));
         }
         // init component systems
-        let javascript_component_system = JavaScriptScriptComponentSystem::new();
-        self.javascript_component_system = Some(Box::new(javascript_component_system));
+        self.javascript_component_system = Some(Box::new(JavaScriptScriptComponentSystem::new()));
+        self.python_component_system = Some(Box::new(PythonScriptComponentSystem::new()));
     }
 
     fn update(&mut self) -> f32 {
+        if self.should_init {
+            self.initialize();
+            self.should_init = false;
+        }
         self.dt = 1.0 / 60.0;
         if self.javascript_component_system.is_some() {
             let jcs = self.javascript_component_system.as_mut().unwrap();
             jcs.update(self.dt);
+        }
+        if self.python_component_system.is_some() {
+            let pcs = self.python_component_system.as_mut().unwrap();
+            pcs.update(self.dt);
         }
         return self.dt;
     }

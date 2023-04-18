@@ -113,6 +113,7 @@ const fetchResourceFiles = async () => {
 }
 
 const startApplication = (numMB = 1024) => {
+    // TODO: persistent storage type is deprecated
     navigator.webkitPersistentStorage.requestQuota(numMB * 1024 * 1024, () => {
         window.webkitRequestFileSystem(window.TEMPORARY, numMB * 1024 * 1024, () => {
             fetchResourceFiles().then(() => {

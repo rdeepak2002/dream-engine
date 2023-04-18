@@ -3,9 +3,9 @@ use wgpu::util::DeviceExt;
 
 use dream_fs::load_binary;
 
-use crate::model::Mesh;
+use crate::model::{Mesh, Model};
 
-pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Vec<Mesh> {
+pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
     let gltf = gltf::Gltf::from_slice(
         &load_binary(path)
             .await
@@ -115,5 +115,5 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Vec<Mesh> {
         }
     }
 
-    return meshes;
+    return Model::new(meshes, Vec::new());
 }

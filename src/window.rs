@@ -5,7 +5,9 @@ use winit::{
     window::WindowBuilder,
 };
 
-use crate::app::initialize_app;
+use dream_editor::EditorEguiWgpu;
+use dream_renderer::RendererWgpu;
+
 use crate::app::update_app;
 
 pub struct Window {
@@ -52,7 +54,10 @@ impl Window {
         Self { window, event_loop }
     }
 
-    pub async fn start_loop(self) {
+    pub async fn run(
+        self,
+        update_func: fn(&mut RendererWgpu, &mut EditorEguiWgpu, &winit::window::Window) -> bool,
+    ) {
         // listen for screen resizing events for web build
         #[allow(unused_variables)]
         let (tx, rx) = unbounded::<winit::dpi::LogicalSize<f32>>();
@@ -92,14 +97,6 @@ impl Window {
             .await
             .expect("Error loading model");
 
-        {
-            initialize_app();
-        }
-
-        {
-            crate::python_script_component_system::test_python();
-        }
-
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {
@@ -107,40 +104,9 @@ impl Window {
                         self.window.set_inner_size(size);
                     }
 
-                    // using unsafe here for same reason as mentioned
-                    // above for initialization of this App
-                    {
-                        update_app();
+                    if update_func(&mut renderer, &mut editor, &self.window) {
+                        *control_flow = ControlFlow::Exit;
                     }
-
-                    match renderer.render() {
-                        Ok(_) => {}
-                        // Reconfigure the surface if it's lost or outdated
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&renderer);
-                        }
-                        // The system is out of memory, we should probably quit
-                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        // We're ignoring timeouts
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                    }
-
-                    match editor.render_wgpu(&renderer, &self.window) {
-                        Ok(_) => {}
-                        // Reconfigure the surface if it's lost or outdated
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&renderer);
-                        }
-                        // The system is out of memory, we should probably quit
-                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        // We're ignoring timeouts
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                    }
-
-                    // set aspect ratio of camera for renderer after rendering editor and knowing the size of the center panel
-                    renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
                 }
                 Event::WindowEvent { event, .. } => {
                     if !editor.handle_event(&event) {

@@ -479,8 +479,7 @@ impl RendererWgpu {
             todo!();
             model_guid = "dummy_guid";
         }
-        let mesh_list = gltf_loader::read_gltf(model_path, &self.device).await;
-        let model = Model::new(mesh_list, Vec::new());
+        let model = gltf_loader::read_gltf(model_path, &self.device).await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         return Ok(model_guid.parse().unwrap());
     }
