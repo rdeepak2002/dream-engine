@@ -45,8 +45,9 @@ fn update(
     }
 
     // draw editor
-    // TODO: maybe we don't have to pass in window... it seems like it just uses an egui input anyway
-    match editor.render_wgpu(&renderer, &window) {
+    let editor_raw_input = editor.egui_winit_state.take_egui_input(&window);
+    let editor_pixels_per_point = window.scale_factor() as f32;
+    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
         Ok(_) => {}
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
             renderer.resize(renderer.size);

@@ -1,11 +1,11 @@
-use egui::Widget;
+use egui::{RawInput, Widget};
 
 pub struct EditorEguiWgpu {
     pub depth_texture_egui: dream_renderer::texture::Texture,
     pub renderer_aspect_ratio: f32,
     egui_wgpu_renderer: egui_wgpu::Renderer,
     egui_context: egui::Context,
-    egui_winit_state: egui_winit::State,
+    pub egui_winit_state: egui_winit::State,
     file_epaint_texture_id: egui::epaint::TextureId,
     play_icon_epaint_texture_id: egui::epaint::TextureId,
     directory_epaint_texture_id: egui::epaint::TextureId,
@@ -78,14 +78,15 @@ impl EditorEguiWgpu {
     pub fn render_wgpu(
         &mut self,
         state: &dream_renderer::RendererWgpu,
-        window: &winit::window::Window,
+        input: RawInput,
+        pixels_per_point: f32,
     ) -> Result<(), wgpu::SurfaceError> {
         let output = state.surface.get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let input = self.egui_winit_state.take_egui_input(&window);
+        // let input = self.egui_winit_state.take_egui_input(&window);
         self.egui_context.begin_frame(input);
         {
             if state.frame_texture_view.is_some() {
@@ -120,7 +121,7 @@ impl EditorEguiWgpu {
 
             let egui_screen_descriptor = egui_wgpu::renderer::ScreenDescriptor {
                 size_in_pixels: [state.config.width, state.config.height],
-                pixels_per_point: window.scale_factor() as f32,
+                pixels_per_point,
             };
 
             self.egui_wgpu_renderer.update_buffers(
