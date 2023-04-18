@@ -44,7 +44,8 @@ impl ComponentSystem for JavaScriptScriptComponentSystem {
         }
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
-            let js_code: String = include_str!("../res/script.js").into();
+            // TODO: read this using read bytes method defined in dream-fs
+            let js_code: String = include_str!("../../res/script.js").into();
             let mut context = boa_engine::Context::default();
 
             // evaluate all code (expects a javascript class object to be returned at the end)

@@ -5,10 +5,9 @@ use winit::{
     window::WindowBuilder,
 };
 
+use dream_app::app::App;
 use dream_editor::EditorEguiWgpu;
 use dream_renderer::RendererWgpu;
-
-use crate::app::App;
 
 pub struct Window {
     pub window: winit::window::Window,

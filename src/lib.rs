@@ -1,9 +1,3 @@
-use dream_editor::EditorEguiWgpu;
-use dream_renderer::RendererWgpu;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-
-use crate::app::App;
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///
@@ -19,13 +13,12 @@ use crate::app::App;
 ///
 /// You should have received a copy of the GNU Affero General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-use crate::window::Window;
-
-mod app;
-mod entity_js;
-mod javascript_script_component_system;
-mod python_script_component_system;
-mod window;
+use dream_app::app::App;
+use dream_editor::EditorEguiWgpu;
+use dream_renderer::RendererWgpu;
+use dream_window::window::Window;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 /// Update function called every update loop which returns true when the application should close
 fn update(
@@ -52,6 +45,7 @@ fn update(
     }
 
     // draw editor
+    // TODO: maybe we don't have to pass in window... it seems like it just uses an egui input anyway
     match editor.render_wgpu(&renderer, &window) {
         Ok(_) => {}
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {

@@ -1,19 +1,14 @@
 [package]
-name = "dream"
+name = "dream-window"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-dream-editor = { path = "./dream-editor", version = "0.1.0" }
-dream-renderer = { path = "./dream-renderer", version = "0.1.0" }
-dream-ecs = { path = "./dream-ecs", version = "0.1.0" }
-dream-resource = { path = "./dream-resource", version = "0.1.0" }
-dream-math = { path = "./dream-math", version = "0.1.0" }
-dream-app = { path = "./dream-app", version = "0.1.0" }
-dream-window = { path = "./dream-window", version = "0.1.0" }
+dream-app = { path = "../dream-app", version = "0.1.0" }
+dream-editor = { path = "../dream-editor", version = "0.1.0" }
+dream-renderer = { path = "../dream-renderer", version = "0.1.0" }
 shipyard = "0.6.2"
 anyhow = "1.0"
 cfg-if = "1"
@@ -57,15 +52,3 @@ web-sys = { version = "0.3.61", features = [
     "Element",
     "Location",
 ] }
-
-[workspace]
-members = [
-    "dream-editor",
-    "dream-renderer",
-    "dream-ecs",
-    "dream-resource",
-    "dream-math",
-    "dream-fs",
-    "dream-app",
-    "dream-window"
-]

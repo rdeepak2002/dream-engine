@@ -19,7 +19,6 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
 
-use dream_ecs;
 use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
