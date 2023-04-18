@@ -25,7 +25,8 @@ fn update(
     app: &mut App,
     renderer: &mut RendererWgpu,
     editor: &mut EditorEguiWgpu,
-    window: &winit::window::Window,
+    editor_raw_input: egui::RawInput,
+    editor_pixels_per_point: f32,
 ) -> bool {
     // update component systems (scripts, physics, etc.)
     app.update();
@@ -45,8 +46,6 @@ fn update(
     }
 
     // draw editor
-    let editor_raw_input = editor.egui_winit_state.take_egui_input(&window);
-    let editor_pixels_per_point = window.scale_factor() as f32;
     match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
         Ok(_) => {}
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {

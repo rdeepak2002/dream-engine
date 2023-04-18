@@ -60,7 +60,8 @@ impl Window {
             &mut App,
             &mut RendererWgpu,
             &mut EditorEguiWgpu,
-            &winit::window::Window,
+            egui::RawInput,
+            f32,
         ) -> bool,
     ) {
         // listen for screen resizing events for web build
@@ -109,7 +110,16 @@ impl Window {
                         self.window.set_inner_size(size);
                     }
 
-                    if update_func(app.as_mut(), &mut renderer, &mut editor, &self.window) {
+                    let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
+                    let editor_pixels_per_point = self.window.scale_factor() as f32;
+
+                    if update_func(
+                        app.as_mut(),
+                        &mut renderer,
+                        &mut editor,
+                        editor_raw_input,
+                        editor_pixels_per_point,
+                    ) {
                         *control_flow = ControlFlow::Exit;
                     }
                 }
