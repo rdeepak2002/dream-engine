@@ -23,6 +23,7 @@ cgmath = "0.18"
 crossbeam-channel = "0.5"
 tobj = { version = "3.2", features = ["async"] }
 gltf = "1.1.0"
+once_cell = "1.17.1"
 
 [build-dependencies]
 anyhow = "1.0"

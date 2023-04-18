@@ -1094,6 +1094,7 @@ dependencies = [
  "gltf",
  "image",
  "log",
+ "once_cell",
  "pollster",
  "rapier2d",
  "rapier3d",
