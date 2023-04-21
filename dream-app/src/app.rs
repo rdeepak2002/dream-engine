@@ -15,9 +15,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::any::Any;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-use once_cell::sync::Lazy;
 
 use dream_ecs::component::Transform;
 use dream_ecs::component_system::ComponentSystem;
@@ -31,9 +30,7 @@ use crate::python_script_component_system::PythonScriptComponentSystem;
 pub struct App {
     should_init: bool,
     pub dt: f32,
-    pub javascript_component_system: Option<Box<JavaScriptScriptComponentSystem>>,
-    pub python_component_system: Option<Box<PythonScriptComponentSystem>>,
-    // pub component_systems: Vec<Option<Box<dyn ComponentSystem>>>, <- to do this, we might have to not use RwLock for App, but tbh that seems fine cuz we only have one instance anyway
+    pub component_systems: Vec<Box<dyn ComponentSystem>>,
 }
 
 impl App {
@@ -41,8 +38,7 @@ impl App {
         Self {
             should_init: true,
             dt: 0.0,
-            javascript_component_system: None,
-            python_component_system: None,
+            component_systems: Vec::new(),
         }
     }
 
@@ -58,8 +54,10 @@ impl App {
                 .add_component(Transform::from(dream_math::Vector3::from(2., 1., 1.)));
         }
         // init component systems
-        self.javascript_component_system = Some(Box::new(JavaScriptScriptComponentSystem::new()));
-        self.python_component_system = Some(Box::new(PythonScriptComponentSystem::new()));
+        self.component_systems
+            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn ComponentSystem>);
+        self.component_systems
+            .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn ComponentSystem>);
     }
 
     pub fn update(&mut self) -> f32 {
@@ -68,20 +66,15 @@ impl App {
             self.should_init = false;
         }
         self.dt = 1.0 / 60.0;
-        if self.javascript_component_system.is_some() {
-            let jcs = self.javascript_component_system.as_mut().unwrap();
-            jcs.update(self.dt);
-        }
-        if self.python_component_system.is_some() {
-            let pcs = self.python_component_system.as_mut().unwrap();
-            pcs.update(self.dt);
+        for i in 0..self.component_systems.len() {
+            self.component_systems[i].update(self.dt);
         }
         return self.dt;
     }
 
     pub fn draw(&mut self, renderer: &mut RendererWgpu) {
         // TODO: implement this (look at email for details)
-        todo!();
-        // renderer.draw_mesh("dummy_guid", 0); // TODO: also pass in transform matrix after testing this with other models
+        // todo!();
+        renderer.draw_mesh("dummy_guid", 0); // TODO: also pass in transform matrix after testing this with other models
     }
 }

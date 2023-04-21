@@ -28,7 +28,7 @@ use crate::entity_js::{EntityJS, Vector3JS};
 pub struct JavaScriptScriptComponentSystem {}
 
 impl JavaScriptScriptComponentSystem {
-    pub fn new() -> Self {
+    pub fn new() -> JavaScriptScriptComponentSystem {
         Self {}
     }
 }

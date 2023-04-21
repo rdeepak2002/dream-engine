@@ -1,5 +1,7 @@
 #![allow(unused_mut)]
 
+use std::marker::PhantomData;
+
 use rustpython_vm as vm;
 
 use dream_ecs::component_system::ComponentSystem;
