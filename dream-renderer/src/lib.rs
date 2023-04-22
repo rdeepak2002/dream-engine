@@ -16,10 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::cell::RefCell;
 use std::iter;
-use std::rc::Rc;
+use std::ops::Deref;
 
+use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
 
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
@@ -61,7 +61,6 @@ pub struct CameraUniform {
 
 impl CameraUniform {
     fn new() -> Self {
-        use cgmath::SquareMatrix;
         let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
         let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
         let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
@@ -81,6 +80,12 @@ impl CameraUniform {
     pub fn update_view_proj(&mut self, camera: &camera::Camera) {
         self.view_proj = camera.build_view_projection_matrix().into();
     }
+}
+
+#[derive(Hash, PartialEq, Eq)]
+struct RenderMapKey {
+    pub model_guid: String,
+    pub mesh_index: i32,
 }
 
 pub struct RendererWgpu {
@@ -107,7 +112,8 @@ pub struct RendererWgpu {
     pub surface_format: wgpu::TextureFormat,
     // pub mesh_list: Vec<model::Mesh>,
     // pub mesh_guids: std::collections::HashMap<String, Rc<Model>>,
-    pub model_guids: std::collections::HashMap<String, Model>,
+    model_guids: std::collections::HashMap<String, Model>,
+    render_map: std::collections::HashMap<RenderMapKey, Box<Vec<cgmath::Matrix4<f32>>>>,
 }
 
 impl RendererWgpu {
@@ -424,6 +430,7 @@ impl RendererWgpu {
             surface_format,
             // mesh_list,
             model_guids: Default::default(),
+            render_map: Default::default(),
         }
     }
 
@@ -456,11 +463,25 @@ impl RendererWgpu {
 
     pub fn draw_model(&mut self, model_guid: &str) -> bool {
         todo!();
+        // TODO: just call draw mesh on all the mesh's that belong to a model with a specific guid
         return true;
     }
 
-    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32) -> bool {
-        todo!();
+    pub fn draw_mesh(
+        &mut self,
+        model_guid: &str,
+        mesh_index: i32,
+        model_mat: cgmath::Matrix4<f32>,
+    ) -> bool {
+        let mut new_vec: Vec<cgmath::Matrix4<f32>> = Vec::new();
+        new_vec.push(model_mat);
+        self.render_map.insert(
+            RenderMapKey {
+                model_guid: model_guid.parse().unwrap(),
+                mesh_index,
+            },
+            Box::new(new_vec),
+        );
         return true;
     }
 
@@ -530,6 +551,22 @@ impl RendererWgpu {
             // diffuse texture
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             // camera
+            {
+                // TODO: this should model mat be read from renderer vector or wtv its called
+                // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
+                // let rotation_mat_x: cgmath::Matrix4<f32> =
+                //     cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
+                // let rotation_mat_y: cgmath::Matrix4<f32> =
+                //     cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
+                // let rotation_mat_z: cgmath::Matrix4<f32> =
+                //     cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+                // let translation_mat: cgmath::Matrix4<f32> =
+                //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -10.0));
+                // let model_mat =
+                //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
+                // TODO: don't hardcode the guid and model index
+                // self.camera_uniform.model = model_mat.into();
+            }
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
             // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
@@ -542,39 +579,30 @@ impl RendererWgpu {
                 model_guid
             ));
             let mesh_index = 0;
-            render_pass.draw_mesh(model.meshes.get(mesh_index).expect(&*format!(
+            let transform_matrix_index = 0;
+            let model_mats = self
+                .render_map
+                .get(&RenderMapKey {
+                    model_guid: model_guid.parse().unwrap(),
+                    mesh_index,
+                })
+                .expect("No render map key found");
+            let model_mat = model_mats.get(transform_matrix_index).expect(&*format!(
+                "No transform matrix at index {}",
+                transform_matrix_index
+            ));
+            // TODO: is clone performance intense?
+            let model_mat = model_mat.clone().into();
+            self.camera_uniform.model = model_mat;
+            self.queue.write_buffer(
+                &self.camera_buffer,
+                0,
+                bytemuck::cast_slice(&[self.camera_uniform]),
+            );
+            render_pass.draw_mesh(model.meshes.get(mesh_index as usize).expect(&*format!(
                 "no mesh at index {} for model with guid {}",
                 mesh_index, model_guid
             )));
-            // let weak_model = Rc::downgrade(self.mesh_guids.get(mesh_guid).expect(&*format!(
-            //     "No mesh with guid {} is loaded in the renderer",
-            //     mesh_guid
-            // )));
-            // let model = self
-            //     .mesh_guids
-            //     .get(mesh_guid)
-            //     .expect(
-            //         format!(
-            //             "mesh with guid {} not stored in renderer resources",
-            //             mesh_guid
-            //         )
-            //         .as_mut_str(),
-            //     )
-            //     .clone();
-            // let mesh_list = model.meshes.clone();
-            // let cube_mesh = mesh_list
-            //     .get(0)
-            //     .expect("No mesh available at index 0")
-            //     .clone();
-            // let num_indices = cube_mesh.num_elements;
-            // let vertex_buffer_slice = cube_mesh.vertex_buffer.slice(..).clone();
-            // let index_buffer_slice = cube_mesh.index_buffer.slice(..).clone();
-            // render_pass.draw_mesh(cube_mesh.clone());
-            // render_pass.set_vertex_buffer(0, vertex_buffer_slice);
-            // render_pass.set_index_buffer(index_buffer_slice, wgpu::IndexFormat::Uint32);
-            // render_pass.draw_indexed(0..num_indices, 0, 0..1);
-
-            // render_pass.draw_mesh()
         }
 
         self.queue.submit(iter::once(encoder.finish()));
@@ -585,6 +613,7 @@ impl RendererWgpu {
             .create_view(&wgpu::TextureViewDescriptor::default());
 
         self.frame_texture_view = Some(output_texture_view);
+        self.render_map.clear();
 
         Ok(())
     }
