@@ -84,7 +84,9 @@ impl App {
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
+            // TODO: fix scale matrix
             let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
+            // TODO: fix rotation matrix
             let rotation_mat_x: cgmath::Matrix4<f32> =
                 cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
             let rotation_mat_y: cgmath::Matrix4<f32> =
@@ -95,7 +97,7 @@ impl App {
                 cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
             let model_mat =
                 scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
-            renderer.draw_mesh("dummy_guid", 0, model_mat); // TODO: also pass in transform matrix after testing this with other models
+            renderer.draw_mesh("dummy_guid", 0, model_mat)
         }
     }
 }

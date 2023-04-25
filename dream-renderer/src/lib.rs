@@ -82,7 +82,7 @@ impl CameraUniform {
     }
 }
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq, Clone)]
 struct RenderMapKey {
     pub model_guid: String,
     pub mesh_index: i32,
@@ -461,28 +461,36 @@ impl RendererWgpu {
         }
     }
 
-    pub fn draw_model(&mut self, model_guid: &str) -> bool {
-        todo!();
-        // TODO: just call draw mesh on all the mesh's that belong to a model with a specific guid
-        return true;
-    }
+    // pub fn draw_model(&mut self, model_guid: &str, model_mat: cgmath::Matrix4<f32>) -> bool {
+    //     todo!();
+    //     // TODO: just call draw mesh on all the mesh's that belong to a model with a specific guid
+    //     return true;
+    // }
 
     pub fn draw_mesh(
         &mut self,
         model_guid: &str,
         mesh_index: i32,
         model_mat: cgmath::Matrix4<f32>,
-    ) -> bool {
-        let mut new_vec: Vec<cgmath::Matrix4<f32>> = Vec::new();
-        new_vec.push(model_mat);
-        self.render_map.insert(
-            RenderMapKey {
-                model_guid: model_guid.parse().unwrap(),
-                mesh_index,
-            },
-            Box::new(new_vec),
-        );
-        return true;
+    ) {
+        let key = RenderMapKey {
+            model_guid: model_guid.parse().unwrap(),
+            mesh_index,
+        };
+        {
+            if let std::collections::hash_map::Entry::Vacant(e) = self.render_map.entry(key) {
+                // create new array
+                e.insert(Box::new(vec![model_mat]));
+            } else {
+                let key = RenderMapKey {
+                    model_guid: model_guid.parse().unwrap(),
+                    mesh_index,
+                };
+                // add to existing array
+                let current_vec = &mut self.render_map.get_mut(&key).unwrap();
+                current_vec.push(model_mat);
+            }
+        }
     }
 
     pub async fn store_model(
