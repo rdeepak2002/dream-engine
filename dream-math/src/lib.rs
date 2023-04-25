@@ -1,6 +1,5 @@
-// use boa_gc::{Finalize, Trace};
+use std::fmt;
 
-// #[derive(Debug, Clone, Trace, Finalize)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector3 {
     pub x: f32,
@@ -20,12 +19,23 @@ impl Vector3 {
     pub fn from(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!("Position({}, {}, {})", self.x, self.y, self.z)
+impl Default for Vector3 {
+    fn default() -> Self {
+        Vector3::new()
     }
+}
 
-    pub fn to_cg_math(&self) -> cgmath::Vector3<f32> {
-        return cgmath::Vector3::new(self.x, self.y, self.z);
+impl fmt::Display for Vector3 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let str = format!("Position({}, {}, {})", self.x, self.y, self.z);
+        write!(f, "{}", str)
+    }
+}
+
+impl From<Vector3> for cgmath::Vector3<f32> {
+    fn from(vec: Vector3) -> Self {
+        return cgmath::Vector3::new(vec.x, vec.y, vec.z);
     }
 }

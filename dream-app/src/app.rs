@@ -92,11 +92,7 @@ impl App {
             let rotation_mat_z: cgmath::Matrix4<f32> =
                 cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
             let translation_mat: cgmath::Matrix4<f32> =
-                cgmath::Matrix4::from_translation(cgmath::Vector3::new(
-                    entity_position.x.clone(),
-                    entity_position.y.clone(),
-                    entity_position.z.clone(),
-                ));
+                cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
             let model_mat =
                 scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
             renderer.draw_mesh("dummy_guid", 0, model_mat); // TODO: also pass in transform matrix after testing this with other models
