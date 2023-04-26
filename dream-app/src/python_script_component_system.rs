@@ -4,9 +4,10 @@ use std::marker::PhantomData;
 
 use rustpython_vm as vm;
 
-use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene_read_only;
+
+use crate::system::System;
 
 pub struct PythonScriptComponentSystem {
     pub interpreter: rustpython_vm::Interpreter,
@@ -20,7 +21,7 @@ impl PythonScriptComponentSystem {
     }
 }
 
-impl ComponentSystem for PythonScriptComponentSystem {
+impl System for PythonScriptComponentSystem {
     fn update(&mut self, dt: f32) {
         let transform_entities: Vec<u64>;
         {

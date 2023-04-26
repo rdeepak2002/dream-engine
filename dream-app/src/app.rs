@@ -19,18 +19,18 @@ use std::any::Any;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use dream_ecs::component::Transform;
-use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::RendererWgpu;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
+use crate::system::System;
 
 pub struct App {
     should_init: bool,
     pub dt: f32,
-    pub component_systems: Vec<Box<dyn ComponentSystem>>,
+    pub component_systems: Vec<Box<dyn System>>,
 }
 
 impl App {
@@ -55,9 +55,9 @@ impl App {
         }
         // init component systems
         self.component_systems
-            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn ComponentSystem>);
+            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
         self.component_systems
-            .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn ComponentSystem>);
+            .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn System>);
     }
 
     pub fn update(&mut self) -> f32 {

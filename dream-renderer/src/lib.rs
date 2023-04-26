@@ -599,6 +599,8 @@ impl RendererWgpu {
                 "No transform matrix at index {}",
                 transform_matrix_index
             ));
+            // key of self.render map contains mesh guid and array index
+            // value of self.render map is an array of all transforms it should be drawn at (using instancing if multiple)
             // TODO: is clone performance intense?
             let model_mat = model_mat.clone().into();
             self.camera_uniform.model = model_mat;

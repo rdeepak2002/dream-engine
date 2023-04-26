@@ -19,11 +19,11 @@
 use boa_engine::JsValue;
 use epi::egui::emath::Numeric;
 
-use dream_ecs::component_system::ComponentSystem;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene_read_only;
 
 use crate::entity_js::{EntityJS, Vector3JS};
+use crate::system::System;
 
 pub struct JavaScriptScriptComponentSystem {}
 
@@ -33,7 +33,7 @@ impl JavaScriptScriptComponentSystem {
     }
 }
 
-impl ComponentSystem for JavaScriptScriptComponentSystem {
+impl System for JavaScriptScriptComponentSystem {
     fn update(&mut self, dt: f32) {
         // let scene = SCENE.read().unwrap();
         let transform_entities: Vec<u64>;

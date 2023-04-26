@@ -16,6 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-pub trait ComponentSystem {
+pub trait System {
     fn update(&mut self, dt: f32);
 }
