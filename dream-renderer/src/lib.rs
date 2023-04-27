@@ -17,7 +17,6 @@
  **********************************************************************************/
 
 use std::iter;
-use std::ops::Deref;
 
 use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
@@ -113,7 +112,7 @@ pub struct RendererWgpu {
     // pub mesh_list: Vec<model::Mesh>,
     // pub mesh_guids: std::collections::HashMap<String, Rc<Model>>,
     model_guids: std::collections::HashMap<String, Model>,
-    render_map: std::collections::HashMap<RenderMapKey, Box<Vec<cgmath::Matrix4<f32>>>>,
+    render_map: std::collections::HashMap<RenderMapKey, Vec<cgmath::Matrix4<f32>>>,
 }
 
 impl RendererWgpu {
@@ -150,8 +149,7 @@ impl RendererWgpu {
             .formats
             .iter()
             .copied()
-            .filter(|f| f.describe().srgb)
-            .next()
+            .find(|f| f.describe().srgb)
             .unwrap_or(surface_caps.formats[0]);
 
         let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
@@ -173,9 +171,7 @@ impl RendererWgpu {
                 None, // Trace path
             )
             .await
-            .map(|(device, queue)| {
-                return (device, queue);
-            })
+            .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
             .unwrap();
 
         let config = wgpu::SurfaceConfiguration {
@@ -480,7 +476,7 @@ impl RendererWgpu {
         {
             if let std::collections::hash_map::Entry::Vacant(e) = self.render_map.entry(key) {
                 // create new array
-                e.insert(Box::new(vec![model_mat]));
+                e.insert(vec![model_mat]);
             } else {
                 let key = RenderMapKey {
                     model_guid: model_guid.parse().unwrap(),
@@ -510,7 +506,7 @@ impl RendererWgpu {
         }
         let model = gltf_loader::read_gltf(model_path, &self.device).await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
-        return Ok(model_guid.parse().unwrap());
+        Ok(model_guid.parse().unwrap())
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -582,10 +578,10 @@ impl RendererWgpu {
 
             // TODO: actually add a model with string key 'dummy_guid'
             let model_guid = "dummy_guid";
-            let model = self.model_guids.get(model_guid).expect(&*format!(
-                "no model loaded in renderer with guid {}",
-                model_guid
-            ));
+            let model = self
+                .model_guids
+                .get(model_guid)
+                .unwrap_or_else(|| panic!("no model loaded in renderer with guid {}", model_guid));
             let mesh_index = 0;
             let transform_matrix_index = 0;
             let model_mats = self
@@ -595,24 +591,25 @@ impl RendererWgpu {
                     mesh_index,
                 })
                 .expect("No render map key found");
-            let model_mat = model_mats.get(transform_matrix_index).expect(&*format!(
-                "No transform matrix at index {}",
-                transform_matrix_index
-            ));
+            let model_mat = model_mats.get(transform_matrix_index).unwrap_or_else(|| {
+                panic!("No transform matrix at index {}", transform_matrix_index)
+            });
             // key of self.render map contains mesh guid and array index
             // value of self.render map is an array of all transforms it should be drawn at (using instancing if multiple)
             // TODO: is clone performance intense?
-            let model_mat = model_mat.clone().into();
+            let model_mat = (*model_mat).into();
             self.camera_uniform.model = model_mat;
             self.queue.write_buffer(
                 &self.camera_buffer,
                 0,
                 bytemuck::cast_slice(&[self.camera_uniform]),
             );
-            render_pass.draw_mesh(model.meshes.get(mesh_index as usize).expect(&*format!(
-                "no mesh at index {} for model with guid {}",
-                mesh_index, model_guid
-            )));
+            render_pass.draw_mesh(model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
+                panic!(
+                    "no mesh at index {} for model with guid {}",
+                    mesh_index, model_guid
+                )
+            }));
         }
 
         self.queue.submit(iter::once(encoder.finish()));
