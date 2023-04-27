@@ -44,18 +44,27 @@ impl App {
 
     fn initialize(&mut self) {
         // init scene
-        let mut e: Option<Entity> = None;
+        let mut e1: Option<Entity> = None;
         {
             let mut scene = get_current_scene();
-            e = Some(scene.create_entity());
+            e1 = Some(scene.create_entity());
         }
         {
-            e.unwrap()
+            e1.unwrap()
+                .add_component(Transform::from(dream_math::Vector3::from(-1.5, -1.0, -5.)));
+        }
+        let mut e2: Option<Entity> = None;
+        {
+            let mut scene = get_current_scene();
+            e2 = Some(scene.create_entity());
+        }
+        {
+            e2.unwrap()
                 .add_component(Transform::from(dream_math::Vector3::from(0., -1.5, -5.)));
         }
         // init component systems
-        self.component_systems
-            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
+        // self.component_systems
+        //     .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
         self.component_systems
             .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn System>);
     }
@@ -82,6 +91,7 @@ impl App {
             transform_entities = scene.transform_entities().clone();
         }
         for entity_id in transform_entities {
+            println!("{}", entity_id);
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
             // TODO: fix scale matrix

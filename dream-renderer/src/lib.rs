@@ -550,66 +550,39 @@ impl RendererWgpu {
 
             // let num_vertices = VERTICES.len() as u32;
             // let num_indices = INDICES.len() as u32;
-
             render_pass.set_pipeline(&self.render_pipeline);
-            // diffuse texture
+            // material bind group
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
-            // camera
-            {
-                // TODO: this should model mat be read from renderer vector or wtv its called
-                // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
-                // let rotation_mat_x: cgmath::Matrix4<f32> =
-                //     cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
-                // let rotation_mat_y: cgmath::Matrix4<f32> =
-                //     cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
-                // let rotation_mat_z: cgmath::Matrix4<f32> =
-                //     cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
-                // let translation_mat: cgmath::Matrix4<f32> =
-                //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -10.0));
-                // let model_mat =
-                //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
-                // TODO: don't hardcode the guid and model index
-                // self.camera_uniform.model = model_mat.into();
-            }
+            // camera bind group
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
             // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-
-            // TODO: actually add a model with string key 'dummy_guid'
-            let model_guid = "dummy_guid";
-            let model = self
-                .model_guids
-                .get(model_guid)
-                .unwrap_or_else(|| panic!("no model loaded in renderer with guid {}", model_guid));
-            let mesh_index = 0;
-            let transform_matrix_index = 0;
-            let model_mats = self
-                .render_map
-                .get(&RenderMapKey {
-                    model_guid: model_guid.parse().unwrap(),
-                    mesh_index,
-                })
-                .expect("No render map key found");
-            let model_mat = model_mats.get(transform_matrix_index).unwrap_or_else(|| {
-                panic!("No transform matrix at index {}", transform_matrix_index)
-            });
-            // key of self.render map contains mesh guid and array index
-            // value of self.render map is an array of all transforms it should be drawn at (using instancing if multiple)
-            // TODO: is clone performance intense?
-            let model_mat = (*model_mat).into();
-            self.camera_uniform.model = model_mat;
-            self.queue.write_buffer(
-                &self.camera_buffer,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform]),
-            );
-            render_pass.draw_mesh(model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
-                panic!(
-                    "no mesh at index {} for model with guid {}",
-                    mesh_index, model_guid
-                )
-            }));
+            for (render_map_key, transforms) in &self.render_map {
+                // TODO: actually add a model with string key 'dummy_guid'
+                let model_guid = render_map_key.model_guid.clone();
+                let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
+                    panic!("no model loaded in renderer with guid {}", model_guid)
+                });
+                let mesh_index = render_map_key.mesh_index.clone();
+                for model_mat in transforms {
+                    let model_mat = (*model_mat).into();
+                    self.camera_uniform.model = model_mat;
+                    self.queue.write_buffer(
+                        &self.camera_buffer,
+                        0,
+                        bytemuck::cast_slice(&[self.camera_uniform]),
+                    );
+                    render_pass.draw_mesh(model.meshes.get(mesh_index as usize).unwrap_or_else(
+                        || {
+                            panic!(
+                                "no mesh at index {} for model with guid {}",
+                                mesh_index, model_guid
+                            )
+                        },
+                    ));
+                }
+            }
         }
 
         self.queue.submit(iter::once(encoder.finish()));
