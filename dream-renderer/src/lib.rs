@@ -56,24 +56,24 @@ pub struct CameraUniform {
     // We can't use cgmath with bytemuck directly so we'll have
     // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
-    model: [[f32; 4]; 4],
+    // model: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
     fn new() -> Self {
-        let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
-        let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
-        let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
-        let rotation_mat_z: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+        // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
+        // let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
+        // let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
+        // let rotation_mat_z: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+        // // let translation_mat: cgmath::Matrix4<f32> =
+        // //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
         // let translation_mat: cgmath::Matrix4<f32> =
-        //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
-        let translation_mat: cgmath::Matrix4<f32> =
-            cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -5.0));
-        let model_mat =
-            scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
+        //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -5.0));
+        // // let model_mat =
+        // //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
-            model: model_mat.into(),
+            // model: model_mat.into(),
         }
     }
 
@@ -661,11 +661,12 @@ impl RendererWgpu {
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
             for (render_map_key, transforms) in &self.render_map {
+                println!("Num transforms: {}", transforms.len());
                 // update instance buffers
+                // if self.instance_buffer_map.contains_key(render_map_key) {
+                //     self.instance_buffer_map.remove(render_map_key);
+                // }
                 // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
-                if self.instance_buffer_map.contains_key(render_map_key) {
-                    self.instance_buffer_map.remove(render_map_key);
-                }
                 {
                     let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
                     let instance_buffer =
@@ -686,11 +687,7 @@ impl RendererWgpu {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
                 let mesh_index = render_map_key.mesh_index;
-                self.queue.write_buffer(
-                    &self.camera_buffer,
-                    0,
-                    bytemuck::cast_slice(&[self.camera_uniform]),
-                );
+                let num_instances = transforms.len() as u32;
                 let instance_buffer = self
                     .instance_buffer_map
                     .get(render_map_key)
@@ -703,7 +700,7 @@ impl RendererWgpu {
                             mesh_index, model_guid
                         )
                     }),
-                    0..transforms.len() as u32,
+                    0..num_instances,
                 );
             }
         }

@@ -65,8 +65,8 @@ impl App {
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -1.5, -5.)));
         }
         // init component systems
-        // self.component_systems
-        //     .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
+        self.component_systems
+            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
         self.component_systems
             .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn System>);
     }
@@ -97,18 +97,18 @@ impl App {
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
             // TODO: fix scale matrix
-            let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
+            // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
             // TODO: fix rotation matrix
-            let rotation_mat_x: cgmath::Matrix4<f32> =
-                cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
-            let rotation_mat_y: cgmath::Matrix4<f32> =
-                cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
-            let rotation_mat_z: cgmath::Matrix4<f32> =
-                cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
-            let translation_mat: cgmath::Matrix4<f32> =
-                cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
-            let model_mat =
-                scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
+            // let rotation_mat_x: cgmath::Matrix4<f32> =
+            //     cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
+            // let rotation_mat_y: cgmath::Matrix4<f32> =
+            //     cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
+            // let rotation_mat_z: cgmath::Matrix4<f32> =
+            //     cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
+            // let translation_mat: cgmath::Matrix4<f32> =
+            //     cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
+            // let model_mat =
+            //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
             renderer.draw_mesh(
                 "dummy_guid",
                 0,
