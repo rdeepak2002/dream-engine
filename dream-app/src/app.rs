@@ -18,6 +18,8 @@
 use std::any::Any;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use cgmath::prelude::*;
+
 use dream_ecs::component::Transform;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
@@ -60,7 +62,7 @@ impl App {
         }
         {
             e2.unwrap()
-                .add_component(Transform::from(dream_math::Vector3::from(0., -1.5, -5.)));
+                .add_component(Transform::from(dream_math::Vector3::from(1.0, -1.5, -5.)));
         }
         // init component systems
         // self.component_systems
@@ -107,7 +109,17 @@ impl App {
                 cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
             let model_mat =
                 scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
-            renderer.draw_mesh("dummy_guid", 0, model_mat)
+            renderer.draw_mesh(
+                "dummy_guid",
+                0,
+                dream_renderer::Instance {
+                    position: cgmath::Vector3::from(entity_position),
+                    rotation: cgmath::Quaternion::from_axis_angle(
+                        cgmath::Vector3::new(1., 0., 0.),
+                        cgmath::Deg(0.0),
+                    ),
+                },
+            )
         }
     }
 }

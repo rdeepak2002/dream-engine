@@ -89,13 +89,13 @@ struct RenderMapKey {
 }
 
 // TODO: move to instance file
-struct Instance {
-    position: cgmath::Vector3<f32>,
-    rotation: cgmath::Quaternion<f32>,
+pub struct Instance {
+    pub position: cgmath::Vector3<f32>,
+    pub rotation: cgmath::Quaternion<f32>,
 }
 
 impl Instance {
-    fn to_raw(&self) -> InstanceRaw {
+    pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation))
@@ -106,11 +106,15 @@ impl Instance {
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct InstanceRaw {
+pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
 
 impl InstanceRaw {
+    fn from_raw_mat4(model: [[f32; 4]; 4]) -> InstanceRaw {
+        Self { model }
+    }
+
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;
         wgpu::VertexBufferLayout {
@@ -175,9 +179,11 @@ pub struct RendererWgpu {
     // pub mesh_list: Vec<model::Mesh>,
     // pub mesh_guids: std::collections::HashMap<String, Rc<Model>>,
     model_guids: std::collections::HashMap<String, Model>,
-    render_map: std::collections::HashMap<RenderMapKey, Vec<cgmath::Matrix4<f32>>>,
-    instances: Vec<Instance>,
-    instance_buffer: wgpu::Buffer,
+    // render_map: std::collections::HashMap<RenderMapKey, Vec<cgmath::Matrix4<f32>>>,
+    render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
+    instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
+    // instances: Vec<Instance>,
+    // instance_buffer: wgpu::Buffer,
 }
 
 impl RendererWgpu {
@@ -474,36 +480,36 @@ impl RendererWgpu {
             0.0,
             NUM_INSTANCES_PER_ROW as f32 * 0.5,
         );
-        let instances = (0..NUM_INSTANCES_PER_ROW)
-            .flat_map(|z| {
-                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                    let position = cgmath::Vector3 {
-                        x: x as f32,
-                        y: 0.0,
-                        z: z as f32,
-                    } - INSTANCE_DISPLACEMENT;
-
-                    let rotation = if position.is_zero() {
-                        // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                        // as Quaternions can effect scale if they're not created correctly
-                        cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::unit_z(),
-                            cgmath::Deg(0.0),
-                        )
-                    } else {
-                        cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(45.0))
-                    };
-
-                    Instance { position, rotation }
-                })
-            })
-            .collect::<Vec<_>>();
-        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Instance Buffer"),
-            contents: bytemuck::cast_slice(&instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
+        // let instances = (0..NUM_INSTANCES_PER_ROW)
+        //     .flat_map(|z| {
+        //         (0..NUM_INSTANCES_PER_ROW).map(move |x| {
+        //             let position = cgmath::Vector3 {
+        //                 x: x as f32,
+        //                 y: 0.0,
+        //                 z: z as f32,
+        //             } - INSTANCE_DISPLACEMENT;
+        //
+        //             let rotation = if position.is_zero() {
+        //                 // this is needed so an object at (0, 0, 0) won't get scaled to zero
+        //                 // as Quaternions can effect scale if they're not created correctly
+        //                 cgmath::Quaternion::from_axis_angle(
+        //                     cgmath::Vector3::unit_z(),
+        //                     cgmath::Deg(0.0),
+        //                 )
+        //             } else {
+        //                 cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(45.0))
+        //             };
+        //
+        //             Instance { position, rotation }
+        //         })
+        //     })
+        //     .collect::<Vec<_>>();
+        // let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+        // let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Instance Buffer"),
+        //     contents: bytemuck::cast_slice(&instance_data),
+        //     usage: wgpu::BufferUsages::VERTEX,
+        // });
 
         Self {
             surface,
@@ -529,8 +535,9 @@ impl RendererWgpu {
             // mesh_list,
             model_guids: Default::default(),
             render_map: Default::default(),
-            instances,
-            instance_buffer,
+            instance_buffer_map: Default::default(),
+            // instances,
+            // instance_buffer,
         }
     }
 
@@ -567,12 +574,7 @@ impl RendererWgpu {
     //     return true;
     // }
 
-    pub fn draw_mesh(
-        &mut self,
-        model_guid: &str,
-        mesh_index: i32,
-        model_mat: cgmath::Matrix4<f32>,
-    ) {
+    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
         let key = RenderMapKey {
             model_guid: model_guid.parse().unwrap(),
             mesh_index,
@@ -652,53 +654,57 @@ impl RendererWgpu {
                 }),
             });
 
-            // let num_vertices = VERTICES.len() as u32;
-            // let num_indices = INDICES.len() as u32;
             render_pass.set_pipeline(&self.render_pipeline);
             // material bind group
             render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             // camera bind group
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
-            // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             for (render_map_key, transforms) in &self.render_map {
-                // TODO: actually add a model with string key 'dummy_guid'
+                // update instance buffers
+                // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
+                if self.instance_buffer_map.contains_key(render_map_key) {
+                    self.instance_buffer_map.remove(render_map_key);
+                }
+                {
+                    let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
+                    let instance_buffer =
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Instance Buffer"),
+                                contents: bytemuck::cast_slice(&instance_data),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            });
+                    self.instance_buffer_map
+                        .insert(render_map_key.clone(), instance_buffer);
+                }
+            }
+            for (render_map_key, transforms) in &self.render_map {
+                // draw meshes using instancing
                 let model_guid = render_map_key.model_guid.clone();
                 let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
-                let mesh_index = render_map_key.mesh_index.clone();
-                // TODO: below code is fundamentally wrong in wgpu, look at example shadow rendering code (in email)
-                // they create a new dynamic buffer with offsets
-                // todo!();
-                for model_mat in transforms {
-                    let model_mat = (*model_mat).into();
-                    self.camera_uniform.model = model_mat;
-                    self.queue.write_buffer(
-                        &self.camera_buffer,
-                        0,
-                        bytemuck::cast_slice(&[self.camera_uniform]),
-                    );
-                    render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-                    // render_pass.draw_mesh(model.meshes.get(mesh_index as usize).unwrap_or_else(
-                    //     || {
-                    //         panic!(
-                    //             "no mesh at index {} for model with guid {}",
-                    //             mesh_index, model_guid
-                    //         )
-                    //     },
-                    // ));
-                    render_pass.draw_mesh_instanced(
-                        model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
-                            panic!(
-                                "no mesh at index {} for model with guid {}",
-                                mesh_index, model_guid
-                            )
-                        }),
-                        0..self.instances.len() as u32,
-                    );
-                }
+                let mesh_index = render_map_key.mesh_index;
+                self.queue.write_buffer(
+                    &self.camera_buffer,
+                    0,
+                    bytemuck::cast_slice(&[self.camera_uniform]),
+                );
+                let instance_buffer = self
+                    .instance_buffer_map
+                    .get(render_map_key)
+                    .expect("No instance buffer found in map");
+                render_pass.set_vertex_buffer(1, instance_buffer.slice(..));
+                render_pass.draw_mesh_instanced(
+                    model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
+                        panic!(
+                            "no mesh at index {} for model with guid {}",
+                            mesh_index, model_guid
+                        )
+                    }),
+                    0..transforms.len() as u32,
+                );
             }
         }
 
