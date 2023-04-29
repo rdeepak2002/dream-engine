@@ -91,7 +91,7 @@ impl App {
             transform_entities = scene.transform_entities().clone();
         }
         for entity_id in transform_entities {
-            println!("{}", entity_id);
+            // println!("{}", entity_id);
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
             // TODO: fix scale matrix
