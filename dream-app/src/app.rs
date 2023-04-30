@@ -53,7 +53,7 @@ impl App {
         }
         {
             e1.unwrap()
-                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.0, -5.0)));
+                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
         }
         // let mut e1: Option<Entity> = None;
         // {
@@ -93,8 +93,6 @@ impl App {
     }
 
     pub fn draw(&mut self, renderer: &mut RendererWgpu) {
-        // TODO: implement this (look at email for details)
-        // todo!();
         // TODO: traverse in tree fashion
         let transform_entities: Vec<u64>;
         {
@@ -102,34 +100,22 @@ impl App {
             transform_entities = scene.transform_entities().clone();
         }
         for entity_id in transform_entities {
-            // println!("{}", entity_id);
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
-            // TODO: fix scale matrix
-            // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
-            // TODO: fix rotation matrix
-            // let rotation_mat_x: cgmath::Matrix4<f32> =
-            //     cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
-            // let rotation_mat_y: cgmath::Matrix4<f32> =
-            //     cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
-            // let rotation_mat_z: cgmath::Matrix4<f32> =
-            //     cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
-            // let translation_mat: cgmath::Matrix4<f32> =
-            //     cgmath::Matrix4::from_translation(cgmath::Vector3::from(entity_position));
-            // let model_mat =
-            //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
-            renderer.draw_mesh(
-                "link",
-                0,
-                dream_renderer::Instance {
-                    position: cgmath::Vector3::from(entity_position),
-                    rotation: cgmath::Quaternion::from_axis_angle(
-                        cgmath::Vector3::new(1., 0., 0.),
-                        cgmath::Deg(0.0),
-                    ),
-                    scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
-                },
-            )
+            for i in 0..18 {
+                renderer.draw_mesh(
+                    "link",
+                    i,
+                    dream_renderer::Instance {
+                        position: cgmath::Vector3::from(entity_position),
+                        rotation: cgmath::Quaternion::from_axis_angle(
+                            cgmath::Vector3::new(1., 0., 0.),
+                            cgmath::Deg(0.0),
+                        ),
+                        scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+                    },
+                );
+            }
         }
     }
 }
