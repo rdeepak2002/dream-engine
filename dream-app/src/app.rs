@@ -53,17 +53,26 @@ impl App {
         }
         {
             e1.unwrap()
-                .add_component(Transform::from(dream_math::Vector3::from(-1.5, -1.0, -5.)));
+                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.0, -5.0)));
         }
-        let mut e2: Option<Entity> = None;
-        {
-            let mut scene = get_current_scene();
-            e2 = Some(scene.create_entity());
-        }
-        {
-            e2.unwrap()
-                .add_component(Transform::from(dream_math::Vector3::from(1.0, -1.5, -5.)));
-        }
+        // let mut e1: Option<Entity> = None;
+        // {
+        //     let mut scene = get_current_scene();
+        //     e1 = Some(scene.create_entity());
+        // }
+        // {
+        //     e1.unwrap()
+        //         .add_component(Transform::from(dream_math::Vector3::from(-1.5, -1.0, -5.)));
+        // }
+        // let mut e2: Option<Entity> = None;
+        // {
+        //     let mut scene = get_current_scene();
+        //     e2 = Some(scene.create_entity());
+        // }
+        // {
+        //     e2.unwrap()
+        //         .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.0, -5.)));
+        // }
         // init component systems
         self.component_systems
             .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
@@ -110,7 +119,7 @@ impl App {
             // let model_mat =
             //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
             renderer.draw_mesh(
-                "dummy_guid",
+                "link",
                 0,
                 dream_renderer::Instance {
                     position: cgmath::Vector3::from(entity_position),
@@ -118,6 +127,7 @@ impl App {
                         cgmath::Vector3::new(1., 0., 0.),
                         cgmath::Deg(0.0),
                     ),
+                    scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
                 },
             )
         }

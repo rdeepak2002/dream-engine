@@ -103,10 +103,10 @@ impl Window {
             .await
             .expect("Error loading cube model");
 
-        // renderer
-        //     .store_model(Some("link"), "link.glb")
-        //     .await
-        //     .expect("Error loading link model");
+        renderer
+            .store_model(Some("link"), "link.glb")
+            .await
+            .expect("Error loading link model");
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
