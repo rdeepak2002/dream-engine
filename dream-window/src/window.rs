@@ -108,6 +108,11 @@ impl Window {
             .await
             .expect("Error loading link model");
 
+        renderer
+            .store_model(Some("ice_cube"), "ice_cube.glb")
+            .await
+            .expect("Error loading ice_cube model");
+
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {

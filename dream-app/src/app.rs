@@ -122,6 +122,26 @@ impl App {
                     },
                 );
             }
+            // for i in 0..6 {
+            //     renderer.draw_mesh(
+            //         "ice_cube",
+            //         i,
+            //         dream_renderer::Instance {
+            //             position: cgmath::Vector3::from(entity_position),
+            //             rotation: cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(1., 0., 0.),
+            //                 cgmath::Deg(0.0),
+            //             ) * cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(0., 1., 0.),
+            //                 cgmath::Deg(0.0),
+            //             ) * cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(0., 0., 1.),
+            //                 cgmath::Deg(0.0),
+            //             ),
+            //             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+            //         },
+            //     );
+            // }
         }
     }
 }

@@ -36,6 +36,16 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGro
     // get materials for model
     for material in gltf.materials() {
         let pbr_properties = material.pbr_metallic_roughness();
+        // TODO: get base color texture for PBR
+        // pbr_properties.base_color_texture().
+        // let texture_source = &pbr
+        //     .base_color_texture()
+        //     .map(|tex| {
+        //         println!("Grabbing diffuse tex");
+        //         dbg!(&tex.texture().source());
+        //         tex.texture().source().source()
+        //     })
+        //     .expect("texture");
         // get base_color for PBR
         let base_color = pbr_properties.base_color_factor();
         let red = *base_color.first().expect("No red found for base color");
@@ -147,10 +157,69 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGro
             match node.mesh() {
                 None => {
                     for child in node.children() {
-                        // process each child (call method recursively)
-                        // todo!()
+                        // TODO: process each child (call method recursively)
                         match child.mesh() {
-                            None => {}
+                            None => {
+                                println!("TODO: implement recursive searching method for meshes");
+                                for child in child.children() {
+                                    match child.mesh() {
+                                        None => {
+                                            for child in child.children() {
+                                                for child in child.children() {
+                                                    match child.mesh() {
+                                                        None => {
+                                                            for child in child.children() {
+                                                                for child in child.children() {
+                                                                    match child.mesh() {
+                                                                        None => {
+                                                                            for child in
+                                                                                child.children()
+                                                                            {
+                                                                                for child in
+                                                                                    child.children()
+                                                                                {
+                                                                                    match child.mesh() {
+                                                                                        None => {
+                                                                                            for child in child.children() {
+                                                                                                for child in child.children() {
+                                                                                                    match child.mesh() {
+                                                                                                        None => {
+                                                                                                            for child in child.children() {}
+                                                                                                        },
+                                                                                                        Some(mesh) => {
+                                                                                                            get_dream_mesh(mesh);
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                        },
+                                                                                        Some(mesh) => {
+                                                                                            get_dream_mesh(mesh);
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        Some(mesh) => {
+                                                                            get_dream_mesh(mesh);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        Some(mesh) => {
+                                                            get_dream_mesh(mesh);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Some(mesh) => {
+                                            get_dream_mesh(mesh);
+                                        }
+                                    }
+                                }
+                            }
                             Some(mesh) => {
                                 get_dream_mesh(mesh);
                             }

@@ -57,6 +57,7 @@ pub struct Material {
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MaterialUniform {
     pub base_color: [f32; 4],
+    // TODO: add support for base color texture
 }
 
 pub struct Mesh {
