@@ -101,7 +101,12 @@ impl Window {
         renderer
             .store_model(Some("dummy_guid"), "cube.glb")
             .await
-            .expect("Error loading model");
+            .expect("Error loading cube model");
+
+        // renderer
+        //     .store_model(Some("link"), "link.glb")
+        //     .await
+        //     .expect("Error loading link model");
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {

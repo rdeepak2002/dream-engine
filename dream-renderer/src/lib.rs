@@ -661,7 +661,7 @@ impl RendererWgpu {
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
             for (render_map_key, transforms) in &self.render_map {
-                println!("Num transforms: {}", transforms.len());
+                // println!("Num transforms: {}", transforms.len());
                 // update instance buffers
                 // if self.instance_buffer_map.contains_key(render_map_key) {
                 //     self.instance_buffer_map.remove(render_map_key);
