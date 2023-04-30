@@ -30,7 +30,24 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
 
     // let mut mesh_info = Vec::new();
     let mut meshes = Vec::new();
+    let mut materials = Vec::new();
 
+    // TODO: follow this https://whoisryosuke.com/blog/2022/importing-gltf-with-wgpu-and-rust/
+    // get materials for model
+    for material in gltf.materials() {
+        let pbr_properties = material.pbr_metallic_roughness();
+        // get base_color for PBR
+        let base_color = pbr_properties.base_color_factor();
+        let red = *base_color.first().expect("No red found for base color");
+        let green = *base_color.get(1).expect("No green found for base color");
+        let blue = *base_color.get(2).expect("No blue found for base color");
+        let alpha = *base_color.get(3).expect("No alpha found for base color");
+        let base_color = cgmath::Vector4::new(red, green, blue, alpha).into();
+        // TODO: get other PBR properties
+        materials.push(crate::model::Material { base_color });
+    }
+
+    // get meshes for model
     let mut get_dream_mesh = |mesh: gltf::Mesh| {
         mesh.index();
         // println!("Mesh for node {}", node.name().expect("No name for node"));
@@ -93,8 +110,7 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
                 vertex_buffer,
                 index_buffer,
                 num_elements: indices.len() as u32,
-                // material: m.mesh.material_id.unwrap_or(0),
-                material: 0,
+                material: primitive.material().index().unwrap_or(0),
             });
         });
     };
@@ -122,5 +138,5 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
         }
     }
 
-    return Model::new(meshes, Vec::new());
+    Model::new(meshes, materials)
 }

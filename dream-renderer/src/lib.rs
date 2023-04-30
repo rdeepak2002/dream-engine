@@ -688,6 +688,7 @@ impl RendererWgpu {
                 let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
+                let materials = model.materials.clone();
                 let mesh_index = render_map_key.mesh_index;
                 let num_instances = transforms.len() as u32;
                 let instance_buffer = self

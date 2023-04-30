@@ -42,10 +42,16 @@ impl Vertex for ModelVertex {
     }
 }
 
+// pub struct Material {
+//     pub name: String,
+//     pub diffuse_texture: texture::Texture,
+//     pub bind_group: wgpu::BindGroup,
+// }
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Material {
-    pub name: String,
-    pub diffuse_texture: texture::Texture,
-    pub bind_group: wgpu::BindGroup,
+    pub base_color: [f32; 4],
 }
 
 pub struct Mesh {
