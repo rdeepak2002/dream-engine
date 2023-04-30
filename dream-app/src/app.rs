@@ -111,6 +111,12 @@ impl App {
                         rotation: cgmath::Quaternion::from_axis_angle(
                             cgmath::Vector3::new(1., 0., 0.),
                             cgmath::Deg(0.0),
+                        ) * cgmath::Quaternion::from_axis_angle(
+                            cgmath::Vector3::new(0., 1., 0.),
+                            cgmath::Deg(0.0),
+                        ) * cgmath::Quaternion::from_axis_angle(
+                            cgmath::Vector3::new(0., 0., 1.),
+                            cgmath::Deg(0.0),
                         ),
                         scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
                     },
