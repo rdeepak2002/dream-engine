@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use anyhow::*;
-use image::GenericImageView;
 use std::num::NonZeroU32;
+
+use anyhow::*;
+use image::{GenericImageView, ImageFormat};
 
 pub struct Texture {
     pub texture: wgpu::Texture,
@@ -164,8 +165,21 @@ impl Texture {
         queue: &wgpu::Queue,
         bytes: &[u8],
         label: &str,
+        mime_type: Option<String>,
     ) -> Result<Self> {
-        let img = image::load_from_memory(bytes)?;
+        let img;
+        if mime_type.is_none() {
+            img = image::load_from_memory(bytes)?;
+        } else {
+            let mime_type = mime_type.unwrap();
+            if mime_type == "image/png" {
+                img = image::load_from_memory_with_format(bytes, ImageFormat::Png)?;
+            } else if mime_type == "image/jpeg" {
+                img = image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)?;
+            } else {
+                panic!("Unsupported mime_type provided: {}", mime_type);
+            }
+        }
         Self::from_image(device, queue, &img, Some(label))
     }
 

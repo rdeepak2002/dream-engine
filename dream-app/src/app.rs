@@ -102,26 +102,46 @@ impl App {
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
-            for i in 0..18 {
+            for i in 0..2 {
                 renderer.draw_mesh(
-                    "link",
+                    "robot",
                     i,
                     dream_renderer::Instance {
                         position: cgmath::Vector3::from(entity_position),
                         rotation: cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::new(1., 0., 0.),
+                            cgmath::Vector3::new(0., 0., 1.),
                             cgmath::Deg(0.0),
                         ) * cgmath::Quaternion::from_axis_angle(
                             cgmath::Vector3::new(0., 1., 0.),
-                            cgmath::Deg(0.0),
+                            cgmath::Deg(-0.0),
                         ) * cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::new(0., 0., 1.),
-                            cgmath::Deg(0.0),
+                            cgmath::Vector3::new(1., 0., 0.),
+                            cgmath::Deg(-90.0),
                         ),
-                        scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+                        scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
                     },
                 );
             }
+            // for i in 0..18 {
+            //     renderer.draw_mesh(
+            //         "link",
+            //         i,
+            //         dream_renderer::Instance {
+            //             position: cgmath::Vector3::from(entity_position),
+            //             rotation: cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(1., 0., 0.),
+            //                 cgmath::Deg(0.0),
+            //             ) * cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(0., 1., 0.),
+            //                 cgmath::Deg(0.0),
+            //             ) * cgmath::Quaternion::from_axis_angle(
+            //                 cgmath::Vector3::new(0., 0., 1.),
+            //                 cgmath::Deg(0.0),
+            //             ),
+            //             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
+            //         },
+            //     );
+            // }
             // for i in 0..6 {
             //     renderer.draw_mesh(
             //         "ice_cube",

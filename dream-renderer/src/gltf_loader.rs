@@ -5,7 +5,12 @@ use dream_fs::load_binary;
 
 use crate::model::{MaterialUniform, Mesh, Model};
 
-pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGroupLayout) -> Model {
+pub async fn read_gltf(
+    path: &str,
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    layout: &wgpu::BindGroupLayout,
+) -> Model {
     let gltf = gltf::Gltf::from_slice(
         &load_binary(path)
             .await
@@ -32,20 +37,44 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGro
     let mut meshes = Vec::new();
     let mut materials = Vec::new();
 
-    // TODO: follow this https://whoisryosuke.com/blog/2022/importing-gltf-with-wgpu-and-rust/
     // get materials for model
     for material in gltf.materials() {
         let pbr_properties = material.pbr_metallic_roughness();
-        // TODO: get base color texture for PBR
-        // pbr_properties.base_color_texture().
-        // let texture_source = &pbr
-        //     .base_color_texture()
-        //     .map(|tex| {
-        //         println!("Grabbing diffuse tex");
-        //         dbg!(&tex.texture().source());
-        //         tex.texture().source().source()
-        //     })
-        //     .expect("texture");
+        if material
+            .pbr_metallic_roughness()
+            .base_color_texture()
+            .is_some()
+        {
+            let tex = pbr_properties
+                .base_color_texture()
+                .expect("No base color texture")
+                .texture();
+            let tex_name = tex.name().unwrap_or("No texture name");
+            // println!("texture name {}", tex_name);
+            let texture_source = tex.source().source();
+            match texture_source {
+                gltf::image::Source::View { view, mime_type } => {
+                    // TODO: below is wrong for sure (since the buffer size is always the same)
+                    // let buf_dat = &buffer_data[view.buffer().index()];
+                    let parent_buffer_data = &buffer_data[view.buffer().index()];
+                    let begin = view.offset();
+                    let end = view.offset() + view.length();
+                    let buf_dat = &parent_buffer_data[begin..end];
+                    // println!("mime_type is {}", mime_type);
+                    // println!("buffer length {}", buf_dat.len());
+                    // load texture from binary
+                    let mime_type = Some(mime_type.to_string());
+                    let base_color_texture = crate::texture::Texture::from_bytes(
+                        device, queue, buf_dat, tex_name, mime_type,
+                    )
+                    .expect("Couldn't load base color texture");
+                }
+                gltf::image::Source::Uri { uri, mime_type } => {
+                    todo!();
+                    // let base_color_texture = crate::texture::Texture::load_texture(uri, device, queue).await;
+                }
+            };
+        }
         // get base_color for PBR
         let base_color = pbr_properties.base_color_factor();
         let red = *base_color.first().expect("No red found for base color");
@@ -55,10 +84,10 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGro
         // let base_color = cgmath::Vector4::new(1.0, 1.0, 0.0, 1.0).into();        // <- TODO: this works, but not the bottom line of code...
         let base_color = cgmath::Vector4::new(red, green, blue, alpha).into();
         // let base_color = cgmath::Vector4::new(red, green, blue, 1.0).into();
-        println!(
-            "base_color: (r {}, g {}, b {}, a {})",
-            red, green, blue, alpha
-        );
+        // println!(
+        //     "base_color: (r {}, g {}, b {}, a {})",
+        //     red, green, blue, alpha
+        // );
         println!(
             "TODO: sample base color texture too (refer to old code on how to sample texture)"
         );

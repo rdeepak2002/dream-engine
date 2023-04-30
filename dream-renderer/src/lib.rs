@@ -262,7 +262,8 @@ impl RendererWgpu {
         // let diffuse_bytes = include_bytes!("happy-tree.png");
         let diffuse_bytes = include_bytes!("container.jpg");
         let diffuse_texture =
-            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg").unwrap();
+            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg", None)
+                .unwrap();
 
         // let texture_bind_group_layout =
         //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -391,6 +392,7 @@ impl RendererWgpu {
             &queue,
             play_icon_texture_bytes,
             "icons/PlayIcon.png",
+            None,
         )
         .unwrap();
 
@@ -400,6 +402,7 @@ impl RendererWgpu {
             &queue,
             file_icon_texture_bytes,
             "icons/FileIcon.png",
+            None,
         )
         .unwrap();
 
@@ -409,6 +412,7 @@ impl RendererWgpu {
             &queue,
             directory_icon_texture_bytes,
             "icons/FileIcon.png",
+            None,
         )
         .unwrap();
 
@@ -646,8 +650,13 @@ impl RendererWgpu {
             todo!();
             model_guid = "dummy_guid";
         }
-        let model =
-            gltf_loader::read_gltf(model_path, &self.device, &self.texture_bind_group_layout).await;
+        let model = gltf_loader::read_gltf(
+            model_path,
+            &self.device,
+            &self.queue,
+            &self.texture_bind_group_layout,
+        )
+        .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         Ok(model_guid.parse().unwrap())
     }
