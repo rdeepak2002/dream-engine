@@ -3,9 +3,9 @@ use wgpu::util::DeviceExt;
 
 use dream_fs::load_binary;
 
-use crate::model::{Mesh, Model};
+use crate::model::{MaterialUniform, Mesh, Model};
 
-pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
+pub async fn read_gltf(path: &str, device: &wgpu::Device, layout: &wgpu::BindGroupLayout) -> Model {
     let gltf = gltf::Gltf::from_slice(
         &load_binary(path)
             .await
@@ -42,9 +42,35 @@ pub async fn read_gltf(path: &str, device: &wgpu::Device) -> Model {
         let green = *base_color.get(1).expect("No green found for base color");
         let blue = *base_color.get(2).expect("No blue found for base color");
         let alpha = *base_color.get(3).expect("No alpha found for base color");
+        // let base_color = cgmath::Vector4::new(1.0, 1.0, 0.0, 1.0).into();        // <- TODO: this works, but not the bottom line of code...
         let base_color = cgmath::Vector4::new(red, green, blue, alpha).into();
-        // TODO: get other PBR properties
-        materials.push(crate::model::Material { base_color });
+        // let base_color = cgmath::Vector4::new(red, green, blue, 1.0).into();
+        println!(
+            "base_color: (r {}, g {}, b {}, a {})",
+            red, green, blue, alpha
+        );
+        println!(
+            "TODO: sample base color texture too (refer to old code on how to sample texture)"
+        );
+        // TODO: maybe we need to sample the base color texture?
+        let material_uniform = MaterialUniform { base_color };
+        let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("PBR Buffer"),
+            contents: bytemuck::cast_slice(&[material_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: pbr_mat_buffer.as_entire_binding(),
+            }],
+            label: None,
+        });
+        materials.push(crate::model::Material {
+            base_color,
+            bind_group,
+        });
     }
 
     // get meshes for model

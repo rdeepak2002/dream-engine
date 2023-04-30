@@ -46,14 +46,20 @@ fn vs_main(
 
 
 // Fragment shader
-
-@group(0) @binding(0)
-var t_diffuse: texture_2d<f32>;
-@group(0)@binding(1)
-var s_diffuse: sampler;
+struct MaterialUniform {
+    base_color: vec4<f32>,
+};
+//@group(0) @binding(0)
+//var t_diffuse: texture_2d<f32>;
+//@group(0)@binding(1)
+//var s_diffuse: sampler;
+@group(0)@binding(0)
+var<uniform> material: MaterialUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
+//    return vec4(1.0, 1.0, 1.0, 1.0);
+    return material.base_color;
+//    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
 }
 

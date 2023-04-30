@@ -186,6 +186,7 @@ pub struct RendererWgpu {
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     // instances: Vec<Instance>,
     // instance_buffer: wgpu::Buffer,
+    pub texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RendererWgpu {
@@ -263,43 +264,75 @@ impl RendererWgpu {
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg").unwrap();
 
+        // let texture_bind_group_layout =
+        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //         entries: &[
+        //             wgpu::BindGroupLayoutEntry {
+        //                 binding: 0,
+        //                 visibility: wgpu::ShaderStages::FRAGMENT,
+        //                 ty: wgpu::BindingType::Texture {
+        //                     multisampled: false,
+        //                     view_dimension: wgpu::TextureViewDimension::D2,
+        //                     sample_type: wgpu::TextureSampleType::Float { filterable: true },
+        //                 },
+        //                 count: None,
+        //             },
+        //             wgpu::BindGroupLayoutEntry {
+        //                 binding: 1,
+        //                 visibility: wgpu::ShaderStages::FRAGMENT,
+        //                 // This should match the filterable field of the
+        //                 // corresponding Texture entry above.
+        //                 ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+        //                 count: None,
+        //             },
+        //         ],
+        //         label: Some("texture_bind_group_layout"),
+        //     });
+        //
+        // let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: &texture_bind_group_layout,
+        //     entries: &[
+        //         wgpu::BindGroupEntry {
+        //             binding: 0,
+        //             resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
+        //         },
+        //         wgpu::BindGroupEntry {
+        //             binding: 1,
+        //             resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
+        //         },
+        //     ],
+        //     label: Some("diffuse_bind_group"),
+        // });
+
         let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        // This should match the filterable field of the
-                        // corresponding Texture entry above.
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
+                    count: None,
+                }],
                 label: Some("texture_bind_group_layout"),
             });
 
+        let base_color = cgmath::Vector4::new(1., 0., 0., 1.).into();
+        let material_uniform = crate::model::MaterialUniform { base_color };
+        let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("PBR Buffer"),
+            contents: bytemuck::cast_slice(&[material_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
         let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &texture_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&diffuse_texture.view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&diffuse_texture.sampler),
-                },
-            ],
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: pbr_mat_buffer.as_entire_binding(),
+            }],
             label: Some("diffuse_bind_group"),
         });
 
@@ -540,6 +573,7 @@ impl RendererWgpu {
             instance_buffer_map: Default::default(),
             // instances,
             // instance_buffer,
+            texture_bind_group_layout,
         }
     }
 
@@ -612,7 +646,8 @@ impl RendererWgpu {
             todo!();
             model_guid = "dummy_guid";
         }
-        let model = gltf_loader::read_gltf(model_path, &self.device).await;
+        let model =
+            gltf_loader::read_gltf(model_path, &self.device, &self.texture_bind_group_layout).await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         Ok(model_guid.parse().unwrap())
     }
@@ -688,8 +723,15 @@ impl RendererWgpu {
                 let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
-                let materials = model.materials.clone();
                 let mesh_index = render_map_key.mesh_index;
+                let mesh = model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
+                    panic!(
+                        "no mesh at index {} for model with guid {}",
+                        mesh_index, model_guid
+                    )
+                });
+                // let materials = model.materials;
+                let material_index = mesh.material;
                 let num_instances = transforms.len() as u32;
                 let instance_buffer = self
                     .instance_buffer_map
@@ -697,12 +739,11 @@ impl RendererWgpu {
                     .expect("No instance buffer found in map");
                 render_pass.set_vertex_buffer(1, instance_buffer.slice(..));
                 render_pass.draw_mesh_instanced(
-                    model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
-                        panic!(
-                            "no mesh at index {} for model with guid {}",
-                            mesh_index, model_guid
-                        )
-                    }),
+                    mesh,
+                    model
+                        .materials
+                        .get(material_index)
+                        .expect("No material at index"),
                     0..num_instances,
                 );
             }
