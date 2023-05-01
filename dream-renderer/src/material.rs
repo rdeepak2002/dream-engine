@@ -1,3 +1,4 @@
+use gltf::texture::Info;
 use wgpu::util::DeviceExt;
 
 #[repr(C)]
@@ -76,74 +77,102 @@ impl Material {
 
         // get base color texture
         let base_color_texture;
-        if pbr_properties.base_color_texture().is_some() {
-            let texture = pbr_properties
-                .base_color_texture()
-                .expect("No base color texture")
-                .texture();
-            let texture_name = texture.name().unwrap_or("No texture name");
-            let texture_source = texture.source().source();
-            match texture_source {
-                gltf::image::Source::View { view, mime_type } => {
-                    let parent_buffer_data = &buffer_data[view.buffer().index()];
-                    let begin = view.offset();
-                    let end = view.offset() + view.length();
-                    let buf_dat = &parent_buffer_data[begin..end];
-                    let mime_type = Some(mime_type.to_string());
-                    base_color_texture = crate::texture::Texture::from_bytes(
-                        device,
-                        queue,
-                        buf_dat,
-                        texture_name,
-                        mime_type,
-                    )
-                    .expect("Couldn't load base color texture");
-                }
-                gltf::image::Source::Uri { uri, mime_type } => {
-                    todo!();
-                }
-            };
-        } else {
-            let bytes = include_bytes!("white.png");
-            base_color_texture =
-                crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                    .expect("Couldn't load default texture");
+        match pbr_properties.base_color_texture() {
+            None => {
+                // TODO: cache this
+                let bytes = include_bytes!("white.png");
+                base_color_texture =
+                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                        .expect("Couldn't load default texture");
+            }
+            Some(texture_info) => {
+                base_color_texture = crate::texture::Texture::from_gltf_texture(
+                    texture_info.texture(),
+                    device,
+                    queue,
+                    buffer_data,
+                );
+            }
+        }
+
+        // get metallic texture
+        let metallic_texture;
+        match pbr_properties.metallic_roughness_texture() {
+            None => {
+                // TODO: cache this
+                let bytes = include_bytes!("black.png");
+                metallic_texture =
+                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                        .expect("Couldn't load default texture");
+            }
+            Some(texture_info) => {
+                metallic_texture = crate::texture::Texture::from_gltf_texture(
+                    texture_info.texture(),
+                    device,
+                    queue,
+                    buffer_data,
+                );
+            }
+        }
+
+        // get normal map texture
+        let normal_map_texture;
+        match material.normal_texture() {
+            None => {
+                // TODO: cache this
+                let bytes = include_bytes!("default_normal.png");
+                normal_map_texture =
+                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                        .expect("Couldn't load default texture");
+            }
+            Some(texture_info) => {
+                normal_map_texture = crate::texture::Texture::from_gltf_texture(
+                    texture_info.texture(),
+                    device,
+                    queue,
+                    buffer_data,
+                );
+            }
         }
 
         // get emissive texture
         let emissive_texture;
-        if material.emissive_texture().is_some() {
-            let texture = material
-                .emissive_texture()
-                .expect("No emissive color texture")
-                .texture();
-            let texture_name = texture.name().unwrap_or("No texture name");
-            let texture_source = texture.source().source();
-            match texture_source {
-                gltf::image::Source::View { view, mime_type } => {
-                    let parent_buffer_data = &buffer_data[view.buffer().index()];
-                    let begin = view.offset();
-                    let end = view.offset() + view.length();
-                    let buf_dat = &parent_buffer_data[begin..end];
-                    let mime_type = Some(mime_type.to_string());
-                    emissive_texture = crate::texture::Texture::from_bytes(
-                        device,
-                        queue,
-                        buf_dat,
-                        texture_name,
-                        mime_type,
-                    )
-                    .expect("Couldn't load base color texture");
-                }
-                gltf::image::Source::Uri { uri, mime_type } => {
-                    todo!();
-                }
-            };
-        } else {
-            let bytes = include_bytes!("black.png");
-            emissive_texture =
-                crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                    .expect("Couldn't load default texture");
+        match material.emissive_texture() {
+            None => {
+                // TODO: cache this
+                let bytes = include_bytes!("black.png");
+                emissive_texture =
+                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                        .expect("Couldn't load default texture");
+            }
+            Some(texture_info) => {
+                emissive_texture = crate::texture::Texture::from_gltf_texture(
+                    texture_info.texture(),
+                    device,
+                    queue,
+                    buffer_data,
+                );
+            }
+        }
+
+        // get occlusion texture
+        let occlusion_texture;
+        match material.occlusion_texture() {
+            None => {
+                // TODO: cache this
+                let bytes = include_bytes!("white.png");
+                occlusion_texture =
+                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                        .expect("Couldn't load default texture");
+            }
+            Some(texture_info) => {
+                occlusion_texture = crate::texture::Texture::from_gltf_texture(
+                    texture_info.texture(),
+                    device,
+                    queue,
+                    buffer_data,
+                );
+            }
         }
 
         // define the material factors uniform
@@ -174,7 +203,7 @@ impl Material {
         // create bind group for base color texture
         let pbr_material_textures_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &pbr_material_textures_bind_group_layout,
+                layout: pbr_material_textures_bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
@@ -186,15 +215,46 @@ impl Material {
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::TextureView(&emissive_texture.view),
+                        resource: wgpu::BindingResource::TextureView(&metallic_texture.view),
                     },
                     wgpu::BindGroupEntry {
                         binding: 3,
+                        resource: wgpu::BindingResource::Sampler(&metallic_texture.sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 4,
+                        resource: wgpu::BindingResource::TextureView(&normal_map_texture.view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 5,
+                        resource: wgpu::BindingResource::Sampler(&normal_map_texture.sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 6,
+                        resource: wgpu::BindingResource::TextureView(&emissive_texture.view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 7,
                         resource: wgpu::BindingResource::Sampler(&emissive_texture.sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 8,
+                        resource: wgpu::BindingResource::TextureView(&occlusion_texture.view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 9,
+                        resource: wgpu::BindingResource::Sampler(&occlusion_texture.sampler),
                     },
                 ],
                 label: Some("pbr_textures_bind_group"),
             });
+
+        println!(
+            "emissive ({}, {}, {})",
+            material_factors_uniform.emissive[0],
+            material_factors_uniform.emissive[1],
+            material_factors_uniform.emissive[2]
+        );
 
         // define this struct
         Self {
