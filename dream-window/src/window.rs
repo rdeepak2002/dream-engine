@@ -95,12 +95,14 @@ impl Window {
         )
         .await;
 
-        // println!("Loading link model");
-        // renderer
-        //     .store_model(Some("link"), "link.glb")
-        //     .await
-        //     .expect("Error loading link model");
-        // println!("Done loading link model");
+        // TODO: figure out why link is slow (just print stuff to see what stages are slow)
+        // TODO: i think the repeated load bytes for default textures is the bottle neck
+        dbg!("Loading link model");
+        renderer
+            .store_model(Some("link"), "link.glb")
+            .await
+            .expect("Error loading link model");
+        dbg!("Done loading link model");
 
         println!("Loading robot model");
         renderer

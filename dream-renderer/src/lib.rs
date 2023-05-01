@@ -156,6 +156,9 @@ pub struct RendererWgpu {
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
     pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
+    pub default_white_texture: texture::Texture,
+    pub default_black_texture: texture::Texture,
+    pub default_normal_texture: texture::Texture,
 }
 
 impl RendererWgpu {
@@ -487,7 +490,37 @@ impl RendererWgpu {
             multiview: None,
         });
 
+        let default_white_texture = crate::texture::Texture::from_bytes(
+            &device,
+            &queue,
+            include_bytes!("white.png"),
+            "default",
+            None,
+        )
+        .expect("Couldn't load default white texture");
+
+        let default_black_texture = crate::texture::Texture::from_bytes(
+            &device,
+            &queue,
+            include_bytes!("black.png"),
+            "default",
+            None,
+        )
+        .expect("Couldn't load default black texture");
+
+        let default_normal_texture = crate::texture::Texture::from_bytes(
+            &device,
+            &queue,
+            include_bytes!("default_normal.png"),
+            "default",
+            None,
+        )
+        .expect("Couldn't load default normal texture");
+
         Self {
+            default_white_texture,
+            default_black_texture,
+            default_normal_texture,
             surface,
             device,
             queue,
@@ -575,6 +608,7 @@ impl RendererWgpu {
             // TODO: auto-generate guid
             todo!();
         }
+        dbg!("Reading gltf");
         let model = gltf_loader::read_gltf(
             model_path,
             &self.device,
@@ -583,6 +617,7 @@ impl RendererWgpu {
             &self.pbr_material_textures_bind_group_layout,
         )
         .await;
+        dbg!("Done reading gltf");
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         Ok(model_guid.parse().unwrap())
     }

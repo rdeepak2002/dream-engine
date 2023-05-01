@@ -40,7 +40,9 @@ pub async fn read_gltf(
     let mut materials = Vec::new();
 
     // get materials for model
+    dbg!("Creating materials");
     for material in gltf.materials() {
+        dbg!("Creating material");
         materials.push(Material::new(
             material,
             device,
@@ -49,7 +51,9 @@ pub async fn read_gltf(
             pbr_material_textures_bind_group_layout,
             &buffer_data,
         ));
+        dbg!("Done creating material");
     }
+    dbg!("Done creating materials");
 
     // get meshes for model
     let mut get_dream_mesh = |mesh: gltf::Mesh| {
