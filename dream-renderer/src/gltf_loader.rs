@@ -3,7 +3,8 @@ use wgpu::util::DeviceExt;
 
 use dream_fs::load_binary;
 
-use crate::model::{MaterialUniform, Mesh, Model};
+use crate::material::Material;
+use crate::model::{Mesh, Model};
 
 pub async fn read_gltf(
     path: &str,
@@ -39,13 +40,7 @@ pub async fn read_gltf(
 
     // get materials for model
     for material in gltf.materials() {
-        materials.push(crate::model::Material::new(
-            material,
-            device,
-            queue,
-            layout,
-            &buffer_data,
-        ));
+        materials.push(Material::new(material, device, queue, layout, &buffer_data));
     }
 
     // get meshes for model

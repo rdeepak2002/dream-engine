@@ -22,10 +22,12 @@ use cgmath::prelude::*;
 use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
 
+use crate::material::MaterialUniform;
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 
 pub mod camera;
 pub mod gltf_loader;
+pub mod material;
 pub mod model;
 pub mod texture;
 
@@ -317,7 +319,7 @@ impl RendererWgpu {
 
         let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("PBR Buffer"),
-            contents: bytemuck::cast_slice(&[model::MaterialUniform::new()]),
+            contents: bytemuck::cast_slice(&[MaterialUniform::new()]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
