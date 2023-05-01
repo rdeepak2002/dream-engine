@@ -1,16 +1,34 @@
 use wgpu::util::DeviceExt;
 
+// #[repr(C)]
+// #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+// pub(crate) struct MaterialUniform {
+//     pub base_color: [f32; 4],
+//     // TODO: add support for base color texture
+// }
+//
+// impl MaterialUniform {
+//     pub fn new() -> Self {
+//         Self {
+//             base_color: cgmath::Vector4::new(0., 0., 0., 1.).into(),
+//         }
+//     }
+// }
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub(crate) struct MaterialUniform {
+pub struct MaterialFactors {
     pub base_color: [f32; 4],
-    // TODO: add support for base color texture
+    // pub metal: f32,
+    // pub rough: f32,
+    // pub emissive: [f32; 3],
+    // pub extra_emissive: [f32; 3],
 }
 
-impl MaterialUniform {
+impl MaterialFactors {
     pub fn new() -> Self {
         Self {
-            base_color: cgmath::Vector4::new(0., 0., 0., 1.).into(),
+            base_color: [0., 0., 0., 1.],
         }
     }
 }
@@ -64,14 +82,14 @@ impl Material {
         let base_color = pbr_properties.base_color_factor();
 
         // create the uniform and the respective bind group for it
-        let material_uniform = MaterialUniform { base_color };
+        let material_uniform = MaterialFactors { base_color };
         let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("PBR Buffer"),
+            label: Some("PBR Material Buffer"),
             contents: bytemuck::cast_slice(&[material_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &layout,
+            layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
                 resource: pbr_mat_buffer.as_entire_binding(),

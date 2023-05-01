@@ -18,11 +18,9 @@
 
 use std::iter;
 
-use cgmath::prelude::*;
 use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
 
-use crate::material::MaterialUniform;
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 
 pub mod camera;
@@ -58,19 +56,8 @@ pub struct CameraUniform {
 
 impl CameraUniform {
     fn new() -> Self {
-        // let scale_mat: cgmath::Matrix4<f32> = cgmath::Matrix4::from_scale(1.0);
-        // let rotation_mat_x: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_x(cgmath::Rad(0.0));
-        // let rotation_mat_y: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_y(cgmath::Rad(0.0));
-        // let rotation_mat_z: cgmath::Matrix4<f32> = cgmath::Matrix4::from_angle_z(cgmath::Rad(0.0));
-        // // let translation_mat: cgmath::Matrix4<f32> =
-        // //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, 0.0, 0.0));
-        // let translation_mat: cgmath::Matrix4<f32> =
-        //     cgmath::Matrix4::from_translation(cgmath::Vector3::new(0.0, -2.0, -5.0));
-        // // let model_mat =
-        // //     scale_mat * rotation_mat_z * rotation_mat_y * rotation_mat_x * translation_mat;
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
-            // model: model_mat.into(),
         }
     }
 
@@ -118,21 +105,13 @@ impl InstanceRaw {
         use std::mem;
         wgpu::VertexBufferLayout {
             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
-            // We need to switch from using a step mode of Vertex to Instance
-            // This means that our shaders will only change to use the next
-            // instance when the shader starts processing a new instance
             step_mode: wgpu::VertexStepMode::Instance,
             attributes: &[
                 wgpu::VertexAttribute {
                     offset: 0,
-                    // While our vertex shader only uses locations 0, and 1 now, in later tutorials we'll
-                    // be using 2, 3, and 4, for Vertex. We'll start at slot 5 not conflict with them later
                     shader_location: 5,
                     format: wgpu::VertexFormat::Float32x4,
                 },
-                // A mat4 takes up 4 vertex slots as it is technically 4 vec4s. We need to define a slot
-                // for each vec4. We'll have to reassemble the mat4 in
-                // the shader.
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
                     shader_location: 6,
@@ -167,23 +146,15 @@ pub struct RendererWgpu {
     pub play_icon_texture: texture::Texture,
     pub file_icon_texture: texture::Texture,
     pub directory_icon_texture: texture::Texture,
-    // vertex_buffer: wgpu::Buffer,
-    // index_buffer: wgpu::Buffer,
-    diffuse_bind_group: wgpu::BindGroup,
     pub camera: camera::Camera,
     pub camera_uniform: CameraUniform,
     pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     pub surface_format: wgpu::TextureFormat,
-    // pub mesh_list: Vec<model::Mesh>,
-    // pub mesh_guids: std::collections::HashMap<String, Rc<Model>>,
     model_guids: std::collections::HashMap<String, Model>,
-    // render_map: std::collections::HashMap<RenderMapKey, Vec<cgmath::Matrix4<f32>>>,
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
-    // instances: Vec<Instance>,
-    // instance_buffer: wgpu::Buffer,
-    pub texture_bind_group_layout: wgpu::BindGroupLayout,
+    pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RendererWgpu {
@@ -301,7 +272,7 @@ impl RendererWgpu {
         //     label: Some("diffuse_bind_group"),
         // });
 
-        let texture_bind_group_layout =
+        let pbr_material_factors_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
@@ -316,20 +287,20 @@ impl RendererWgpu {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("PBR Buffer"),
-            contents: bytemuck::cast_slice(&[MaterialUniform::new()]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
+        // let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("PBR Buffer"),
+        //     contents: bytemuck::cast_slice(&[MaterialFactors::new()]),
+        //     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        // });
 
-        let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &texture_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: pbr_mat_buffer.as_entire_binding(),
-            }],
-            label: Some("diffuse_bind_group"),
-        });
+        // let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: &texture_bind_group_layout,
+        //     entries: &[wgpu::BindGroupEntry {
+        //         binding: 0,
+        //         resource: pbr_mat_buffer.as_entire_binding(),
+        //     }],
+        //     label: Some("diffuse_bind_group"),
+        // });
 
         let camera = camera::Camera {
             // position the camera one unit up and 2 units back
@@ -424,7 +395,10 @@ impl RendererWgpu {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[&texture_bind_group_layout, &camera_bind_group_layout],
+                bind_group_layouts: &[
+                    &pbr_material_factors_bind_group_layout,
+                    &camera_bind_group_layout,
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -557,21 +531,15 @@ impl RendererWgpu {
             play_icon_texture,
             file_icon_texture,
             directory_icon_texture,
-            // vertex_buffer,
-            // index_buffer,
-            diffuse_bind_group,
             camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
             surface_format,
-            // mesh_list,
             model_guids: Default::default(),
             render_map: Default::default(),
             instance_buffer_map: Default::default(),
-            // instances,
-            // instance_buffer,
-            texture_bind_group_layout,
+            pbr_material_factors_bind_group_layout,
         }
     }
 
@@ -642,13 +610,12 @@ impl RendererWgpu {
         } else {
             // TODO: auto-generate guid
             todo!();
-            model_guid = "dummy_guid";
         }
         let model = gltf_loader::read_gltf(
             model_path,
             &self.device,
             &self.queue,
-            &self.texture_bind_group_layout,
+            &self.pbr_material_factors_bind_group_layout,
         )
         .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
@@ -696,16 +663,11 @@ impl RendererWgpu {
 
             render_pass.set_pipeline(&self.render_pipeline);
             // material bind group
-            render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+            // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             // camera bind group
             render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
             // vertex drawing
             for (render_map_key, transforms) in &self.render_map {
-                // println!("Num transforms: {}", transforms.len());
-                // update instance buffers
-                // if self.instance_buffer_map.contains_key(render_map_key) {
-                //     self.instance_buffer_map.remove(render_map_key);
-                // }
                 // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
                 {
                     let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
@@ -733,8 +695,6 @@ impl RendererWgpu {
                         mesh_index, model_guid
                     )
                 });
-                // let materials = model.materials;
-                let material_index = mesh.material;
                 let num_instances = transforms.len() as u32;
                 let instance_buffer = self
                     .instance_buffer_map
@@ -745,7 +705,7 @@ impl RendererWgpu {
                     mesh,
                     model
                         .materials
-                        .get(material_index)
+                        .get(mesh.material)
                         .expect("No material at index"),
                     0..num_instances,
                 );

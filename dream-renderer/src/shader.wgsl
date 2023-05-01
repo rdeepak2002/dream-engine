@@ -4,7 +4,7 @@
 struct CameraUniform {
     view_proj: mat4x4<f32>,
 };
-@group(1) @binding(0) // 1.
+@group(1) @binding(0)
 var<uniform> camera: CameraUniform;
 
 struct VertexInput {
@@ -46,7 +46,7 @@ fn vs_main(
 
 
 // Fragment shader
-struct MaterialUniform {
+struct MaterialFactors {
     base_color: vec4<f32>,
 };
 //@group(0) @binding(0)
@@ -54,12 +54,12 @@ struct MaterialUniform {
 //@group(0)@binding(1)
 //var s_diffuse: sampler;
 @group(0)@binding(0)
-var<uniform> material: MaterialUniform;
+var<uniform> material_factors: MaterialFactors;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 //    return vec4(1.0, 1.0, 1.0, 1.0);
-    return material.base_color;
+    return material_factors.base_color;
 //    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
 }
 
