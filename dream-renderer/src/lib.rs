@@ -48,15 +48,10 @@ impl std::fmt::Display for PathNotFoundError {
 
 // const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
 
-// We need this for Rust to store our data correctly for the shaders
 #[repr(C)]
-// This is so we can store this in a buffer
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
-    // We can't use cgmath with bytemuck directly so we'll have
-    // to convert the Matrix4 into a 4x4 f32 array
     view_proj: [[f32; 4]; 4],
-    // model: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
@@ -320,11 +315,9 @@ impl RendererWgpu {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let base_color = cgmath::Vector4::new(1., 0., 0., 1.).into();
-        let material_uniform = crate::model::MaterialUniform { base_color };
         let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("PBR Buffer"),
-            contents: bytemuck::cast_slice(&[material_uniform]),
+            contents: bytemuck::cast_slice(&[model::MaterialUniform::new()]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 

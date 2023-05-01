@@ -39,77 +39,13 @@ pub async fn read_gltf(
 
     // get materials for model
     for material in gltf.materials() {
-        let pbr_properties = material.pbr_metallic_roughness();
-        if material
-            .pbr_metallic_roughness()
-            .base_color_texture()
-            .is_some()
-        {
-            let tex = pbr_properties
-                .base_color_texture()
-                .expect("No base color texture")
-                .texture();
-            let tex_name = tex.name().unwrap_or("No texture name");
-            // println!("texture name {}", tex_name);
-            let texture_source = tex.source().source();
-            match texture_source {
-                gltf::image::Source::View { view, mime_type } => {
-                    // TODO: below is wrong for sure (since the buffer size is always the same)
-                    // let buf_dat = &buffer_data[view.buffer().index()];
-                    let parent_buffer_data = &buffer_data[view.buffer().index()];
-                    let begin = view.offset();
-                    let end = view.offset() + view.length();
-                    let buf_dat = &parent_buffer_data[begin..end];
-                    // println!("mime_type is {}", mime_type);
-                    // println!("buffer length {}", buf_dat.len());
-                    // load texture from binary
-                    let mime_type = Some(mime_type.to_string());
-                    let base_color_texture = crate::texture::Texture::from_bytes(
-                        device, queue, buf_dat, tex_name, mime_type,
-                    )
-                    .expect("Couldn't load base color texture");
-                }
-                gltf::image::Source::Uri { uri, mime_type } => {
-                    todo!();
-                    // let base_color_texture = crate::texture::Texture::load_texture(uri, device, queue).await;
-                }
-            };
-        }
-        // get base_color for PBR
-        let base_color = pbr_properties.base_color_factor();
-        let red = *base_color.first().expect("No red found for base color");
-        let green = *base_color.get(1).expect("No green found for base color");
-        let blue = *base_color.get(2).expect("No blue found for base color");
-        let alpha = *base_color.get(3).expect("No alpha found for base color");
-        // let base_color = cgmath::Vector4::new(1.0, 1.0, 0.0, 1.0).into();        // <- TODO: this works, but not the bottom line of code...
-        let base_color = cgmath::Vector4::new(red, green, blue, alpha).into();
-        // let base_color = cgmath::Vector4::new(red, green, blue, 1.0).into();
-        // println!(
-        //     "base_color: (r {}, g {}, b {}, a {})",
-        //     red, green, blue, alpha
-        // );
-        println!(
-            "TODO: sample base color texture too (refer to old code on how to sample texture)"
-        );
-        // TODO: maybe we need to sample the base color texture?
-        let material_uniform = MaterialUniform { base_color };
-        let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("PBR Buffer"),
-            contents: bytemuck::cast_slice(&[material_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: pbr_mat_buffer.as_entire_binding(),
-            }],
-            label: None,
-        });
-        materials.push(crate::model::Material {
-            base_color,
-            bind_group,
-        });
+        materials.push(crate::model::Material::new(
+            material,
+            device,
+            queue,
+            layout,
+            &buffer_data,
+        ));
     }
 
     // get meshes for model

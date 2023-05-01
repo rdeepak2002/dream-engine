@@ -112,6 +112,10 @@ const fetchResourceFiles = async () => {
         filepath: "ice_cube.glb",
         fileUrl: undefined,
     });
+    await fetchResourceFile(root, {
+        filepath: "robot.glb",
+        fileUrl: undefined,
+    });
     // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)
     // and the filepath + url can be stored in a db collection as a single db entry
     // await fetchResourceFile(root, {
