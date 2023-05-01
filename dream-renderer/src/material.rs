@@ -42,11 +42,11 @@ pub enum AlphaBlendMode {
 
 impl From<gltf::material::AlphaMode> for AlphaBlendMode {
     fn from(alpha_mode: gltf::material::AlphaMode) -> Self {
-        return match alpha_mode {
+        match alpha_mode {
             gltf::material::AlphaMode::Opaque => AlphaBlendMode::Opaque,
             gltf::material::AlphaMode::Mask => AlphaBlendMode::Mask,
             gltf::material::AlphaMode::Blend => AlphaBlendMode::Blend,
-        };
+        }
     }
 }
 
