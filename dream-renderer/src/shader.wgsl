@@ -45,11 +45,17 @@ fn vs_main(
 
 struct MaterialFactors {
     base_color: vec3<f32>,
-//    metallic: f32,
-//    roughness: f32,
-//    emissive: vec3<f32>,
+    _padding1: f32,
+    emissive: vec3<f32>,
+    metallic: f32,
+    roughness: f32,
     alpha: f32,
-//    alpha_cutoff: f32,
+    alpha_cutoff: f32,
+    _padding2: f32,
+    _padding3: f32,
+    _padding4: f32,
+    _padding5: f32,
+    _padding6: f32
 };
 @group(1) @binding(0)
 var<uniform> material_factors: MaterialFactors;

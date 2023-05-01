@@ -4,22 +4,40 @@ use wgpu::util::DeviceExt;
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MaterialFactors {
     pub base_color: [f32; 3],
-    // pub metallic: f32,
-    // pub roughness: f32,
-    // pub emissive: [f32; 3],
+    pub _padding1: f32,
+    pub emissive: [f32; 3],
+    pub metallic: f32,
+    pub roughness: f32,
     pub alpha: f32,
-    // pub alpha_cutoff: f32,
+    pub alpha_cutoff: f32,
+    pub _padding2: f32,
+    pub _padding3: f32,
+    pub _padding4: f32,
+    pub _padding5: f32,
+    pub _padding6: f32,
 }
 
 impl MaterialFactors {
-    pub fn new() -> Self {
+    pub fn new(
+        base_color: [f32; 4],
+        emissive: [f32; 3],
+        metallic: f32,
+        roughness: f32,
+        alpha_cutoff: f32,
+    ) -> Self {
         Self {
-            base_color: [0., 0., 0.],
-            // metallic: 0.0,
-            // roughness: 0.0,
-            // emissive: [0., 0., 0.],
-            alpha: 1.0,
-            // alpha_cutoff: 0.0,
+            base_color: cgmath::Vector4::from(base_color).truncate().into(),
+            _padding1: 0.,
+            emissive,
+            metallic,
+            roughness,
+            alpha: *(base_color.get(3).unwrap_or(&1.0)),
+            alpha_cutoff,
+            _padding2: 0.,
+            _padding3: 0.,
+            _padding4: 0.,
+            _padding5: 0.,
+            _padding6: 0.,
         }
     }
 }
@@ -89,18 +107,13 @@ impl Material {
         }
 
         // define the uniform
-        let material_factors_uniform = MaterialFactors {
-            base_color: cgmath::Vector4::from(pbr_properties.base_color_factor())
-                .truncate()
-                .into(),
-            // metallic: pbr_properties.metallic_factor(),
-            // roughness: pbr_properties.roughness_factor(),
-            // emissive: material.emissive_factor(),
-            alpha: *(pbr_properties.base_color_factor().get(3).unwrap_or(&1.0)),
-            // alpha_cutoff: material.alpha_cutoff().unwrap_or(0.0),
-        };
-
-        dbg!(material_factors_uniform);
+        let material_factors_uniform = MaterialFactors::new(
+            pbr_properties.base_color_factor(),
+            material.emissive_factor(),
+            pbr_properties.metallic_factor(),
+            pbr_properties.roughness_factor(),
+            material.alpha_cutoff().unwrap_or(0.0),
+        );
 
         // create the gpu bind group for this
         let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
