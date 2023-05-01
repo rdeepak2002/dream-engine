@@ -257,11 +257,10 @@ impl RendererWgpu {
         surface.configure(&device, &config);
 
         // let diffuse_bytes = include_bytes!("happy-tree.png");
-        let diffuse_bytes = include_bytes!("container.jpg");
-        let diffuse_texture =
-            texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg", None)
-                .unwrap();
-
+        // let diffuse_bytes = include_bytes!("container.jpg");
+        // let diffuse_texture =
+        //     texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "container.jpg", None)
+        //         .unwrap();
         // let texture_bind_group_layout =
         //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
         //         entries: &[
