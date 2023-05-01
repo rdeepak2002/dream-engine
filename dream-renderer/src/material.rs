@@ -53,7 +53,11 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 pub struct Material {
     pub bind_group: wgpu::BindGroup,
     pub factor_base_color: cgmath::Vector3<f32>,
+    pub factor_emissive: cgmath::Vector3<f32>,
+    pub factor_metallic: f32,
+    pub factor_roughness: f32,
     pub factor_alpha: f32,
+    pub factor_alpha_cutoff: f32,
     pub alpha_blend_mode: AlphaBlendMode,
     pub double_sided: bool,
 }
@@ -126,7 +130,11 @@ impl Material {
         Self {
             bind_group,
             factor_base_color: material_factors_uniform.base_color.into(),
+            factor_emissive: material_factors_uniform.emissive.into(),
+            factor_metallic: material_factors_uniform.metallic,
+            factor_roughness: material_factors_uniform.roughness,
             factor_alpha: material_factors_uniform.alpha,
+            factor_alpha_cutoff: material_factors_uniform.alpha_cutoff,
             alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
             double_sided: material.double_sided(),
         }
