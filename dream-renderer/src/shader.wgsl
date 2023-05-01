@@ -55,14 +55,16 @@ struct MaterialFactors {
 };
 @group(1) @binding(0)
 var<uniform> material_factors: MaterialFactors;
-//@group(0) @binding(0)
-//var t_diffuse: texture_2d<f32>;
-//@group(0) @binding(1)
-//var s_diffuse: sampler;
+@group(2) @binding(0)
+var texture_base_color: texture_2d<f32>;
+@group(2) @binding(1)
+var sampler_base_color: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-//    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
-    return vec4(material_factors.base_color, material_factors.alpha);
+    let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
+    let base_color_factor = vec4(material_factors.base_color, material_factors.alpha);
+    let base_color = base_color_texture * base_color_factor;
+    return base_color;
 }
 

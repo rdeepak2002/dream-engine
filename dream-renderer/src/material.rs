@@ -51,7 +51,8 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 }
 
 pub struct Material {
-    pub bind_group: wgpu::BindGroup,
+    pub pbr_material_factors_bind_group: wgpu::BindGroup,
+    pub pbr_material_base_color_texture_bind_group: wgpu::BindGroup,
     pub factor_base_color: cgmath::Vector3<f32>,
     pub factor_emissive: cgmath::Vector3<f32>,
     pub factor_metallic: f32,
@@ -67,12 +68,14 @@ impl Material {
         material: gltf::Material,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        layout: &wgpu::BindGroupLayout,
+        pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
+        base_color_texture_bind_group_layout: &wgpu::BindGroupLayout,
         buffer_data: &Vec<Vec<u8>>,
     ) -> Self {
         let pbr_properties = material.pbr_metallic_roughness();
 
         // get base color texture
+        let base_color_texture;
         if pbr_properties.base_color_texture().is_some() {
             let texture = pbr_properties
                 .base_color_texture()
@@ -87,7 +90,7 @@ impl Material {
                     let end = view.offset() + view.length();
                     let buf_dat = &parent_buffer_data[begin..end];
                     let mime_type = Some(mime_type.to_string());
-                    let base_color_texture = crate::texture::Texture::from_bytes(
+                    base_color_texture = crate::texture::Texture::from_bytes(
                         device,
                         queue,
                         buf_dat,
@@ -100,6 +103,11 @@ impl Material {
                     todo!();
                 }
             };
+        } else {
+            let bytes = include_bytes!("white.png");
+            base_color_texture =
+                crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                    .expect("Couldn't load default texture");
         }
 
         // define the uniform
@@ -111,24 +119,51 @@ impl Material {
             material.alpha_cutoff().unwrap_or(0.0),
         );
 
-        // create the gpu bind group for this
+        // create the gpu bind group for material factors
         let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("PBR Material Buffer"),
             contents: bytemuck::cast_slice(&[material_factors_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: pbr_mat_buffer.as_entire_binding(),
-            }],
-            label: None,
-        });
+        let pbr_material_factors_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: pbr_material_factors_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: pbr_mat_buffer.as_entire_binding(),
+                }],
+                label: None,
+            });
+
+        // create bind group for base color texture
+        let pbr_material_base_color_texture_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &base_color_texture_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(
+                            &base_color_texture
+                                // .expect("No base color texture found")
+                                .view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(
+                            &base_color_texture
+                                // .expect("No base color texture found")
+                                .sampler,
+                        ),
+                    },
+                ],
+                label: Some("base_color_texture_bind_group"),
+            });
 
         // define this struct
         Self {
-            bind_group,
+            pbr_material_factors_bind_group,
+            pbr_material_base_color_texture_bind_group,
             factor_base_color: material_factors_uniform.base_color.into(),
             factor_emissive: material_factors_uniform.emissive.into(),
             factor_metallic: material_factors_uniform.metallic,

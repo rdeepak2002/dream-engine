@@ -155,6 +155,7 @@ pub struct RendererWgpu {
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
+    base_color_texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RendererWgpu {
@@ -287,6 +288,31 @@ impl RendererWgpu {
                 label: Some("texture_bind_group_layout"),
             });
 
+        let base_color_texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        // This should match the filterable field of the
+                        // corresponding Texture entry above.
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: Some("base_color_texture_bind_group_layout"),
+            });
+
         // let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         //     label: Some("PBR Buffer"),
         //     contents: bytemuck::cast_slice(&[MaterialFactors::new()]),
@@ -398,6 +424,7 @@ impl RendererWgpu {
                 bind_group_layouts: &[
                     &camera_bind_group_layout,
                     &pbr_material_factors_bind_group_layout,
+                    &base_color_texture_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -477,6 +504,7 @@ impl RendererWgpu {
             render_map: Default::default(),
             instance_buffer_map: Default::default(),
             pbr_material_factors_bind_group_layout,
+            base_color_texture_bind_group_layout,
         }
     }
 
@@ -547,6 +575,7 @@ impl RendererWgpu {
             &self.device,
             &self.queue,
             &self.pbr_material_factors_bind_group_layout,
+            &self.base_color_texture_bind_group_layout,
         )
         .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
@@ -638,7 +667,12 @@ impl RendererWgpu {
                     .materials
                     .get(mesh.material)
                     .expect("No material at index");
-                render_pass.set_bind_group(1, &material.bind_group, &[]);
+                render_pass.set_bind_group(1, &material.pbr_material_factors_bind_group, &[]);
+                render_pass.set_bind_group(
+                    2,
+                    &material.pbr_material_base_color_texture_bind_group,
+                    &[],
+                );
                 // draw the mesh
                 render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
             }

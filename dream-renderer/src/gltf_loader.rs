@@ -10,7 +10,8 @@ pub async fn read_gltf(
     path: &str,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
-    layout: &wgpu::BindGroupLayout,
+    pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
+    base_color_texture_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
     let gltf = gltf::Gltf::from_slice(
         &load_binary(path)
@@ -40,7 +41,14 @@ pub async fn read_gltf(
 
     // get materials for model
     for material in gltf.materials() {
-        materials.push(Material::new(material, device, queue, layout, &buffer_data));
+        materials.push(Material::new(
+            material,
+            device,
+            queue,
+            pbr_material_factors_bind_group_layout,
+            base_color_texture_bind_group_layout,
+            &buffer_data,
+        ));
     }
 
     // get meshes for model
