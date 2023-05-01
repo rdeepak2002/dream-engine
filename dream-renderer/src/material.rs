@@ -110,7 +110,43 @@ impl Material {
                     .expect("Couldn't load default texture");
         }
 
-        // define the uniform
+        // get emissive texture
+        let emissive_texture;
+        if material.emissive_texture().is_some() {
+            let texture = material
+                .emissive_texture()
+                .expect("No emissive color texture")
+                .texture();
+            let texture_name = texture.name().unwrap_or("No texture name");
+            let texture_source = texture.source().source();
+            match texture_source {
+                gltf::image::Source::View { view, mime_type } => {
+                    let parent_buffer_data = &buffer_data[view.buffer().index()];
+                    let begin = view.offset();
+                    let end = view.offset() + view.length();
+                    let buf_dat = &parent_buffer_data[begin..end];
+                    let mime_type = Some(mime_type.to_string());
+                    emissive_texture = crate::texture::Texture::from_bytes(
+                        device,
+                        queue,
+                        buf_dat,
+                        texture_name,
+                        mime_type,
+                    )
+                    .expect("Couldn't load base color texture");
+                }
+                gltf::image::Source::Uri { uri, mime_type } => {
+                    todo!();
+                }
+            };
+        } else {
+            let bytes = include_bytes!("black.png");
+            emissive_texture =
+                crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
+                    .expect("Couldn't load default texture");
+        }
+
+        // define the material factors uniform
         let material_factors_uniform = MaterialFactors::new(
             pbr_properties.base_color_factor(),
             material.emissive_factor(),
@@ -142,19 +178,19 @@ impl Material {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::TextureView(
-                            &base_color_texture
-                                // .expect("No base color texture found")
-                                .view,
-                        ),
+                        resource: wgpu::BindingResource::TextureView(&base_color_texture.view),
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::Sampler(
-                            &base_color_texture
-                                // .expect("No base color texture found")
-                                .sampler,
-                        ),
+                        resource: wgpu::BindingResource::Sampler(&base_color_texture.sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(&emissive_texture.view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
+                        resource: wgpu::BindingResource::Sampler(&emissive_texture.sampler),
                     },
                 ],
                 label: Some("base_color_texture_bind_group"),

@@ -59,12 +59,23 @@ var<uniform> material_factors: MaterialFactors;
 var texture_base_color: texture_2d<f32>;
 @group(2) @binding(1)
 var sampler_base_color: sampler;
+@group(2) @binding(2)
+var texture_emissive: texture_2d<f32>;
+@group(2) @binding(3)
+var sampler_emissive: sampler;
+
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // base color
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, material_factors.alpha);
     let base_color = base_color_texture * base_color_factor;
-    return base_color;
+    // emissive
+    let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
+    let emissive_factor = vec4(material_factors.emissive, 1.0);
+    let emissive = emissive_texture * emissive_factor;
+    // final color
+    return base_color + emissive;
 }
 

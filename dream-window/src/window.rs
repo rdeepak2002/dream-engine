@@ -95,28 +95,26 @@ impl Window {
         )
         .await;
 
-        // TODO: in render method allow us to call renderer.draw_mesh("dummy_guid", 0)
-        // ^ cuz rn the code is always just drawing whatever has id "dummy_guid"
-        // TODO: remove this
-        // renderer
-        //     .store_model(Some("dummy_guid"), "cube.glb")
-        //     .await
-        //     .expect("Error loading cube model");
-
+        // println!("Loading link model");
         // renderer
         //     .store_model(Some("link"), "link.glb")
         //     .await
         //     .expect("Error loading link model");
+        // println!("Done loading link model");
 
+        println!("Loading robot model");
         renderer
             .store_model(Some("robot"), "robot.glb")
             .await
             .expect("Error loading robot model");
+        println!("Done loading robot model");
 
+        // println!("Loading ice cube model");
         // renderer
         //     .store_model(Some("ice_cube"), "ice_cube.glb")
         //     .await
         //     .expect("Error loading ice_cube model");
+        // println!("Done loading ice cube model");
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
