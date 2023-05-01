@@ -396,8 +396,8 @@ impl RendererWgpu {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    &pbr_material_factors_bind_group_layout,
                     &camera_bind_group_layout,
+                    &pbr_material_factors_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -665,7 +665,7 @@ impl RendererWgpu {
             // material bind group
             // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
             // camera bind group
-            render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
+            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
             // vertex drawing
             for (render_map_key, transforms) in &self.render_map {
                 // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
