@@ -122,20 +122,24 @@ impl Texture {
         texture: gltf::Texture,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        buffer_data: &Vec<Vec<u8>>,
+        buffer_data: &[Vec<u8>],
     ) -> Self {
         let texture_name = texture.name().unwrap_or("No texture name");
         let texture_source = texture.source().source();
         match texture_source {
             gltf::image::Source::View { view, mime_type } => {
+                dbg!("Getting bytes");
                 let parent_buffer_data = &buffer_data[view.buffer().index()];
                 let begin = view.offset();
                 let end = view.offset() + view.length();
                 let buf_dat = &parent_buffer_data[begin..end];
                 let mime_type = Some(mime_type.to_string());
+                dbg!("Done getting bytes");
+                dbg!("Creating texture from bytes");
                 let texture_result =
                     Self::from_bytes(device, queue, buf_dat, texture_name, mime_type)
                         .expect("Couldn't load texture");
+                dbg!("Done creating texture from bytes");
                 return texture_result;
             }
             gltf::image::Source::Uri { uri, mime_type } => {
@@ -154,17 +158,19 @@ impl Texture {
         let img;
         if mime_type.is_none() {
             img = image::load_from_memory(bytes)?;
+            return Self::from_image(device, queue, &img, Some(label));
         } else {
             let mime_type = mime_type.unwrap();
             if mime_type == "image/png" {
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Png)?;
+                return Self::from_image(device, queue, &img, Some(label));
             } else if mime_type == "image/jpeg" {
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)?;
+                return Self::from_image(device, queue, &img, Some(label));
             } else {
                 panic!("Unsupported mime_type provided: {}", mime_type);
             }
         }
-        Self::from_image(device, queue, &img, Some(label))
     }
 
     pub fn from_image(
