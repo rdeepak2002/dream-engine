@@ -452,71 +452,8 @@ impl RendererWgpu {
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
-            // If the pipeline will be used with a multiview render pass, this
-            // indicates how many array layers the attachments will have.
             multiview: None,
         });
-
-        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Vertex Buffer"),
-        //     contents: bytemuck::cast_slice(VERTICES),
-        //     usage: wgpu::BufferUsages::VERTEX,
-        // });
-
-        // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Index Buffer"),
-        //     contents: bytemuck::cast_slice(INDICES),
-        //     usage: wgpu::BufferUsages::INDEX,
-        // });
-
-        // let cube_path = "filesystem:http://127.0.0.1:8080/temporary/Box.glb";
-        // let mesh_path = "cube.glb";
-        // let mesh_list = gltf_loader::read_gltf(mesh_path, &device).await;
-        // let model = Model::new(Vec::new(), Vec::new());
-        // let mesh_list = gltf_loader::read_gltf("Box.glb", &device).await;
-        // let mesh_list = gltf_loader::read_gltf("ice_cube.glb", &device).await;
-        // let mesh_list = gltf_loader::read_gltf("cube_sketchfab.glb", &device).await;
-        // TODO: do something with this cube mesh
-
-        // let index_buffer = cube_mesh.index_buffer;
-        // let vertex_buffer = cube_mesh.vertex_buffer;
-
-        const NUM_INSTANCES_PER_ROW: u32 = 10;
-        const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
-            NUM_INSTANCES_PER_ROW as f32 * 0.5,
-            0.0,
-            NUM_INSTANCES_PER_ROW as f32 * 0.5,
-        );
-        // let instances = (0..NUM_INSTANCES_PER_ROW)
-        //     .flat_map(|z| {
-        //         (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-        //             let position = cgmath::Vector3 {
-        //                 x: x as f32,
-        //                 y: 0.0,
-        //                 z: z as f32,
-        //             } - INSTANCE_DISPLACEMENT;
-        //
-        //             let rotation = if position.is_zero() {
-        //                 // this is needed so an object at (0, 0, 0) won't get scaled to zero
-        //                 // as Quaternions can effect scale if they're not created correctly
-        //                 cgmath::Quaternion::from_axis_angle(
-        //                     cgmath::Vector3::unit_z(),
-        //                     cgmath::Deg(0.0),
-        //                 )
-        //             } else {
-        //                 cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(45.0))
-        //             };
-        //
-        //             Instance { position, rotation }
-        //         })
-        //     })
-        //     .collect::<Vec<_>>();
-        // let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
-        // let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Instance Buffer"),
-        //     contents: bytemuck::cast_slice(&instance_data),
-        //     usage: wgpu::BufferUsages::VERTEX,
-        // });
 
         Self {
             surface,
@@ -569,12 +506,6 @@ impl RendererWgpu {
                 texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
         }
     }
-
-    // pub fn draw_model(&mut self, model_guid: &str, model_mat: cgmath::Matrix4<f32>) -> bool {
-    //     todo!();
-    //     // TODO: just call draw mesh on all the mesh's that belong to a model with a specific guid
-    //     return true;
-    // }
 
     pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
         let key = RenderMapKey {
@@ -634,8 +565,8 @@ impl RendererWgpu {
                 label: Some("Render Encoder"),
             });
 
-        // draw triangle
         {
+            // define render pass
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -660,13 +591,12 @@ impl RendererWgpu {
                     stencil_ops: None,
                 }),
             });
-
             render_pass.set_pipeline(&self.render_pipeline);
-            // material bind group
-            // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
+
             // camera bind group
             render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            // vertex drawing
+
+            // setup instance buffer for meshes
             for (render_map_key, transforms) in &self.render_map {
                 // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
                 {
@@ -682,8 +612,10 @@ impl RendererWgpu {
                         .insert(render_map_key.clone(), instance_buffer);
                 }
             }
+
+            // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in &self.render_map {
-                // draw meshes using instancing
+                // get the mesh to be instance drawn
                 let model_guid = render_map_key.model_guid.clone();
                 let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
@@ -695,20 +627,20 @@ impl RendererWgpu {
                         mesh_index, model_guid
                     )
                 });
-                let num_instances = transforms.len() as u32;
+                // setup instancing buffer
                 let instance_buffer = self
                     .instance_buffer_map
                     .get(render_map_key)
                     .expect("No instance buffer found in map");
                 render_pass.set_vertex_buffer(1, instance_buffer.slice(..));
-                render_pass.draw_mesh_instanced(
-                    mesh,
-                    model
-                        .materials
-                        .get(mesh.material)
-                        .expect("No material at index"),
-                    0..num_instances,
-                );
+                // get the material and set it in the bind group
+                let material = model
+                    .materials
+                    .get(mesh.material)
+                    .expect("No material at index");
+                render_pass.set_bind_group(1, &material.bind_group, &[]);
+                // draw the mesh
+                render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
             }
         }
 
@@ -718,8 +650,8 @@ impl RendererWgpu {
             .frame_texture
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
-
         self.frame_texture_view = Some(output_texture_view);
+
         self.render_map.clear();
 
         Ok(())
