@@ -25,15 +25,11 @@ impl MaterialFactors {
             base_color: cgmath::Vector4::from(base_color).truncate().into(),
             _padding1: 0.,
             emissive,
+            _padding2: 0.,
             metallic,
             roughness,
             alpha: *(base_color.get(3).unwrap_or(&1.0)),
             alpha_cutoff,
-            _padding2: 0.,
-            // _padding3: 0.,
-            // _padding4: 0.,
-            // _padding5: 0.,
-            // _padding6: 0.,
         }
     }
 }
