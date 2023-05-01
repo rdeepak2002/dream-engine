@@ -44,7 +44,12 @@ fn vs_main(
 // Fragment shader
 
 struct MaterialFactors {
-    base_color: vec4<f32>,
+    base_color: vec3<f32>,
+//    metallic: f32,
+//    roughness: f32,
+//    emissive: vec3<f32>,
+    alpha: f32,
+//    alpha_cutoff: f32,
 };
 @group(1) @binding(0)
 var<uniform> material_factors: MaterialFactors;
@@ -56,6 +61,6 @@ var<uniform> material_factors: MaterialFactors;
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 //    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
-    return material_factors.base_color;
+    return vec4(material_factors.base_color, material_factors.alpha);
 }
 
