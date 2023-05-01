@@ -158,19 +158,20 @@ impl Texture {
         let img;
         if mime_type.is_none() {
             img = image::load_from_memory(bytes)?;
-            return Self::from_image(device, queue, &img, Some(label));
         } else {
             let mime_type = mime_type.unwrap();
             if mime_type == "image/png" {
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Png)?;
-                return Self::from_image(device, queue, &img, Some(label));
             } else if mime_type == "image/jpeg" {
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)?;
-                return Self::from_image(device, queue, &img, Some(label));
             } else {
                 panic!("Unsupported mime_type provided: {}", mime_type);
             }
         }
+        dbg!("Creating texture object from image");
+        let res = Self::from_image(device, queue, &img, Some(label));
+        dbg!("Done creating internal texture object from image");
+        return res;
     }
 
     pub fn from_image(
