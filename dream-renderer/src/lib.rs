@@ -155,7 +155,7 @@ pub struct RendererWgpu {
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
-    base_color_texture_bind_group_layout: wgpu::BindGroupLayout,
+    pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RendererWgpu {
@@ -243,7 +243,7 @@ impl RendererWgpu {
                 label: Some("texture_bind_group_layout"),
             });
 
-        let base_color_texture_bind_group_layout =
+        let pbr_material_textures_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
@@ -283,23 +283,8 @@ impl RendererWgpu {
                         count: None,
                     },
                 ],
-                label: Some("base_color_texture_bind_group_layout"),
+                label: Some("pbr_textures_bind_group_layout"),
             });
-
-        // let pbr_mat_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("PBR Buffer"),
-        //     contents: bytemuck::cast_slice(&[MaterialFactors::new()]),
-        //     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        // });
-
-        // let diffuse_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-        //     layout: &texture_bind_group_layout,
-        //     entries: &[wgpu::BindGroupEntry {
-        //         binding: 0,
-        //         resource: pbr_mat_buffer.as_entire_binding(),
-        //     }],
-        //     label: Some("diffuse_bind_group"),
-        // });
 
         let camera = camera::Camera {
             // position the camera one unit up and 2 units back
@@ -314,8 +299,6 @@ impl RendererWgpu {
             znear: 0.01,
             zfar: 1000.0,
         };
-
-        // in new() after creating `camera`
 
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
@@ -397,7 +380,7 @@ impl RendererWgpu {
                 bind_group_layouts: &[
                     &camera_bind_group_layout,
                     &pbr_material_factors_bind_group_layout,
-                    &base_color_texture_bind_group_layout,
+                    &pbr_material_textures_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -477,7 +460,7 @@ impl RendererWgpu {
             render_map: Default::default(),
             instance_buffer_map: Default::default(),
             pbr_material_factors_bind_group_layout,
-            base_color_texture_bind_group_layout,
+            pbr_material_textures_bind_group_layout,
         }
     }
 
@@ -548,7 +531,7 @@ impl RendererWgpu {
             &self.device,
             &self.queue,
             &self.pbr_material_factors_bind_group_layout,
-            &self.base_color_texture_bind_group_layout,
+            &self.pbr_material_textures_bind_group_layout,
         )
         .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
@@ -641,11 +624,7 @@ impl RendererWgpu {
                     .get(mesh.material)
                     .expect("No material at index");
                 render_pass.set_bind_group(1, &material.pbr_material_factors_bind_group, &[]);
-                render_pass.set_bind_group(
-                    2,
-                    &material.pbr_material_base_color_texture_bind_group,
-                    &[],
-                );
+                render_pass.set_bind_group(2, &material.pbr_material_textures_bind_group, &[]);
                 // draw the mesh
                 render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
             }

@@ -52,7 +52,7 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 
 pub struct Material {
     pub pbr_material_factors_bind_group: wgpu::BindGroup,
-    pub pbr_material_base_color_texture_bind_group: wgpu::BindGroup,
+    pub pbr_material_textures_bind_group: wgpu::BindGroup,
     pub factor_base_color: cgmath::Vector3<f32>,
     pub factor_emissive: cgmath::Vector3<f32>,
     pub factor_metallic: f32,
@@ -69,7 +69,7 @@ impl Material {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
-        base_color_texture_bind_group_layout: &wgpu::BindGroupLayout,
+        pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
         buffer_data: &Vec<Vec<u8>>,
     ) -> Self {
         let pbr_properties = material.pbr_metallic_roughness();
@@ -172,9 +172,9 @@ impl Material {
             });
 
         // create bind group for base color texture
-        let pbr_material_base_color_texture_bind_group =
+        let pbr_material_textures_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &base_color_texture_bind_group_layout,
+                layout: &pbr_material_textures_bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
@@ -193,13 +193,13 @@ impl Material {
                         resource: wgpu::BindingResource::Sampler(&emissive_texture.sampler),
                     },
                 ],
-                label: Some("base_color_texture_bind_group"),
+                label: Some("pbr_textures_bind_group"),
             });
 
         // define this struct
         Self {
             pbr_material_factors_bind_group,
-            pbr_material_base_color_texture_bind_group,
+            pbr_material_textures_bind_group,
             factor_base_color: material_factors_uniform.base_color.into(),
             factor_emissive: material_factors_uniform.emissive.into(),
             factor_metallic: material_factors_uniform.metallic,
