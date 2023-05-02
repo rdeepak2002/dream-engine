@@ -1,4 +1,3 @@
-use gltf::texture::Info;
 use wgpu::util::DeviceExt;
 
 #[repr(C)]
@@ -77,10 +76,9 @@ impl Material {
 
         // get base color texture
         let base_color_texture;
-        dbg!("Creating base color texture");
         match pbr_properties.base_color_texture() {
             None => {
-                dbg!("Using default texture");
+                log::warn!("TODO: cache white texture");
                 // TODO: cache this
                 let bytes = include_bytes!("white.png");
                 base_color_texture =
@@ -96,14 +94,12 @@ impl Material {
                 );
             }
         }
-        dbg!("Done creating base color texture");
 
         // get metallic texture
         let metallic_texture;
-        dbg!("Creating metallic texture");
         match pbr_properties.metallic_roughness_texture() {
             None => {
-                dbg!("Using default texture");
+                log::warn!("TODO: cache black texture");
                 // TODO: cache this
                 let bytes = include_bytes!("black.png");
                 metallic_texture =
@@ -119,14 +115,12 @@ impl Material {
                 );
             }
         }
-        dbg!("Done creating metallic texture");
 
         // get normal map texture
         let normal_map_texture;
-        dbg!("Creating normal map texture");
         match material.normal_texture() {
             None => {
-                dbg!("Using default texture");
+                log::warn!("TODO: cache default normal texture");
                 // TODO: cache this
                 let bytes = include_bytes!("default_normal.png");
                 normal_map_texture =
@@ -142,14 +136,12 @@ impl Material {
                 );
             }
         }
-        dbg!("Done creating normal map texture");
 
         // get emissive texture
         let emissive_texture;
-        dbg!("Creating emissive texture");
         match material.emissive_texture() {
             None => {
-                dbg!("Using default texture");
+                log::warn!("TODO: cache black texture");
                 // TODO: cache this
                 let bytes = include_bytes!("black.png");
                 emissive_texture =
@@ -165,14 +157,12 @@ impl Material {
                 );
             }
         }
-        dbg!("Done creating emissive texture");
 
         // get occlusion texture
         let occlusion_texture;
-        dbg!("Creating occlusion texture");
         match material.occlusion_texture() {
             None => {
-                dbg!("Using default texture");
+                log::warn!("TODO: cache white texture");
                 // TODO: cache this
                 let bytes = include_bytes!("white.png");
                 occlusion_texture =
@@ -188,7 +178,6 @@ impl Material {
                 );
             }
         }
-        dbg!("Done creating occlusion texture");
 
         // define the material factors uniform
         let material_factors_uniform = MaterialFactors::new(
@@ -216,7 +205,6 @@ impl Material {
             });
 
         // create bind group for base color texture
-        dbg!("Creating textures bind group");
         let pbr_material_textures_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: pbr_material_textures_bind_group_layout,
@@ -264,7 +252,6 @@ impl Material {
                 ],
                 label: Some("pbr_textures_bind_group"),
             });
-        dbg!("Done creating textures bind group");
 
         // define this struct
         Self {

@@ -75,14 +75,12 @@ impl System for JavaScriptScriptComponentSystem {
                         Ok(_res) => {}
                         Err(e) => {
                             // Pretty print the error
-                            eprintln!("Uncaught (2) {}", e.display());
                             log::error!("Uncaught (2) {}", e.display());
                         }
                     };
                 }
                 Err(e) => {
                     // script could not compile
-                    eprintln!("Uncaught (1) {}", e.display());
                     log::error!("Uncaught (1) {}", e.display());
                 }
             };

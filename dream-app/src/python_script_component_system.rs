@@ -1,7 +1,3 @@
-#![allow(unused_mut)]
-
-use std::marker::PhantomData;
-
 use rustpython_vm as vm;
 
 use dream_ecs::entity::Entity;
@@ -22,20 +18,24 @@ impl PythonScriptComponentSystem {
 }
 
 impl System for PythonScriptComponentSystem {
-    fn update(&mut self, dt: f32) {
+    fn update(&mut self, _dt: f32) {
         let transform_entities: Vec<u64>;
         {
             let scene = get_current_scene_read_only();
-            transform_entities = scene.transform_entities().clone();
+            transform_entities = scene.transform_entities();
         }
         for entity_id in transform_entities {
-            let entity = Entity::from_handle(entity_id);
+            let _entity = Entity::from_handle(entity_id);
+            #[allow(clippy::needless_late_init)]
             self.interpreter.enter(|vm| {
                 let scope = vm.new_scope_with_builtins();
-                let mut source_path = "<embedded>";
-                #[cfg(target_arch = "wasm32")]
-                {
-                    source_path = "<wasm>";
+                let source_path;
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                        source_path = "<wasm>"
+                    } else {
+                        source_path = "<embedded>"
+                    }
                 }
                 let code_obj = vm
                     .compile(r#"5"#, vm::compiler::Mode::Eval, source_path.to_owned())
@@ -44,7 +44,7 @@ impl System for PythonScriptComponentSystem {
                 let py_obj_ref = vm
                     .run_code_obj(code_obj, scope)
                     .expect("Error running python code");
-                let res = py_obj_ref
+                let _res = py_obj_ref
                     .try_int(vm)
                     .expect("Error getting python result")
                     .to_string();

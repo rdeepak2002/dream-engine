@@ -599,8 +599,6 @@ impl RendererWgpu {
         model_guid_in: Option<&str>,
         model_path: &str,
     ) -> Result<String, PathNotFoundError> {
-        // let model_guid = "dummy_guid";
-        // let mesh_path = "cube.glb";
         let model_guid;
         if model_guid_in.is_some() {
             model_guid = model_guid_in.unwrap();
@@ -608,7 +606,7 @@ impl RendererWgpu {
             // TODO: auto-generate guid
             todo!();
         }
-        dbg!("Reading gltf");
+        log::debug!("Storing model {} with guid {}", model_path, model_guid);
         let model = gltf_loader::read_gltf(
             model_path,
             &self.device,
@@ -617,7 +615,6 @@ impl RendererWgpu {
             &self.pbr_material_textures_bind_group_layout,
         )
         .await;
-        dbg!("Done reading gltf");
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         Ok(model_guid.parse().unwrap())
     }

@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 use dream_fs::load_binary;
 
 use crate::material::Material;
-use crate::model::{Mesh, Model};
+use crate::model::Model;
 
 pub async fn read_gltf(
     path: &str,
@@ -40,9 +40,7 @@ pub async fn read_gltf(
     let mut materials = Vec::new();
 
     // get materials for model
-    dbg!("Creating materials");
     for material in gltf.materials() {
-        dbg!("Creating material");
         materials.push(Material::new(
             material,
             device,
@@ -51,9 +49,7 @@ pub async fn read_gltf(
             pbr_material_textures_bind_group_layout,
             &buffer_data,
         ));
-        dbg!("Done creating material");
     }
-    dbg!("Done creating materials");
 
     // get meshes for model
     let mut get_dream_mesh = |mesh: gltf::Mesh| {
@@ -132,7 +128,7 @@ pub async fn read_gltf(
                         // TODO: process each child (call method recursively)
                         match child.mesh() {
                             None => {
-                                println!("TODO: implement recursive searching method for meshes");
+                                log::warn!("TODO: implement recursive searching method for meshes");
                                 for child in child.children() {
                                     match child.mesh() {
                                         None => {
@@ -150,13 +146,15 @@ pub async fn read_gltf(
                                                                                 for child in
                                                                                     child.children()
                                                                                 {
-                                                                                    match child.mesh() {
+                                                                                    match child
+                                                                                        .mesh()
+                                                                                    {
                                                                                         None => {
                                                                                             for child in child.children() {
                                                                                                 for child in child.children() {
                                                                                                     match child.mesh() {
                                                                                                         None => {
-                                                                                                            for child in child.children() {}
+                                                                                                            // for child in child.children() {}
                                                                                                         },
                                                                                                         Some(mesh) => {
                                                                                                             get_dream_mesh(mesh);
@@ -164,8 +162,10 @@ pub async fn read_gltf(
                                                                                                     }
                                                                                                 }
                                                                                             }
-                                                                                        },
-                                                                                        Some(mesh) => {
+                                                                                        }
+                                                                                        Some(
+                                                                                            mesh,
+                                                                                        ) => {
                                                                                             get_dream_mesh(mesh);
                                                                                         }
                                                                                     }

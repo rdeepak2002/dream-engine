@@ -104,12 +104,10 @@ impl Window {
         //     .expect("Error loading link model");
         // dbg!("Done loading link model");
 
-        println!("Loading robot model");
         renderer
             .store_model(Some("robot"), "robot.glb")
             .await
             .expect("Error loading robot model");
-        println!("Done loading robot model");
 
         // println!("Loading ice cube model");
         // renderer

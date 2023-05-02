@@ -128,21 +128,22 @@ impl Texture {
         let texture_source = texture.source().source();
         match texture_source {
             gltf::image::Source::View { view, mime_type } => {
-                dbg!("Getting bytes");
                 let parent_buffer_data = &buffer_data[view.buffer().index()];
                 let begin = view.offset();
                 let end = view.offset() + view.length();
                 let buf_dat = &parent_buffer_data[begin..end];
                 let mime_type = Some(mime_type.to_string());
-                dbg!("Done getting bytes");
-                dbg!("Creating texture from bytes");
                 let texture_result =
                     Self::from_bytes(device, queue, buf_dat, texture_name, mime_type)
                         .expect("Couldn't load texture");
-                dbg!("Done creating texture from bytes");
                 return texture_result;
             }
             gltf::image::Source::Uri { uri, mime_type } => {
+                log::warn!(
+                    "TODO: get gltf texture from uri {} with mime type {}",
+                    uri,
+                    mime_type.unwrap_or("unknown")
+                );
                 todo!();
             }
         };
@@ -161,6 +162,7 @@ impl Texture {
         } else {
             let mime_type = mime_type.unwrap();
             if mime_type == "image/png" {
+                log::warn!("TODO: use png crate for faster image loading");
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Png)?;
             } else if mime_type == "image/jpeg" {
                 img = image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)?;
@@ -168,9 +170,7 @@ impl Texture {
                 panic!("Unsupported mime_type provided: {}", mime_type);
             }
         }
-        dbg!("Creating texture object from image");
         let res = Self::from_image(device, queue, &img, Some(label));
-        dbg!("Done creating internal texture object from image");
         return res;
     }
 

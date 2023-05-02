@@ -17,19 +17,18 @@ pub(crate) static RESOURCE_MAP: Lazy<Mutex<HashMap<String, i32>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub fn using_resource(guid: String) {
-    // TODO: call this whenever an entity refers to a model / mesh of a model
-    todo!();
     let new_count = RESOURCE_MAP.lock().unwrap().get(&*guid).unwrap_or(&0) + 1;
     println!(
         "[Resource Increase] Using resource {} {} times",
         guid, new_count
     );
     RESOURCE_MAP.lock().unwrap().insert(guid, new_count);
+    // TODO: call this whenever an entity refers to a model / mesh of a model
+    todo!();
 }
 
 pub fn no_longer_using_resource(guid: String) {
     // TODO: call this whenever an entity that refers to a model / mesh of a model is deleted
-    todo!();
     let new_count = RESOURCE_MAP.lock().unwrap().get(&*guid).unwrap_or(&0) - 1;
     println!(
         "[Resource Decrease] Using resource {} {} times",

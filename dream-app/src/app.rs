@@ -15,9 +15,6 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use std::any::Any;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-
 use cgmath::prelude::*;
 
 use dream_ecs::component::Transform;
@@ -46,7 +43,7 @@ impl App {
 
     fn initialize(&mut self) {
         // init scene
-        let mut e1: Option<Entity> = None;
+        let e1;
         {
             let mut scene = get_current_scene();
             e1 = Some(scene.create_entity());
@@ -55,24 +52,6 @@ impl App {
             e1.unwrap()
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
         }
-        // let mut e1: Option<Entity> = None;
-        // {
-        //     let mut scene = get_current_scene();
-        //     e1 = Some(scene.create_entity());
-        // }
-        // {
-        //     e1.unwrap()
-        //         .add_component(Transform::from(dream_math::Vector3::from(-1.5, -1.0, -5.)));
-        // }
-        // let mut e2: Option<Entity> = None;
-        // {
-        //     let mut scene = get_current_scene();
-        //     e2 = Some(scene.create_entity());
-        // }
-        // {
-        //     e2.unwrap()
-        //         .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.0, -5.)));
-        // }
         // init component systems
         self.component_systems
             .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
