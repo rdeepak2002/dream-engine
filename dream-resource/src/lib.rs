@@ -1,16 +1,7 @@
 use std::collections::HashMap;
-#[cfg(target_arch = "wasm32")]
-use std::io::{Read, Seek, SeekFrom};
 use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
-
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen_file_reader::WebSysFile;
-#[cfg(target_arch = "wasm32")]
-use web_sys::console;
 
 /// map to keep track of number of times a resource is being used, so the application can smartly deallocate it from the renderer and other consumers
 pub(crate) static RESOURCE_MAP: Lazy<Mutex<HashMap<String, i32>>> =

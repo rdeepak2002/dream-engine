@@ -96,11 +96,13 @@ pub struct InstanceRaw {
     model: [[f32; 4]; 4],
 }
 
-impl InstanceRaw {
-    fn from_raw_mat4(model: [[f32; 4]; 4]) -> InstanceRaw {
+impl From<[[f32; 4]; 4]> for InstanceRaw {
+    fn from(model: [[f32; 4]; 4]) -> Self {
         Self { model }
     }
+}
 
+impl InstanceRaw {
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
         use std::mem;
         wgpu::VertexBufferLayout {
