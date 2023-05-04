@@ -1,13 +1,12 @@
+use std::sync::{Arc, Mutex};
+use std::thread;
+
 use crossbeam_channel::unbounded;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
-
-use dream_app::app::App;
-use dream_editor::EditorEguiWgpu;
-use dream_renderer::RendererWgpu;
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -55,11 +54,11 @@ impl Window {
 
     pub async fn run(
         self,
-        mut app: Box<App>,
+        mut app: Box<dream_app::app::App>,
         update_func: fn(
-            &mut App,
-            &mut RendererWgpu,
-            &mut EditorEguiWgpu,
+            &mut dream_app::app::App,
+            &mut dream_renderer::RendererWgpu,
+            &mut dream_editor::EditorEguiWgpu,
             egui::RawInput,
             f32,
         ) -> bool,
@@ -87,9 +86,11 @@ impl Window {
             closure.forget();
         }
 
-        let mut renderer = dream_renderer::RendererWgpu::new(&self.window).await;
+        let renderer = Arc::new(Mutex::new(
+            dream_renderer::RendererWgpu::new(&self.window).await,
+        ));
         let mut editor = dream_editor::EditorEguiWgpu::new(
-            &renderer,
+            &renderer.lock().unwrap(),
             self.window.scale_factor() as f32,
             &self.event_loop,
         )
@@ -107,10 +108,24 @@ impl Window {
 
         // dbg!("Done loading link model");
 
+        // renderer
+        //     .store_model(Some("robot"), "robot.glb")
+        //     .await
+        //     .expect("Error loading robot model");
+
+        // tokio::spawn(async move {
+        //     renderer
+        //         .lock()
+        //         .unwrap()
+        //         .store_model(Some("robot"), "robot.glb");
+        // });
+
         renderer
+            .lock()
+            .unwrap()
             .store_model(Some("robot"), "robot.glb")
             .await
-            .expect("Error loading robot model");
+            .expect("unable to store robot.glb model");
 
         // renderer
         //     .store_model(Some("robot"), "scene.gltf")
@@ -138,7 +153,7 @@ impl Window {
 
                     if update_func(
                         app.as_mut(),
-                        &mut renderer,
+                        &mut renderer.lock().unwrap(),
                         &mut editor,
                         editor_raw_input,
                         editor_pixels_per_point,
@@ -150,14 +165,14 @@ impl Window {
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                renderer.resize(physical_size);
-                                editor.handle_resize(&renderer);
+                                renderer.lock().unwrap().resize(physical_size);
+                                editor.handle_resize(&renderer.lock().unwrap());
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(*new_inner_size);
-                                editor.handle_resize(&renderer);
+                                renderer.lock().unwrap().resize(*new_inner_size);
+                                editor.handle_resize(&renderer.lock().unwrap());
                             }
                             _ => (),
                         }

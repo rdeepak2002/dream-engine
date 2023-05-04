@@ -618,6 +618,7 @@ impl RendererWgpu {
         )
         .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
+        log::debug!("model with guid {} stored", model_guid);
         Ok(model_guid.parse().unwrap())
     }
 
@@ -685,6 +686,10 @@ impl RendererWgpu {
             for (render_map_key, transforms) in &self.render_map {
                 // get the mesh to be instance drawn
                 let model_guid = render_map_key.model_guid.clone();
+                if self.model_guids.get(&*model_guid).is_none() {
+                    log::warn!("skipping drawing of model {}", model_guid);
+                    continue;
+                }
                 let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
