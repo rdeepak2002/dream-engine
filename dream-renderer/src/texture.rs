@@ -118,25 +118,23 @@ impl Texture {
         }
     }
 
-    pub fn from_gltf_texture(
-        texture: gltf::Texture,
+    pub async fn from_gltf_texture<'a>(
+        texture: gltf::Texture<'a>,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         buffer_data: &[Vec<u8>],
     ) -> Self {
         let texture_name = texture.name().unwrap_or("No texture name");
         let texture_source = texture.source().source();
-        match texture_source {
+        return match texture_source {
             gltf::image::Source::View { view, mime_type } => {
                 let parent_buffer_data = &buffer_data[view.buffer().index()];
                 let begin = view.offset();
                 let end = view.offset() + view.length();
                 let buf_dat = &parent_buffer_data[begin..end];
                 let mime_type = Some(mime_type.to_string());
-                let texture_result =
-                    Self::from_bytes(device, queue, buf_dat, texture_name, mime_type)
-                        .expect("Couldn't load texture");
-                return texture_result;
+                Self::from_bytes(device, queue, buf_dat, texture_name, mime_type)
+                    .expect("Couldn't load texture")
             }
             gltf::image::Source::Uri { uri, mime_type } => {
                 log::warn!(
@@ -144,7 +142,12 @@ impl Texture {
                     uri,
                     mime_type.unwrap_or("unknown")
                 );
-                todo!();
+                let bin = dream_fs::load_binary(uri)
+                    .await
+                    .expect("unable to load binary");
+                let buf_dat: &[u8] = &bin;
+                Self::from_bytes(device, queue, buf_dat, texture_name, None)
+                    .expect("Couldn't load texture")
             }
         };
     }

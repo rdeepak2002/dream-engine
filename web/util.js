@@ -53,7 +53,8 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
         }
     }
     const fileName = filepath_arr[filepath_arr.length - 1];
-    const filePath = `/${fileName}`;
+    // const filePath = `/${fileName}`;
+    const filePath = `/${resourceFileDescriptor.filepath}`;
     const fileUrl = resourceFileDescriptor?.fileUrl || `/res${filePath}`;
     // fetch the file from the URL and get the blob data
     let fetchedFileBlob;
@@ -114,6 +115,26 @@ const fetchResourceFiles = async () => {
     });
     await fetchResourceFile(root, {
         filepath: "robot.glb",
+        fileUrl: undefined,
+    });
+    await fetchResourceFile(root, {
+        filepath: "scene.gltf",
+        fileUrl: undefined,
+    });
+    await fetchResourceFile(root, {
+        filepath: "scene.bin",
+        fileUrl: undefined,
+    });
+    await fetchResourceFile(root, {
+        filepath: "textures/main_mat_baseColor.png",
+        fileUrl: undefined,
+    });
+    await fetchResourceFile(root, {
+        filepath: "textures/main_mat_metallicRoughness.png",
+        fileUrl: undefined,
+    });
+    await fetchResourceFile(root, {
+        filepath: "textures/main_mat_normal.png",
         fileUrl: undefined,
     });
     // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)

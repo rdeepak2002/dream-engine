@@ -109,6 +109,11 @@ impl Window {
             .await
             .expect("Error loading robot model");
 
+        // renderer
+        //     .store_model(Some("robot"), "scene.gltf")
+        //     .await
+        //     .expect("Error loading robot-gltf model");
+
         // println!("Loading ice cube model");
         // renderer
         //     .store_model(Some("ice_cube"), "ice_cube.glb")

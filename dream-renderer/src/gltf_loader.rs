@@ -29,7 +29,9 @@ pub async fn read_gltf(
                 };
             }
             Source::Uri(uri) => {
-                let bin = load_binary(uri).await.expect("unable to load binary");
+                let bin = load_binary(uri)
+                    .await
+                    .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);
             }
         }
@@ -41,14 +43,17 @@ pub async fn read_gltf(
 
     // get materials for model
     for material in gltf.materials() {
-        materials.push(Material::new(
-            material,
-            device,
-            queue,
-            pbr_material_factors_bind_group_layout,
-            pbr_material_textures_bind_group_layout,
-            &buffer_data,
-        ));
+        materials.push(
+            Material::new(
+                material,
+                device,
+                queue,
+                pbr_material_factors_bind_group_layout,
+                pbr_material_textures_bind_group_layout,
+                &buffer_data,
+            )
+            .await,
+        );
     }
 
     // get meshes for model

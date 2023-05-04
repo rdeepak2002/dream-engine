@@ -64,8 +64,8 @@ pub struct Material {
 }
 
 impl Material {
-    pub(crate) fn new(
-        material: gltf::Material,
+    pub(crate) async fn new<'a>(
+        material: gltf::Material<'a>,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
@@ -91,7 +91,8 @@ impl Material {
                     device,
                     queue,
                     buffer_data,
-                );
+                )
+                .await;
             }
         }
 
@@ -112,7 +113,8 @@ impl Material {
                     device,
                     queue,
                     buffer_data,
-                );
+                )
+                .await;
             }
         }
 
@@ -133,7 +135,8 @@ impl Material {
                     device,
                     queue,
                     buffer_data,
-                );
+                )
+                .await;
             }
         }
 
@@ -154,7 +157,8 @@ impl Material {
                     device,
                     queue,
                     buffer_data,
-                );
+                )
+                .await;
             }
         }
 
@@ -175,7 +179,8 @@ impl Material {
                     device,
                     queue,
                     buffer_data,
-                );
+                )
+                .await;
             }
         }
 
