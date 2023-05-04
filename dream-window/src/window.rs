@@ -97,11 +97,14 @@ impl Window {
 
         // TODO: figure out why link is slow (just print stuff to see what stages are slow)
         // TODO: i think the repeated load bytes for default textures is the bottle neck
+
         // dbg!("Loading link model");
+
         // renderer
         //     .store_model(Some("link"), "link.glb")
         //     .await
         //     .expect("Error loading link model");
+
         // dbg!("Done loading link model");
 
         renderer
@@ -115,10 +118,12 @@ impl Window {
         //     .expect("Error loading robot-gltf model");
 
         // println!("Loading ice cube model");
+
         // renderer
         //     .store_model(Some("ice_cube"), "ice_cube.glb")
         //     .await
         //     .expect("Error loading ice_cube model");
+
         // println!("Done loading ice cube model");
 
         self.event_loop.run(move |event, _, control_flow| {
