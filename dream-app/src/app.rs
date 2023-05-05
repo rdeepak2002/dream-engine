@@ -20,6 +20,7 @@ use cgmath::prelude::*;
 use dream_ecs::component::Transform;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
+use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
@@ -86,7 +87,7 @@ impl App {
                 renderer.draw_mesh(
                     "robot",
                     i,
-                    dream_renderer::Instance {
+                    Instance {
                         position: cgmath::Vector3::from(entity_position),
                         rotation: cgmath::Quaternion::from_axis_angle(
                             cgmath::Vector3::new(0., 0., 1.),

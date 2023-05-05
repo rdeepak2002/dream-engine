@@ -21,117 +21,25 @@ use std::iter;
 use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
 
+use crate::camera_uniform::CameraUniform;
+use crate::instance::{Instance, InstanceRaw};
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
+use crate::path_not_found_error::PathNotFoundError;
 
 pub mod camera;
+pub mod camera_uniform;
 pub mod gltf_loader;
+pub mod instance;
 pub mod material;
 pub mod model;
+pub mod path_not_found_error;
+pub mod render_map_key;
 pub mod texture;
-
-// Define our error types. These may be customized for our error handling cases.
-// Now we will be able to write our own errors, defer to an underlying error
-// implementation, or do something in between.
-#[derive(Debug, Clone)]
-pub struct PathNotFoundError;
-
-// Generation of an error is completely separate from how it is displayed.
-// There's no need to be concerned about cluttering complex logic with the display style.
-//
-// Note that we don't store any extra info about the errors. This means we can't state
-// which string failed to parse without modifying our types to carry that information.
-impl std::fmt::Display for PathNotFoundError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "unable to find file at path")
-    }
-}
-
-// const INDICES: &[u16] = &[0, 1, 4, 1, 2, 4, 2, 3, 4];
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
-    view_proj: [[f32; 4]; 4],
-}
-
-impl CameraUniform {
-    fn new() -> Self {
-        Self {
-            view_proj: cgmath::Matrix4::identity().into(),
-        }
-    }
-
-    pub fn update_view_proj(&mut self, camera: &camera::Camera) {
-        self.view_proj = camera.build_view_projection_matrix().into();
-    }
-}
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 struct RenderMapKey {
     pub model_guid: String,
     pub mesh_index: i32,
-}
-
-// TODO: move to instance file
-pub struct Instance {
-    pub position: cgmath::Vector3<f32>,
-    pub rotation: cgmath::Quaternion<f32>,
-    pub scale: cgmath::Vector3<f32>,
-}
-
-impl Instance {
-    pub fn to_raw(&self) -> InstanceRaw {
-        InstanceRaw {
-            model: (cgmath::Matrix4::from_translation(self.position)
-                * cgmath::Matrix4::from(self.rotation)
-                * cgmath::Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, self.scale.z))
-            .into(),
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct InstanceRaw {
-    model: [[f32; 4]; 4],
-}
-
-impl From<[[f32; 4]; 4]> for InstanceRaw {
-    fn from(model: [[f32; 4]; 4]) -> Self {
-        Self { model }
-    }
-}
-
-impl InstanceRaw {
-    fn desc<'a>() -> wgpu::VertexBufferLayout<'a> {
-        use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 5,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
-                    shader_location: 6,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
-                    shader_location: 7,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
-                    shader_location: 8,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-            ],
-        }
-    }
 }
 
 pub struct RendererWgpu {
@@ -619,7 +527,7 @@ impl RendererWgpu {
         .await;
         self.model_guids.insert(model_guid.parse().unwrap(), model);
         log::debug!("model with guid {} stored", model_guid);
-        Ok(model_guid.parse().unwrap())
+        Ok(str::parse(model_guid).unwrap())
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
