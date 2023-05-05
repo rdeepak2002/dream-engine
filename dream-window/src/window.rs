@@ -86,11 +86,9 @@ impl Window {
             closure.forget();
         }
 
-        let renderer = Arc::new(Mutex::new(
-            dream_renderer::RendererWgpu::new(&self.window).await,
-        ));
+        let mut renderer = dream_renderer::RendererWgpu::new(&self.window).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(
-            &renderer.lock().unwrap(),
+            &renderer,
             self.window.scale_factor() as f32,
             &self.event_loop,
         )
@@ -121,8 +119,6 @@ impl Window {
         // });
 
         renderer
-            .lock()
-            .unwrap()
             .store_model(Some("robot"), "robot.glb")
             .await
             .expect("unable to store robot.glb model");
@@ -153,7 +149,7 @@ impl Window {
 
                     if update_func(
                         app.as_mut(),
-                        &mut renderer.lock().unwrap(),
+                        &mut renderer,
                         &mut editor,
                         editor_raw_input,
                         editor_pixels_per_point,
@@ -165,14 +161,14 @@ impl Window {
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                renderer.lock().unwrap().resize(physical_size);
-                                editor.handle_resize(&renderer.lock().unwrap());
+                                renderer.resize(physical_size);
+                                editor.handle_resize(&renderer);
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                renderer.lock().unwrap().resize(*new_inner_size);
-                                editor.handle_resize(&renderer.lock().unwrap());
+                                renderer.resize(*new_inner_size);
+                                editor.handle_resize(&renderer);
                             }
                             _ => (),
                         }

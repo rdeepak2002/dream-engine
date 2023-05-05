@@ -7,6 +7,10 @@ use once_cell::sync::Lazy;
 pub(crate) static RESOURCE_MAP: Lazy<Mutex<HashMap<String, i32>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+// TODO: allow easy asynchronous loading of textures here
+// where renderer can keep polling asking if texture is ready
+// then use it
+
 pub fn using_resource(guid: String) {
     let new_count = RESOURCE_MAP.lock().unwrap().get(&*guid).unwrap_or(&0) + 1;
     println!(
