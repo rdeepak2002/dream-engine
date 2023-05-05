@@ -197,7 +197,7 @@ impl RendererWgpu {
             .formats
             .iter()
             .copied()
-            .find(|f| f.describe().srgb)
+            .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
         let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();

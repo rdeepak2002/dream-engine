@@ -11,7 +11,7 @@ cfg-if = "1"
 winit = "0.28"
 env_logger = "0.10"
 log = "0.4"
-wgpu = "0.15"
+wgpu = "0.16.0"
 pollster = "0.3.0"
 epi = "0.17.0"
 anyhow = "1.0"
@@ -40,7 +40,7 @@ getrandom = { version = "0.2", features = ["js"] }
 reqwest = { version = "0.11" }
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
-wgpu = { version = "0.15", features = ["webgl"] }
+wgpu = { version = "0.16.0", features = ["webgl"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
 wasm-bindgen-file-reader = "1"

@@ -12,15 +12,19 @@ cfg-if = "1"
 winit = "0.28"
 env_logger = "0.10"
 log = "0.4"
-wgpu = "0.15"
+wgpu = "0.16.0"
 pollster = "0.3.0"
-egui = "0.21.0"
-egui-winit = { version = "0.21.1", default-features = false, features = ["links", "wayland"]}
+#egui = "0.21.0"
+egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+#egui-winit = { version = "0.21.1", default-features = false, features = ["links", "wayland"]}
+egui-winit = { version = "0.21.1", git = "https://github.com/emilk/egui.git", default-features = false, features = ["links", "wayland"] }
 egui_demo_lib = "0.21.0"
-egui-wgpu = "0.21.0"
+#egui-wgpu = "0.21.0"
+egui-wgpu = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
 epi = "0.17.0"
+#epi = { version="0.17.0", git="https://github.com/emilk/egui.git" }
 anyhow = "1.0"
-bytemuck = { version = "1.12", features = [ "derive" ] }
+bytemuck = { version = "1.12", features = ["derive"] }
 cgmath = "0.18"
 
 [dependencies.image]
@@ -31,7 +35,7 @@ features = ["png", "jpeg"]
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
-wgpu = { version = "0.15", features = ["webgl"]}
+wgpu = { version = "0.16.0", features = ["webgl"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
 web-sys = { version = "0.3.61", features = [
