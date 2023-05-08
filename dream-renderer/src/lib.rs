@@ -18,7 +18,6 @@
 
 use std::iter;
 
-use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
 
 use crate::camera_uniform::CameraUniform;

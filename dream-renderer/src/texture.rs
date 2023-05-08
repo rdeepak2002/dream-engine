@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::num::NonZeroU32;
-
 use anyhow::*;
 use image::{GenericImageView, ImageFormat};
 

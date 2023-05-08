@@ -1,6 +1,3 @@
-use std::sync::{Arc, Mutex};
-use std::thread;
-
 use crossbeam_channel::unbounded;
 use winit::{
     event::*,
