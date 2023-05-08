@@ -4,6 +4,11 @@ rm -rf web/res
 # copy resources
 cp -R ./res ./web/res
 
+# enable rustflags for WebGPU
+echo "Enabling unstable web sys API's for WebGPU rendering"
+export RUSTFLAGS="--cfg=web_sys_unstable_apis"
+RUSTFLAGS="--cfg=web_sys_unstable_apis"
+
 # build rust app
 wasm-pack build --target web --out-dir web/build --release
 if [ $? -eq 0 ]; then

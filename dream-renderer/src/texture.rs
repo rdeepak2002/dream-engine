@@ -42,7 +42,7 @@ impl Texture {
         let mut fmt: Option<wgpu::TextureFormat> = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
-                fmt = Some(wgpu::TextureFormat::Rgba8UnormSrgb);
+                fmt = Some(wgpu::TextureFormat::Bgra8Unorm);    // for webgl: Rgba8UnormSrgb
             }
         }
         let desc = wgpu::TextureDescriptor {
