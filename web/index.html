@@ -6,16 +6,87 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Ubuntu:wght@300&display=swap"
+          rel="stylesheet">
     <style>
-        html, body, canvas {
+        html, body, #dream-window-container {
             background-color: #1b1b1b;
             box-shadow: none;
             outline: 0;
         }
+
+        p {
+            font-family: 'Ubuntu', sans-serif;
+        }
+
+        #dream-window-container {
+            z-index: 1;
+            position: fixed;
+            left: 0;
+            top: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #dream-window-overlay {
+            background: #1b1b1b;
+            z-index: 2;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #dream-resource-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #dream-resource-loader-main, #dream-resource-loader-main > .loader-part {
+            width: 200px;
+            height: 10px;
+        }
+
+        #dream-resource-loader-main > .loader-part {
+            position: absolute;
+            border-radius: 10px;
+        }
+
+        #dream-resource-loader-main > #bar {
+            width: 0;
+            background: white;
+        }
+
+        #dream-resource-loader-main > #bg {
+            background: rgba(0, 0, 0, 0);
+            outline: white solid 1px;
+        }
+
+        #dream-resource-loader-text {
+            margin-top: 20px;
+            color: white;
+        }
     </style>
 </head>
 
-<body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
+<body id="dream-window-container">
+<div id="dream-window-overlay">
+    <div id="dream-resource-loader">
+        <div id="dream-resource-loader-main">
+            <div class="loader-part" id="bar"></div>
+            <div class="loader-part" id="bg"></div>
+        </div>
+        <p id="dream-resource-loader-text"></p>
+    </div>
+</div>
 <script type="module">
     import {startApplication} from "./util.js";
 

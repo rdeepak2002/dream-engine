@@ -1,5 +1,38 @@
 import init from './build/dream.js';
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function updateLoaderBarText(text) {
+    const resourceLoaderTextTag = "dream-resource-loader-text";
+    const resourceLoaderText = document.getElementById(resourceLoaderTextTag);
+    resourceLoaderText.innerText = text;
+}
+
+function updateLoaderBar(percentLoaded) {
+    const resourceLoaderBarTag = "bar";
+    const resourceLoaderBarBgTag = "bg";
+
+    const resourceLoaderBar = document.getElementById(resourceLoaderBarTag);
+    const resourceLoaderBarBg = document.getElementById(resourceLoaderBarBgTag);
+    const maxResourceLoaderBarWidth = resourceLoaderBarBg.getBoundingClientRect().width;
+
+    resourceLoaderBar.style.width = `${Math.round(maxResourceLoaderBarWidth * percentLoaded)}px`;
+}
+
+function showWindowOverlay() {
+    const windowOverlayTag = "dream-window-overlay";
+    const windowOverlay = document.getElementById(windowOverlayTag);
+    windowOverlay.style.display = "visible";
+}
+
+function hideWindowOverlay() {
+    const windowOverlayTag = "dream-window-overlay";
+    const windowOverlay = document.getElementById(windowOverlayTag);
+    windowOverlay.style.display = "none";
+}
+
 function disableWebKeyboardEvents() {
     const canvasElement = document?.getElementsByTagName('canvas')[0];
     if (canvasElement) {
@@ -60,6 +93,7 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
     let fetchedFileBlob;
     try {
         console.log(`Downloading ${fileUrl}`);
+        updateLoaderBarText(`Downloading ${fileUrl}`);
         const fetchedFile = await fetch(fileUrl);
         fetchedFileBlob = await fetchedFile.blob();
     } catch (e) {
@@ -84,6 +118,9 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
 // then for each one 'download' it to our project (if its locally stored, dont do anything on desktop build when downloading a file)
 // but ofc for web build we want to run above fetchResource() method when downloading a file
 const fetchResourceFiles = async () => {
+    updateLoaderBarText("Retrieving filesystem root");
+    updateLoaderBar(0.0 / 9);
+
     // get root directory of file system
     let root;
     try {
@@ -93,7 +130,12 @@ const fetchResourceFiles = async () => {
         throw new Error(`Unable to get root directory of temporary file system`);
     }
     // clear file system by clearing root directory
-    root.remove();
+    try {
+        root.remove();
+    } catch (e) {
+        // TODO: doesn't work on safari and firefox
+        console.error(`Unable to remove root directory`, e);
+    }
     root = await navigator.storage.getDirectory();
 
     // TODO: in long run we want users to toggle between a local and cloud saved project
@@ -105,38 +147,75 @@ const fetchResourceFiles = async () => {
         filepath: "cube.glb",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(1.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "link.glb",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(2.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "ice_cube.glb",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(3.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "robot.glb",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(4.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "scene.gltf",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(5.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "scene.bin",
         fileUrl: undefined,
     });
+
+    updateLoaderBar(6.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "textures/main_mat_baseColor.png",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(7.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "textures/main_mat_metallicRoughness.png",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(8.0 / 9);
+
     await fetchResourceFile(root, {
         filepath: "textures/main_mat_normal.png",
         fileUrl: undefined,
     });
+    await sleep(10);
+
+    updateLoaderBar(9.0 / 9);
+    updateLoaderBarText("Done downloading resources");
+    hideWindowOverlay();
+
     // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)
     // and the filepath + url can be stored in a db collection as a single db entry
     // await fetchResourceFile(root, {
