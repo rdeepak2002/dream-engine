@@ -955,7 +955,6 @@ dependencies = [
  "log",
  "wasm-bindgen",
  "web-sys",
- "wgpu",
  "winit",
 ]
 
