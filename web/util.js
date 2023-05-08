@@ -145,24 +145,18 @@ const fetchResourceFiles = async () => {
     // });
 }
 
-const startApplication = (numMB = 1024) => {
-    // TODO: persistent storage type is deprecated
-    navigator.webkitPersistentStorage.requestQuota(numMB * 1024 * 1024, () => {
-        window.webkitRequestFileSystem(window.TEMPORARY, numMB * 1024 * 1024, () => {
-            fetchResourceFiles().then(() => {
-                // initialize web assembly application and disable possible keyboard input events
-                init().then(() => {
-                    disableWebKeyboardEvents();
-                });
-            }).catch((error) => {
-                console.error('Unable to fetch resource files', error);
-                alert('Unable to fetch resource files, please try again later');
-            });
-        }, () => {
-            alert(`Unable to initialize ${numMB} MB of space for temporary file system`);
+const startApplication = () => {
+    fetchResourceFiles().then(() => {
+        // initialize web assembly application and disable possible keyboard input events
+        init().then(() => {
+            disableWebKeyboardEvents();
+        }).catch((err) => {
+            alert('Unable to initialize application. Please try again later.');
+            console.error('Unable to initialize application', err);
         });
-    }, () => {
-        alert(`Unable to initialize ${numMB} MB of space for temporary file system`);
+    }).catch((error) => {
+        console.error('Unable to fetch resource files', error);
+        alert('Unable to fetch resource files, please try again later');
     });
 }
 

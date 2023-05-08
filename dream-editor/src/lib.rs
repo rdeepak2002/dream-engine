@@ -13,23 +13,22 @@ pub struct EditorEguiWgpu {
 }
 
 pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
-    return egui_wgpu::Renderer::new(
+    egui_wgpu::Renderer::new(
         &state.device,
         state.surface_format,
         Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
         1,
-    );
+    )
 }
 
 pub fn generate_egui_wgpu_depth_texture(
     state: &dream_renderer::RendererWgpu,
 ) -> dream_renderer::texture::Texture {
-    let depth_texture_egui = dream_renderer::texture::Texture::create_depth_texture(
+    dream_renderer::texture::Texture::create_depth_texture(
         &state.device,
         &state.config,
         "depth_texture_egui",
-    );
-    return depth_texture_egui;
+    )
 }
 
 impl EditorEguiWgpu {
@@ -425,10 +424,8 @@ impl EditorEguiWgpu {
     }
 
     pub fn handle_event(&mut self, window_event: &winit::event::WindowEvent) -> bool {
-        let exclusive = self
-            .egui_winit_state
-            .on_event(&self.egui_context, &window_event);
-        let editor_exclusive_event = exclusive.consumed;
-        return editor_exclusive_event;
+        self.egui_winit_state
+            .on_event(&self.egui_context, &window_event)
+            .consumed
     }
 }

@@ -9,6 +9,8 @@
     <style>
         html, body, canvas {
             background-color: #1b1b1b;
+            box-shadow: none;
+            outline: 0;
         }
     </style>
 </head>
@@ -16,9 +18,8 @@
 <body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
 <script type="module">
     import {startApplication} from "./util.js";
-    // start application with 1 GB of space
-    const ONE_GB = 1024;
-    startApplication(ONE_GB);
+
+    startApplication();
 </script>
 </body>
 

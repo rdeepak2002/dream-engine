@@ -35,30 +35,34 @@ fn update(
     // draw the scene (to texture)
     match renderer.render() {
         Ok(_) => {}
-        // Reconfigure the surface if it's lost or outdated
+        // reconfigure the surface if it's lost or outdated
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
             renderer.resize(renderer.size);
-            editor.handle_resize(&renderer);
+            editor.handle_resize(renderer);
         }
-        // The system is out of memory, we should probably quit
-        Err(wgpu::SurfaceError::OutOfMemory) => return true,
-        // We're ignoring timeouts
+        // quit when system is out of memory
+        Err(wgpu::SurfaceError::OutOfMemory) => {
+            log::error!("Quitting because system out of memory");
+            return true;
+        }
+        // ignore timeout
         Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
     }
 
     // draw editor
-    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
-        Ok(_) => {}
+    match editor.render_wgpu(renderer, editor_raw_input, editor_pixels_per_point) {
+        Ok(_) => {
+            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+        }
         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
             renderer.resize(renderer.size);
-            editor.handle_resize(&renderer);
+            editor.handle_resize(renderer);
         }
         Err(wgpu::SurfaceError::OutOfMemory) => return true,
         Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
     }
 
-    renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
-    return false;
+    false
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
