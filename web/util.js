@@ -7,6 +7,12 @@ function sleep(ms) {
 function updateLoaderBarText(text) {
     const resourceLoaderTextTag = "dream-resource-loader-text";
     const resourceLoaderText = document.getElementById(resourceLoaderTextTag);
+
+    if (!resourceLoaderText) {
+        console.warn(`Unable to find loading text element with ID ${resourceLoaderTextTag}`);
+        return;
+    }
+
     resourceLoaderText.innerText = text;
 }
 
@@ -16,15 +22,29 @@ function updateLoaderBar(percentLoaded) {
 
     const resourceLoaderBar = document.getElementById(resourceLoaderBarTag);
     const resourceLoaderBarBg = document.getElementById(resourceLoaderBarBgTag);
-    const maxResourceLoaderBarWidth = resourceLoaderBarBg.getBoundingClientRect().width;
 
-    resourceLoaderBar.style.width = `${Math.round(maxResourceLoaderBarWidth * percentLoaded)}px`;
+    if (!resourceLoaderBar) {
+        console.warn(`Unable to find loading bar element with ID ${resourceLoaderBarTag}`);
+        return;
+    }
+
+    if (!resourceLoaderBarBg) {
+        console.warn(`Unable to find loading bar background element with ID ${resourceLoaderBarBgTag}`);
+        return;
+    }
+
+    const maxResourceLoaderBarWidth = resourceLoaderBarBg?.getBoundingClientRect()?.width;
+    if (maxResourceLoaderBarWidth) {
+        resourceLoaderBar.style.width = `${Math.round(maxResourceLoaderBarWidth * percentLoaded)}px`;
+    } else {
+        console.warn('Unable to retrieve width of resource loading bar background');
+    }
 }
 
 function showWindowOverlay() {
     const windowOverlayTag = "dream-window-overlay";
     const windowOverlay = document.getElementById(windowOverlayTag);
-    windowOverlay.style.display = "visible";
+    windowOverlay.style.display = "flex";
 }
 
 function hideWindowOverlay() {
@@ -118,6 +138,7 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
 // then for each one 'download' it to our project (if its locally stored, dont do anything on desktop build when downloading a file)
 // but ofc for web build we want to run above fetchResource() method when downloading a file
 const fetchResourceFiles = async () => {
+    showWindowOverlay();
     updateLoaderBarText("Retrieving filesystem root");
     updateLoaderBar(0.0 / 9);
 
@@ -142,77 +163,53 @@ const fetchResourceFiles = async () => {
     // TODO: have JSON file (or db thingy) that specifies what files are a part of the project & urls (so in future we can do google docs approach if user chooses to do a cloud synced project)
     // TODO: stream read json file that describes each resourceFileDescriptor (or read from db for cloud saved projects)
     // TODO: use await navigator.storage.estimate() to ensure we have enough storage space available
+    const resources = [
+        {
+            filepath: "link.glb",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "cube.glb",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "ice_cube.glb",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "robot.glb",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "scene.gltf",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "scene.bin",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "textures/main_mat_baseColor.png",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "textures/main_mat_metallicRoughness.png",
+            fileUrl: undefined,
+        },
+        {
+            filepath: "textures/main_mat_normal.png",
+            fileUrl: undefined,
+        },
+    ];
+
     // fetch each resource file
-    await fetchResourceFile(root, {
-        filepath: "cube.glb",
-        fileUrl: undefined,
-    });
-    await sleep(10);
+    for (let i = 0; i < resources.length; i++) {
+        let resourceFileDescriptor = resources[i];
+        await fetchResourceFile(root, resourceFileDescriptor);
+        updateLoaderBar((i + 1) / resources.length);
+        await sleep(10);
+    }
 
-    updateLoaderBar(1.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "link.glb",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(2.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "ice_cube.glb",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(3.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "robot.glb",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(4.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "scene.gltf",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(5.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "scene.bin",
-        fileUrl: undefined,
-    });
-
-    updateLoaderBar(6.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "textures/main_mat_baseColor.png",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(7.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "textures/main_mat_metallicRoughness.png",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(8.0 / 9);
-
-    await fetchResourceFile(root, {
-        filepath: "textures/main_mat_normal.png",
-        fileUrl: undefined,
-    });
-    await sleep(10);
-
-    updateLoaderBar(9.0 / 9);
     updateLoaderBarText("Done downloading resources");
     hideWindowOverlay();
 
