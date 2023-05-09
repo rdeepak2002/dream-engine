@@ -10,13 +10,15 @@
 
 ## Author
 
-Deepak Ramalingam
+[Deepak Ramalingam](https://github.com/rdeepak2002)
 
 ## About
 
-Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust.
+🚧 Under construction - don't use yet! 🚧
 
-DREAM stands for D(eepaks game engine is) REA(lly a) M(azing).
+Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) (real-time 3D engine) in Rust.
+
+DREAM stands for D(eepak's game engine is) REA(lly a) M(azing).
 
 ## Requirements
 
@@ -84,3 +86,5 @@ solutions: [https://stackoverflow.com/questions/53136717/errore0554-feature-may-
 ### Web Assembly (Browser) Build
 
 ![web](doc/image/screenshot_1.png)
+
+![web](doc/image/screenshot_2.png)
