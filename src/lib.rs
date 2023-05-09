@@ -77,6 +77,6 @@ pub async fn run() {
     }
 
     let app = Box::new(App::new());
-    let window = Window::new();
+    let window = Window::default();
     window.run(app, update).await;
 }

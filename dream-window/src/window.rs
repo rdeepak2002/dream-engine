@@ -10,8 +10,8 @@ pub struct Window {
     pub event_loop: EventLoop<()>,
 }
 
-impl Window {
-    pub fn new() -> Self {
+impl Default for Window {
+    fn default() -> Self {
         let event_loop = EventLoop::new();
         let window = WindowBuilder::new()
             .with_inner_size(winit::dpi::PhysicalSize::new(3000, 1750))
@@ -48,7 +48,9 @@ impl Window {
 
         Self { window, event_loop }
     }
+}
 
+impl Window {
     pub async fn run(
         self,
         mut app: Box<dream_app::app::App>,
