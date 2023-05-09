@@ -33,15 +33,17 @@ pub struct App {
     pub component_systems: Vec<Box<dyn System>>,
 }
 
-impl App {
-    pub fn new() -> Self {
+impl Default for App {
+    fn default() -> Self {
         Self {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
         }
     }
+}
 
+impl App {
     fn initialize(&mut self) {
         // init scene
         let e1;
