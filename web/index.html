@@ -6,6 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream</title>
+    <!--    favicon-->
+    <link href="favicon/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180">
+    <link href="favicon/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png">
+    <link href="favicon/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png">
+    <link href="favicon/site.webmanifest" rel="manifest">
+    <link color="#5bbad5" href="favicon/safari-pinned-tab.svg" rel="mask-icon">
+    <meta content="#da532c" name="msapplication-TileColor">
+    <meta content="#ffffff" name="theme-color">
+    <!--    stylesheets and fonts-->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Ubuntu:wght@300&display=swap"
           rel="stylesheet">
     <style>
@@ -19,8 +28,36 @@
             font-family: 'Ubuntu', sans-serif;
         }
 
+        #dream-title {
+            font-family: 'Ubuntu', sans-serif;
+            color: white;
+            font-size: 26px;
+        }
+
+        #logo {
+            width: 200px;
+            height: auto;
+            padding-bottom: 20px;
+        }
+
         #start-btn {
             display: none;
+            border: none;
+            text-decoration: none;
+            font-family: 'Ubuntu', sans-serif;
+            background: rgba(0, 0, 0, 0);
+            color: white;
+            outline: white solid 3px;
+            font-size: 20px;
+            padding: 10px;
+            text-align: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        #start-btn:hover {
+            box-shadow: inset 0 0 0 2em rgba(53, 123, 206, 1.0);
+            cursor: pointer;
         }
 
         #dream-window-container {
@@ -35,7 +72,7 @@
         }
 
         #dream-window-overlay {
-            background: #1b1b1b;
+            background: rgba(0, 0, 0, 0);
             z-index: 2;
             position: fixed;
             left: 0;
@@ -43,8 +80,13 @@
             width: 100%;
             height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            -webkit-animation-duration: 1s;
+            animation-duration: 1s;
+            -webkit-animation-fill-mode: both;
+            animation-fill-mode: both;
         }
 
         #dream-resource-loader {
@@ -78,11 +120,59 @@
             margin-top: 20px;
             color: white;
         }
+
+        @-webkit-keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .fadeIn {
+            -webkit-animation-name: fadeIn;
+            animation-name: fadeIn;
+        }
+
+        @-webkit-keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .fadeOut {
+            -webkit-animation-name: fadeOut;
+            animation-name: fadeOut;
+        }
     </style>
 </head>
 
 <body id="dream-window-container">
-<div id="dream-window-overlay">
+<div class="fadeIn" id="dream-window-overlay">
+    <h3 id="dream-title">Dream Engine Demo</h3>
+    <img alt="logo" id="logo" src="logo.png"/>
     <div id="dream-resource-loader">
         <div id="dream-resource-loader-main">
             <div class="loader-part" id="bar"></div>
@@ -90,19 +180,21 @@
         </div>
         <p id="dream-resource-loader-text"></p>
     </div>
-    <button id="start-btn" onclick="start();">Start</button>
+    <button id="start-btn" onclick="start();">Download & Play</button>
 </div>
 <script type="module">
     import {startApplication} from "./util.js";
 
-    const autoDownload = true;
+    const autoDownload = false;
+    const showDownloadLogs = false;
+
     const resourceLoaderContainer = document.getElementById("dream-resource-loader");
     const startBtn = document.getElementById("start-btn");
 
     const start = () => {
         startBtn.style.display = "none";
         resourceLoaderContainer.style.display = "flex";
-        startApplication();
+        startApplication(showDownloadLogs);
     }
 
     if (autoDownload) {

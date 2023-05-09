@@ -45,12 +45,18 @@ function showWindowOverlay() {
     const windowOverlayTag = "dream-window-overlay";
     const windowOverlay = document.getElementById(windowOverlayTag);
     windowOverlay.style.display = "flex";
+    windowOverlay.classList.add("fadeIn");
+    windowOverlay.classList.remove("fadeOut");
 }
 
 function hideWindowOverlay() {
     const windowOverlayTag = "dream-window-overlay";
     const windowOverlay = document.getElementById(windowOverlayTag);
-    windowOverlay.style.display = "none";
+    windowOverlay.classList.add("fadeOut");
+    windowOverlay.classList.remove("fadeIn");
+    sleep(1000).then(() => {
+        windowOverlay.style.display = "none";
+    });
 }
 
 function disableWebKeyboardEvents() {
@@ -92,7 +98,7 @@ function disableWebKeyboardEvents() {
     }
 }
 
-const fetchResourceFile = async (root, resourceFileDescriptor) => {
+const fetchResourceFile = async (root, resourceFileDescriptor, showDownloadLogs = false) => {
     // url of the file system for debugging purposes
     const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
     const filepath_arr = resourceFileDescriptor.filepath.split('/');
@@ -113,7 +119,9 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
     let fetchedFileBlob;
     try {
         console.log(`Downloading ${fileUrl}`);
-        updateLoaderBarText(`Downloading ${fileUrl}`);
+        if (showDownloadLogs) {
+            updateLoaderBarText(`Downloading ${fileUrl}`);
+        }
         const fetchedFile = await fetch(fileUrl);
         fetchedFileBlob = await fetchedFile.blob();
     } catch (e) {
@@ -137,9 +145,11 @@ const fetchResourceFile = async (root, resourceFileDescriptor) => {
 // ^ so whenever project starts up in general we want to read through the JSON file or query db to get all the file resource descriptors
 // then for each one 'download' it to our project (if its locally stored, dont do anything on desktop build when downloading a file)
 // but ofc for web build we want to run above fetchResource() method when downloading a file
-const fetchResourceFiles = async () => {
+const fetchResourceFiles = async (showDownloadLogs = false) => {
     showWindowOverlay();
-    updateLoaderBarText("Retrieving filesystem root");
+    if (showDownloadLogs) {
+        updateLoaderBarText("Retrieving filesystem root");
+    }
     updateLoaderBar(0.0 / 9);
 
     // get root directory of file system
@@ -205,12 +215,14 @@ const fetchResourceFiles = async () => {
     // fetch each resource file
     for (let i = 0; i < resources.length; i++) {
         let resourceFileDescriptor = resources[i];
-        await fetchResourceFile(root, resourceFileDescriptor);
+        await fetchResourceFile(root, resourceFileDescriptor, showDownloadLogs);
         updateLoaderBar((i + 1) / resources.length);
         await sleep(10);
     }
 
-    updateLoaderBarText("Done downloading resources");
+    if (showDownloadLogs) {
+        updateLoaderBarText("Done downloading resources");
+    }
     hideWindowOverlay();
 
     // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)
@@ -221,8 +233,8 @@ const fetchResourceFiles = async () => {
     // });
 }
 
-const startApplication = () => {
-    fetchResourceFiles().then(() => {
+const startApplication = (showDownloadLogs = false) => {
+    fetchResourceFiles(showDownloadLogs).then(() => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(() => {
             disableWebKeyboardEvents();
