@@ -4,17 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dream-app = { path = "../dream-app", version = "0.1.0" }
-dream-editor = { path = "../dream-editor", version = "0.1.0" }
-dream-renderer = { path = "../dream-renderer", version = "0.1.0" }
-cfg-if = "1"
-winit = "0.28"
-log = "0.4"
 crossbeam-channel = "0.5"
-egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+winit = { workspace = true }
+cfg-if = { workspace = true }
+log = { workspace = true }
+egui = { workspace = true }
+dream-app = { workspace = true }
+dream-editor = { workspace = true }
+dream-renderer = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = { workspace = true }
 web-sys = { version = "0.3.61", features = [
     "Window",
 ] }

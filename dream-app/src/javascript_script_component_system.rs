@@ -17,7 +17,6 @@
  **********************************************************************************/
 
 use boa_engine::JsValue;
-use epi::egui::emath::Numeric;
 
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::get_current_scene_read_only;
@@ -67,7 +66,7 @@ impl System for JavaScriptScriptComponentSystem {
                         &res,
                         &[
                             JsValue::Integer(entity.get_runtime_id() as i32),
-                            JsValue::Rational(dt.to_f64()),
+                            JsValue::Rational(dt as f64),
                         ],
                         &mut context,
                     );

@@ -7,25 +7,25 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-dream-editor = { path = "./dream-editor", version = "0.1.0" }
-dream-renderer = { path = "./dream-renderer", version = "0.1.0" }
-dream-ecs = { path = "./dream-ecs", version = "0.1.0" }
-dream-math = { path = "./dream-math", version = "0.1.0" }
-dream-app = { path = "./dream-app", version = "0.1.0" }
-dream-window = { path = "./dream-window", version = "0.1.0" }
-cfg-if = "1"
-winit = "0.28"
 env_logger = "0.10"
-log = "0.4"
-wgpu = "0.16.0"
 pollster = "0.3.0"
-egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+cfg-if = { workspace = true }
+winit = { workspace = true }
+wgpu = { workspace = true }
+egui = { workspace = true }
+log = { workspace = true }
+dream-editor = { workspace = true }
+dream-renderer = { workspace = true }
+dream-ecs = { workspace = true }
+dream-math = { workspace = true }
+dream-app = { workspace = true }
+dream-window = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
 console_log = "1.0.0"
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
+wasm-bindgen-futures = { workspace = true }
+wasm-bindgen = { workspace = true }
 
 [workspace]
 members = [
@@ -38,3 +38,23 @@ members = [
     "dream-app",
     "dream-window"
 ]
+
+[workspace.dependencies]
+anyhow = "1.0"
+wgpu = "0.16.0"
+log = "0.4"
+cfg-if = "1"
+winit = "0.28"
+cgmath = "0.18"
+once_cell = "1.17.1"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.30"
+egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+bytemuck = { version = "1.12", features = ["derive"] }
+dream-editor = { path = "./dream-editor" }
+dream-renderer = { path = "./dream-renderer" }
+dream-ecs = { path = "./dream-ecs" }
+dream-math = { path = "./dream-math" }
+dream-app = { path = "./dream-app" }
+dream-window = { path = "./dream-window" }
+dream-fs = { path = "./dream-fs" }

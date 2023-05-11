@@ -836,7 +836,7 @@ dependencies = [
  "dream-math",
  "dream-renderer",
  "dream-window",
- "egui 0.21.0",
+ "egui",
  "env_logger",
  "log",
  "pollster",
@@ -852,19 +852,13 @@ version = "0.1.0"
 dependencies = [
  "boa_engine",
  "boa_gc",
- "bytemuck",
  "cfg-if",
  "cgmath",
- "crossbeam-channel",
  "dream-ecs",
  "dream-math",
  "dream-renderer",
- "epi",
  "gc",
- "gltf",
- "lazy_static",
  "log",
- "once_cell",
  "rustpython-common",
  "rustpython-parser",
  "rustpython-pylib",
@@ -891,7 +885,7 @@ dependencies = [
  "cfg-if",
  "cgmath",
  "dream-renderer",
- "egui 0.21.0",
+ "egui",
  "egui-wgpu",
  "egui-winit",
  "log",
@@ -951,7 +945,7 @@ dependencies = [
  "dream-app",
  "dream-editor",
  "dream-renderer",
- "egui 0.21.0",
+ "egui",
  "log",
  "wasm-bindgen",
  "web-sys",
@@ -974,22 +968,11 @@ dependencies = [
 
 [[package]]
 name = "egui"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a3cd1d47e12f7a17912595241622e373aa652a4e0fa90b3f9278f90a64aedf7"
-dependencies = [
- "ahash 0.7.6",
- "epaint 0.17.0",
- "nohash-hasher",
-]
-
-[[package]]
-name = "egui"
 version = "0.21.0"
 source = "git+https://github.com/emilk/egui.git#3d6a15f442929ae14b942e2d5248f236e7ef9b2f"
 dependencies = [
  "ahash 0.8.3",
- "epaint 0.21.0",
+ "epaint",
  "log",
  "nohash-hasher",
 ]
@@ -1000,7 +983,7 @@ version = "0.21.0"
 source = "git+https://github.com/emilk/egui.git#3d6a15f442929ae14b942e2d5248f236e7ef9b2f"
 dependencies = [
  "bytemuck",
- "epaint 0.21.0",
+ "epaint",
  "log",
  "thiserror",
  "type-map",
@@ -1012,7 +995,7 @@ name = "egui-winit"
 version = "0.21.1"
 source = "git+https://github.com/emilk/egui.git#3d6a15f442929ae14b942e2d5248f236e7ef9b2f"
 dependencies = [
- "egui 0.21.0",
+ "egui",
  "instant",
  "log",
  "raw-window-handle",
@@ -1025,12 +1008,6 @@ name = "either"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
-
-[[package]]
-name = "emath"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a977a80456be58a2c2d48e69c1d0baadef46cecef5a0c98df141c468da006f12"
 
 [[package]]
 name = "emath"
@@ -1070,19 +1047,6 @@ dependencies = [
 
 [[package]]
 name = "epaint"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "033292846059f08e03a71e1b5db2ee6ab7c9622c3b48da21f4bd13258ebee2db"
-dependencies = [
- "ab_glyph",
- "ahash 0.7.6",
- "atomic_refcell",
- "emath 0.17.0",
- "nohash-hasher",
-]
-
-[[package]]
-name = "epaint"
 version = "0.21.0"
 source = "git+https://github.com/emilk/egui.git#3d6a15f442929ae14b942e2d5248f236e7ef9b2f"
 dependencies = [
@@ -1091,20 +1055,10 @@ dependencies = [
  "atomic_refcell",
  "bytemuck",
  "ecolor",
- "emath 0.21.0",
+ "emath",
  "log",
  "nohash-hasher",
  "parking_lot",
-]
-
-[[package]]
-name = "epi"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c95445deccef4d29fa30488d3f7f2e942dd343eef01228becc7cefd5b918176e"
-dependencies = [
- "egui 0.17.0",
- "tracing",
 ]
 
 [[package]]
@@ -2363,12 +2317,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db8bcd96cb740d03149cbad5518db9fd87126a10ab519c011893b1754134c468"
 
 [[package]]
-name = "pin-project-lite"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0a7ae3ac2f1173085d398531c705756c94a4c56843785df85a60c1a0afac116"
-
-[[package]]
 name = "pkg-config"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3482,38 +3430,6 @@ dependencies = [
  "indexmap",
  "toml_datetime",
  "winnow",
-]
-
-[[package]]
-name = "tracing"
-version = "0.1.37"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
-dependencies = [
- "cfg-if",
- "pin-project-lite",
- "tracing-attributes",
- "tracing-core",
-]
-
-[[package]]
-name = "tracing-attributes"
-version = "0.1.23"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4017f8f45139870ca7e672686113917c71c7a6e02d4924eda67186083c03081a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "tracing-core"
-version = "0.1.30"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24eb03ba0eab1fd845050058ce5e616558e8f8d8fca633e6b163fe25c797213a"
-dependencies = [
- "once_cell",
 ]
 
 [[package]]

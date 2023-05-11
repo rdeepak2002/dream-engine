@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 shipyard = "0.6.2"
-cgmath = "0.18"
-dream-math = { path = "../dream-math", version = "0.1.0" }
-once_cell = "1.17.1"
+cgmath = { workspace = true }
+once_cell = { workspace = true }
+dream-math = { workspace = true }

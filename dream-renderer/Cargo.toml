@@ -7,16 +7,13 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-cfg-if = "1"
-winit = "0.28"
-log = "0.4"
-wgpu = "0.16.0"
-image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
-anyhow = "1.0"
-bytemuck = { version = "1.12", features = ["derive"] }
-cgmath = "0.18"
 gltf = "1.1.0"
-dream-fs = { path = "../dream-fs", version = "0.1.0" }
-
-#[target.'cfg(target_arch = "wasm32")'.dependencies]
-#wgpu = { version = "0.16.0", features = ["webgl"] } # for webgl
+image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
+anyhow = { workspace = true }
+cgmath = { workspace = true }
+cfg-if = { workspace = true }
+winit = { workspace = true }
+wgpu = { workspace = true }
+log = { workspace = true }
+bytemuck = { workspace = true }
+dream-fs = { workspace = true }
