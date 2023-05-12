@@ -12,20 +12,16 @@ pub fn set_fs_root(fs_root: &str) {
     *FS_ROOT.lock().unwrap() = Some(String::from(fs_root));
 }
 
-pub async fn load_binary(file_name: &str) -> anyhow::Result<Vec<u8>> {
+pub async fn load_binary(file_name: &str) -> Result<Vec<u8>> {
+    let fs_root = FS_ROOT.lock().unwrap().clone();
+    let path = match fs_root {
+        Some(root_path) => std::path::Path::new(&root_path).join(file_name),
+        None => std::path::Path::new(file_name).to_path_buf(),
+    };
     cfg_if! {
-        // TODO: use FS_ROOT for web build
         if #[cfg(target_arch = "wasm32")] {
-            let data = crate::js_fs::read_file_from_web_storage(file_name).await;
+            let data = crate::js_fs::read_file_from_web_storage(path.to_str().unwrap()).await;
         } else {
-            let fs_root = FS_ROOT.lock().unwrap().clone();
-            let path = match fs_root {
-                Some(root_path) =>
-                    std::path::Path::new(&root_path).join(file_name)
-                ,
-                None =>
-                    std::path::Path::new(file_name).to_path_buf()
-            };
             let data = std::fs::read(path)?;
         }
     }
