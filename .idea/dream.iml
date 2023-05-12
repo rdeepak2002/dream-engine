@@ -13,9 +13,11 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-renderer/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-resource/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-window/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-editor/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-resource/target" />
+      <excludeFolder url="file://$MODULE_DIR$/web/build/snippets" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
