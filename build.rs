@@ -1,15 +1,20 @@
 use std::env;
+use std::path::Path;
 
 use anyhow::*;
 use fs_extra::dir::CopyOptions;
 use fs_extra::{copy_items, remove_items};
 
 fn main() -> Result<()> {
-    let example_folder = "examples/";
-    println!("cargo:rerun-if-changed={}*", example_folder);
+    let example_folder = "examples";
+    println!(
+        "cargo:rerun-if-changed={}{}*",
+        example_folder,
+        std::path::MAIN_SEPARATOR
+    );
 
-    // remove old web build
-    let old_example_folder = format!("web/{}", example_folder);
+    // delete old / previously-copied examples folder from the last time this script was run
+    let old_example_folder = String::from(Path::new("web").join(example_folder).to_str().unwrap());
     let paths_to_remove = vec![old_example_folder];
     remove_items(&paths_to_remove).expect("unable to remove paths");
 
@@ -23,7 +28,7 @@ fn main() -> Result<()> {
     copy_items(&paths_to_copy, out_dir, &copy_options)?;
 
     // copy examples folder to out directory for web build
-    let web_out_dir = std::path::Path::new("web");
+    let web_out_dir = Path::new("web");
     copy_items(&paths_to_copy, web_out_dir.to_str().unwrap(), &copy_options)?;
 
     Ok(())
