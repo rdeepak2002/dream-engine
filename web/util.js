@@ -99,9 +99,11 @@ function disableWebKeyboardEvents() {
 }
 
 const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownloadLogs = false) => {
+    let joinedPaths = paths.join("/");
     // url of the file system for debugging purposes
     const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
-    const filepath_arr = resourceFileDescriptor.filepath.split('/');
+    const full_file_path = `${joinedPaths ? `${joinedPaths}/` : joinedPaths}${resourceFileDescriptor.filepath}`;
+    const filepath_arr = full_file_path.split('/');
     // create the necessary directories to place the file into
     let curDir = root;
     for (let i = 0; i < filepath_arr.length - 1; i++) {
@@ -112,9 +114,8 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         }
     }
     const fileName = filepath_arr[filepath_arr.length - 1];
-    // const filePath = `/${fileName}`;
-    const filePath = `/${resourceFileDescriptor.filepath}`;
-    const fileUrl = resourceFileDescriptor?.fileUrl || `/${paths.join("/")}${filePath}`;
+    const filePath = `/${full_file_path}`;
+    const fileUrl = resourceFileDescriptor?.fileUrl || `${filePath}`;
     // fetch the file from the URL and get the blob data
     let fetchedFileBlob;
     try {

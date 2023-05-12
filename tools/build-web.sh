@@ -1,7 +1,4 @@
-# enable rustflags for WebGPU and build rust app
-echo "Enabling unstable web sys API's for WebGPU rendering"
 export RUSTFLAGS="--cfg=web_sys_unstable_apis"
-RUSTFLAGS="--cfg=web_sys_unstable_apis"
 wasm-pack build --target web --out-dir web/build --release
 
 # start server is build succeeded
