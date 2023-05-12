@@ -34,32 +34,46 @@ wasm-bindgen = { workspace = true }
 
 [workspace]
 members = [
-    "dream-editor",
-    "dream-renderer",
-    "dream-ecs",
-    "dream-resource",
-    "dream-math",
-    "dream-fs",
-    "dream-app",
-    "dream-window"
+    "crates/*"
 ]
 
 [workspace.dependencies]
-anyhow = "1.0"
+# rendering API
 wgpu = "0.16.0"
-log = "0.4"
-cfg-if = "1"
+
+# windowing
 winit = "0.28"
-cgmath = "0.18"
+
+# logging
+log = "0.4"
+
+# singleton library
 once_cell = "1.17.1"
+
+# custom code per configuration
+cfg-if = "1"
+
+# linar algebra math
+cgmath = "0.18"
+
+# immediate gui library
+egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+
+# easy conversion to plain datatypes
+bytemuck = { version = "1.12", features = ["derive"] }
+
+# easier error handling
+anyhow = "1.0"
+
+# web assembly functionalities
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
-egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
-bytemuck = { version = "1.12", features = ["derive"] }
-dream-editor = { path = "./dream-editor" }
-dream-renderer = { path = "./dream-renderer" }
-dream-ecs = { path = "./dream-ecs" }
-dream-math = { path = "./dream-math" }
-dream-app = { path = "./dream-app" }
-dream-window = { path = "./dream-window" }
-dream-fs = { path = "./dream-fs" }
+
+# dream sub-dependencies
+dream-editor = { path = "crates/dream-editor" }
+dream-renderer = { path = "crates/dream-renderer" }
+dream-ecs = { path = "crates/dream-ecs" }
+dream-math = { path = "crates/dream-math" }
+dream-app = { path = "crates/dream-app" }
+dream-window = { path = "crates/dream-window" }
+dream-fs = { path = "crates/dream-fs" }
