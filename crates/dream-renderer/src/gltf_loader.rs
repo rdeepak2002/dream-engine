@@ -16,10 +16,9 @@ pub async fn read_gltf(
     let gltf = gltf::Gltf::from_slice(
         &load_binary(path)
             .await
-            .expect("Error loading binary for glb"),
+            .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
     )
     .expect("Error loading from slice for glb");
-    // let gltf = gltf::Gltf::open("res/cube.gltf").expect("Unable to open gltf");
     let mut buffer_data = Vec::new();
     for buffer in gltf.buffers() {
         match buffer.source() {

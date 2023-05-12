@@ -1,8 +1,8 @@
 # clean-up
 rm -rf web/build
-rm -rf web/res
+rm -rf web/examples
 # copy resources
-cp -R ./res ./web/res
+cp -R ./examples ./web/examples
 
 # enable rustflags for WebGPU
 echo "Enabling unstable web sys API's for WebGPU rendering"

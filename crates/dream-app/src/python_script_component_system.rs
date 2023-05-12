@@ -48,8 +48,6 @@ impl System for PythonScriptComponentSystem {
                     .try_int(vm)
                     .expect("Error getting python result")
                     .to_string();
-                // println!("Result from Python: {}", res);
-                // log::warn!("Result from Python: {}", res);
             })
         }
     }

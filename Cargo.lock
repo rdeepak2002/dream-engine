@@ -827,17 +827,20 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 name = "dream"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cfg-if",
  "console_error_panic_hook",
  "console_log",
  "dream-app",
  "dream-ecs",
  "dream-editor",
+ "dream-fs",
  "dream-math",
  "dream-renderer",
  "dream-window",
  "egui",
  "env_logger",
+ "fs_extra",
  "log",
  "pollster",
  "wasm-bindgen",
@@ -899,8 +902,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cfg-if",
- "fs_extra",
  "js-sys",
+ "log",
  "wasm-bindgen",
  "wasm-bindgen-futures",
 ]
@@ -944,6 +947,7 @@ dependencies = [
  "crossbeam-channel",
  "dream-app",
  "dream-editor",
+ "dream-fs",
  "dream-renderer",
  "egui",
  "log",

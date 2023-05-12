@@ -98,7 +98,7 @@ function disableWebKeyboardEvents() {
     }
 }
 
-const fetchResourceFile = async (root, resourceFileDescriptor, showDownloadLogs = false) => {
+const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownloadLogs = false) => {
     // url of the file system for debugging purposes
     const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
     const filepath_arr = resourceFileDescriptor.filepath.split('/');
@@ -114,7 +114,7 @@ const fetchResourceFile = async (root, resourceFileDescriptor, showDownloadLogs 
     const fileName = filepath_arr[filepath_arr.length - 1];
     // const filePath = `/${fileName}`;
     const filePath = `/${resourceFileDescriptor.filepath}`;
-    const fileUrl = resourceFileDescriptor?.fileUrl || `/res${filePath}`;
+    const fileUrl = resourceFileDescriptor?.fileUrl || `/${paths.join("/")}${filePath}`;
     // fetch the file from the URL and get the blob data
     let fetchedFileBlob;
     try {
@@ -215,7 +215,7 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // fetch each resource file
     for (let i = 0; i < resources.length; i++) {
         let resourceFileDescriptor = resources[i];
-        await fetchResourceFile(root, resourceFileDescriptor, showDownloadLogs);
+        await fetchResourceFile(root, ["examples", "blank"], resourceFileDescriptor, showDownloadLogs);
         updateLoaderBar((i + 1) / resources.length);
         await sleep(10);
     }

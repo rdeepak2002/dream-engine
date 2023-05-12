@@ -76,6 +76,11 @@ pub async fn run() {
         }
     }
 
+    let path = std::path::Path::new(env!("OUT_DIR"))
+        .join("examples")
+        .join("blank");
+    dream_fs::set_fs_root(path.to_str().unwrap());
+
     let app = Box::<App>::default();
     let window = Window::default();
     window.run(app, update).await;
