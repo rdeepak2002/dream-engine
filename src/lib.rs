@@ -76,10 +76,15 @@ pub async fn run() {
         }
     }
 
-    let path = std::path::Path::new(env!("OUT_DIR"))
-        .join("examples")
-        .join("blank");
-    dream_fs::set_fs_root(path.to_str().unwrap());
+    // set the root directory to be the project that is opened (by default this is blank example)
+    cfg_if::cfg_if! {
+        if #[cfg(not(target_arch = "wasm32"))] {
+            let path = std::path::Path::new(env!("OUT_DIR"))
+                .join("examples")
+                .join("blank");
+            dream_fs::set_fs_root(path.to_str().unwrap());
+        }
+    }
 
     let app = Box::<App>::default();
     let window = Window::default();
