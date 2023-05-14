@@ -32,42 +32,33 @@ DREAM stands for D(eepak's game engine is) REA(lly a) M(azing).
 rustup target add wasm32-unknown-unknown
 ```
 
-## Get Started (Desktop)
+## Build for Desktop
 
 ```shell
 cargo run
 ```
 
-## Get Started (Web)
+## Build for Web
 
 ```shell
 export RUSTFLAGS="--cfg=web_sys_unstable_apis"
 wasm-pack build --target web --out-dir web/build --release
 ```
 
-Serve ``web/index.html`` from ``web`` folder
+Serve ``index.html`` from ``web`` folder
 
-[//]: # (## Tests)
+## Run Tests
 
-[//]: # ()
+```shell
+cargo test --workspace
+```
 
-[//]: # (```shell)
+## Run Security Audit
 
-[//]: # (cargo test --workspace)
-
-[//]: # (```)
-
-[//]: # (## Security Audit)
-
-[//]: # ()
-
-[//]: # (```shell)
-
-[//]: # (cargo install cargo-audit)
-
-[//]: # (cargo audit)
-
-[//]: # (```)
+```shell
+cargo install cargo-audit
+cargo audit
+```
 
 ## Troubleshooting
 
