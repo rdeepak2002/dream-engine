@@ -1,3 +1,8 @@
+/**
+ * Get bytes for a file
+ * @param file_path
+ * @returns {Promise<Uint8Array>}
+ */
 export async function readBinary(file_path) {
     const filePath = file_path;
     let root = await navigator.storage.getDirectory();
@@ -15,4 +20,32 @@ export async function readBinary(file_path) {
     const file = await fileHandle.getFile();
     const buffer = await file.arrayBuffer();
     return new Uint8Array(buffer);
+}
+
+/**
+ * Get files in directory. Returns in format Array<[string, bool]> where the string is the file name and the bool
+ * is whether the file is a directory.
+ * @param file_path
+ * @returns {Promise<*[]>}
+ */
+export async function readDir(file_path) {
+    const filePath = file_path;
+    let root = await navigator.storage.getDirectory();
+    const filepath_arr = filePath.split('/');
+    let curDir = root;
+    for (let i = 0; i < filepath_arr.length; i++) {
+        const dirName = filepath_arr[i];
+        if (dirName && dirName !== "") {
+            curDir = await curDir.getDirectoryHandle(dirName, {create: false});
+        }
+    }
+    let names = [];
+    for await(const [_, value] of curDir.entries()) {
+        // value.name is the filename (same as key)
+        // value.kind is either 'file' or 'directory'
+        // console.log(key, value);
+        let is_dir = value.kind === 'directory';
+        names.push([value, is_dir]);
+    }
+    return names;
 }

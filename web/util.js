@@ -164,9 +164,10 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // clear file system by clearing root directory
     try {
         root.remove();
+        root = await navigator.storage.getDirectory();
     } catch (e) {
         // TODO: doesn't work on safari and firefox
-        console.error(`Unable to remove root directory`, e);
+        console.error(`Unable to delete root directory`, e);
     }
     root = await navigator.storage.getDirectory();
 

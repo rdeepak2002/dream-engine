@@ -11,6 +11,8 @@ impl Default for ResourceManager {
         let guid_to_filepath = HashMap::default();
         let project_root = dream_fs::fs::get_fs_root();
 
+        dream_fs::fs::read_dir(project_root);
+
         Self { guid_to_filepath }
     }
 }

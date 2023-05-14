@@ -5,6 +5,37 @@ use cfg_if::cfg_if;
 
 static FS_ROOT: Mutex<Option<String>> = Mutex::new(None);
 
+#[derive(PartialEq)]
+pub enum FileKind {
+    FILE,
+    DIRECTORY,
+}
+
+#[derive(PartialEq)]
+pub struct ReadDir {
+    file_name: String,
+    file_path: std::path::PathBuf,
+    file_type: FileKind,
+}
+
+impl ReadDir {
+    pub fn new(file_name: String, file_path: std::path::PathBuf, file_type: FileKind) -> Self {
+        Self {
+            file_name,
+            file_path,
+            file_type,
+        }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.file_name.clone()
+    }
+
+    pub fn is_dir(&self) -> bool {
+        self.file_type == FileKind::DIRECTORY
+    }
+}
+
 pub fn set_fs_root(fs_root: &str) {
     log::warn!("Setting root directory to {}", fs_root);
     *FS_ROOT.lock().unwrap() = Some(String::from(fs_root));
@@ -35,20 +66,23 @@ pub async fn read_binary(file_path: std::path::PathBuf) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-pub async fn read_dir(file_path: std::path::PathBuf) -> Result<Vec<std::path::PathBuf>> {
+pub async fn read_dir(file_path: std::path::PathBuf) -> Result<Vec<ReadDir>> {
     let mut files_in_directory = Vec::new();
-
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-
+            let paths = crate::js_fs::read_dir_from_web_storage(file_path);
         } else {
             let paths = std::fs::read_dir(file_path).unwrap();
             for path in paths {
-                let path_buf = path.unwrap().path().to_path_buf();
-                files_in_directory.push(path_buf);
+                let dir_entry = path.unwrap();
+                let file_name = String::from(dir_entry.file_name().to_str().unwrap());
+                let is_dir = dir_entry.file_type().unwrap().is_dir();
+                let path_buf = dir_entry.path().to_path_buf();
+                let file_kind = if is_dir { FileKind::DIRECTORY } else { FileKind::FILE };
+                let read_dir = ReadDir::new(file_name, path_buf, file_kind);
+                files_in_directory.push(read_dir);
             }
         }
     }
-
-    return Ok(files_in_directory);
+    Ok(files_in_directory)
 }
