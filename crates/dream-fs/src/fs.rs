@@ -67,11 +67,11 @@ pub async fn read_binary(file_path: std::path::PathBuf) -> Result<Vec<u8>> {
 }
 
 pub async fn read_dir(file_path: std::path::PathBuf) -> Result<Vec<ReadDir>> {
-    let mut files_in_directory: Vec<ReadDir> = Vec::new();
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             let files_in_directory = crate::js_fs::read_dir_from_web_storage(file_path).await;
         } else {
+            let mut files_in_directory: Vec<ReadDir> = Vec::new();
             let paths = std::fs::read_dir(file_path).unwrap();
             for path in paths {
                 let dir_entry = path.unwrap();
