@@ -26,6 +26,7 @@ dream-math = { workspace = true }
 dream-app = { workspace = true }
 dream-window = { workspace = true }
 dream-fs = { workspace = true }
+dream-resource = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
@@ -83,3 +84,4 @@ dream-math = { path = "crates/dream-math" }
 dream-app = { path = "crates/dream-app" }
 dream-window = { path = "crates/dream-window" }
 dream-fs = { path = "crates/dream-fs" }
+dream-resource = { path = "crates/dream-resource" }

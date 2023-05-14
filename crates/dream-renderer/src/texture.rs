@@ -140,7 +140,7 @@ impl Texture {
                     uri,
                     mime_type.unwrap_or("unknown")
                 );
-                let bin = dream_fs::load_binary(uri)
+                let bin = dream_fs::read_binary(std::path::PathBuf::from(uri))
                     .await
                     .expect("unable to load binary");
                 let buf_dat: &[u8] = &bin;

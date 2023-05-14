@@ -12,6 +12,7 @@ log = { workspace = true }
 dream-math = { workspace = true }
 dream-ecs = { workspace = true }
 dream-renderer = { workspace = true }
+dream-resource = { workspace = true }
 
 # javascript interpreter
 boa_engine = { version = "0.16.0", features = ["console"] }

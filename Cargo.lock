@@ -837,6 +837,7 @@ dependencies = [
  "dream-fs",
  "dream-math",
  "dream-renderer",
+ "dream-resource",
  "dream-window",
  "egui",
  "env_logger",
@@ -860,6 +861,7 @@ dependencies = [
  "dream-ecs",
  "dream-math",
  "dream-renderer",
+ "dream-resource",
  "gc",
  "log",
  "rustpython-common",
@@ -936,6 +938,7 @@ name = "dream-resource"
 version = "0.1.0"
 dependencies = [
  "cfg-if",
+ "dream-fs",
  "once_cell",
 ]
 

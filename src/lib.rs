@@ -16,6 +16,7 @@
 use dream_app::app::App;
 use dream_editor::EditorEguiWgpu;
 use dream_renderer::RendererWgpu;
+use dream_resource::resource_manager::ResourceManager;
 use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -67,6 +68,7 @@ fn update(
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
+    // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));

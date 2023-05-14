@@ -12,11 +12,20 @@ pub fn set_fs_root(fs_root: &str) {
     *FS_ROOT.lock().unwrap() = Some(String::from(fs_root));
 }
 
-pub async fn load_binary(file_name: &str) -> Result<Vec<u8>> {
+pub fn get_fs_root() -> std::path::PathBuf {
+    let fs_root = FS_ROOT
+        .lock()
+        .unwrap()
+        .clone()
+        .expect("No file system root specified");
+    std::path::PathBuf::from(fs_root)
+}
+
+pub async fn read_binary(file_path: std::path::PathBuf) -> Result<Vec<u8>> {
     let fs_root = FS_ROOT.lock().unwrap().clone();
     let path = match fs_root {
-        Some(root_path) => std::path::Path::new(&root_path).join(file_name),
-        None => std::path::Path::new(file_name).to_path_buf(),
+        Some(root_path) => std::path::Path::new(&root_path).join(file_path),
+        None => file_path,
     };
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

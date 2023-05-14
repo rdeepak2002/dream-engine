@@ -22,6 +22,7 @@ use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
+use dream_resource::resource_manager::ResourceManager;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
@@ -31,6 +32,7 @@ pub struct App {
     should_init: bool,
     pub dt: f32,
     pub component_systems: Vec<Box<dyn System>>,
+    pub resource_manager: ResourceManager,
 }
 
 impl Default for App {
@@ -39,6 +41,7 @@ impl Default for App {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
+            resource_manager: ResourceManager::default(),
         }
     }
 }

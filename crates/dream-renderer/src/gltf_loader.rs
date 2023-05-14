@@ -1,7 +1,7 @@
 use gltf::buffer::Source;
 use wgpu::util::DeviceExt;
 
-use dream_fs::load_binary;
+use dream_fs::read_binary;
 
 use crate::material::Material;
 use crate::model::Model;
@@ -14,7 +14,7 @@ pub async fn read_gltf(
     pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
     let gltf = gltf::Gltf::from_slice(
-        &load_binary(path)
+        &read_binary(std::path::PathBuf::from(path))
             .await
             .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
     )
@@ -28,7 +28,7 @@ pub async fn read_gltf(
                 };
             }
             Source::Uri(uri) => {
-                let bin = load_binary(uri)
+                let bin = read_binary(std::path::PathBuf::from(uri))
                     .await
                     .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);
