@@ -1,7 +1,7 @@
 use gltf::buffer::Source;
 use wgpu::util::DeviceExt;
 
-use dream_fs::read_binary;
+use dream_fs::fs::read_binary;
 
 use crate::material::Material;
 use crate::model::Model;

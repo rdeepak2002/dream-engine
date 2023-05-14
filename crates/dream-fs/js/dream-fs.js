@@ -1,4 +1,4 @@
-export async function readFileFromStorage(file_path) {
+export async function readBinary(file_path) {
     const filePath = file_path;
     let root = await navigator.storage.getDirectory();
     const filepath_arr = filePath.split('/');

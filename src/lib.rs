@@ -82,12 +82,12 @@ pub async fn run() {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             let path = std::path::Path::new("examples").join("blank");
-            dream_fs::set_fs_root(path.to_str().unwrap());
+            dream_fs::fs::set_fs_root(path.to_str().unwrap());
         } else {
             let path = std::path::Path::new(env!("OUT_DIR"))
                 .join("examples")
                 .join("blank");
-            dream_fs::set_fs_root(path.to_str().unwrap());
+            dream_fs::fs::set_fs_root(path.to_str().unwrap());
         }
     }
 
