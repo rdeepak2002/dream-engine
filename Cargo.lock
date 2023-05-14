@@ -939,6 +939,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if",
  "dream-fs",
+ "log",
  "once_cell",
 ]
 

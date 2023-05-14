@@ -35,18 +35,16 @@ pub struct App {
     pub resource_manager: ResourceManager,
 }
 
-impl Default for App {
-    fn default() -> Self {
+impl App {
+    pub async fn new() -> Self {
         Self {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
-            resource_manager: ResourceManager::default(),
+            resource_manager: ResourceManager::new().await,
         }
     }
-}
 
-impl App {
     fn initialize(&mut self) {
         // init scene
         let e1;

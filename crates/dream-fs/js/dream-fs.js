@@ -30,6 +30,7 @@ export async function readBinary(file_path) {
  */
 export async function readDir(file_path) {
     const filePath = file_path;
+    // throw new Error("test 1");
     let root = await navigator.storage.getDirectory();
     const filepath_arr = filePath.split('/');
     let curDir = root;
@@ -40,12 +41,12 @@ export async function readDir(file_path) {
         }
     }
     let names = [];
-    for await(const [_, value] of curDir.entries()) {
+    for await(const [key, value] of curDir.entries()) {
         // value.name is the filename (same as key)
         // value.kind is either 'file' or 'directory'
-        // console.log(key, value);
         let is_dir = value.kind === 'directory';
-        names.push([value, is_dir]);
+        let entry = [value?.name || key, is_dir];
+        names.push(entry);
     }
     return names;
 }

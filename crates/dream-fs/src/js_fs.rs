@@ -22,7 +22,7 @@ pub async fn read_binary_from_web_storage(file_path: &str) -> Vec<u8> {
 
 #[allow(dead_code)]
 pub async fn read_dir_from_web_storage(file_path: PathBuf) -> Vec<ReadDir> {
-    let js_val_async = readBinary(
+    let js_val_async = readDir(
         file_path
             .to_str()
             .expect("Unable to get string for file path"),
