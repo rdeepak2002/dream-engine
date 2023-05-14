@@ -46,6 +46,7 @@ export async function readDir(file_path) {
         // value.kind is either 'file' or 'directory'
         let is_dir = value.kind === 'directory';
         let entry = [value?.name || key, is_dir];
+        // console.error('entry thingy ', entry);
         names.push(entry);
     }
     return names;

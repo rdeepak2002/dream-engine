@@ -212,6 +212,10 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
             filepath: "textures/main_mat_normal.png",
             fileUrl: undefined,
         },
+        {
+            filepath: "nested_folder_1/nested_folder_2/test.txt",
+            fileUrl: undefined,
+        },
     ];
 
     // fetch each resource file

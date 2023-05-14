@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::Mutex;
 
 use anyhow::*;
@@ -25,6 +26,10 @@ impl ReadDir {
             file_path,
             file_type,
         }
+    }
+
+    pub fn get_path(&self) -> PathBuf {
+        self.file_path.clone()
     }
 
     pub fn get_name(&self) -> String {
