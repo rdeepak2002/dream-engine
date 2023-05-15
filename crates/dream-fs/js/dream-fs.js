@@ -1,5 +1,5 @@
 /**
- * Get bytes for a file
+ * Get bytes for a file.
  * @param file_path
  * @returns {Promise<Uint8Array>}
  */
@@ -50,4 +50,39 @@ export async function readDir(file_path) {
         names.push(entry);
     }
     return names;
+}
+
+/**
+ * Return true if file exists.
+ * @param file_path
+ * @returns {Promise<boolean>}
+ */
+export async function fileExists(file_path) {
+    const filePath = file_path;
+    let root = await navigator.storage.getDirectory();
+    const filepath_arr = filePath.split('/');
+    const fileName = filepath_arr[filepath_arr.length - 1];
+    // create the necessary directories to place the file into
+    let curDir = root;
+    for (let i = 0; i < filepath_arr.length - 1; i++) {
+        const dirName = filepath_arr[i];
+        if (dirName && dirName !== "") {
+            try {
+                curDir = await curDir.getDirectoryHandle(dirName, {create: false});
+            } catch (e) {
+                return false;
+            }
+        }
+    }
+    try {
+        await curDir.getFileHandle(fileName);
+        return true;
+    } catch (e1) {
+        try {
+            await curDir.getDirectoryHandle(fileName);
+            return true;
+        } catch (e2) {
+            return false;
+        }
+    }
 }

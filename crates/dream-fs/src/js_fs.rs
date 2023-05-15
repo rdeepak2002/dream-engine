@@ -8,6 +8,7 @@ use crate::fs::{FileKind, ReadDir};
 extern "C" {
     async fn readBinary(file_path: &str) -> JsValue;
     async fn readDir(file_path: &str) -> JsValue;
+    async fn fileExists(file_path: &str) -> JsValue;
 }
 
 #[allow(dead_code)]
@@ -51,4 +52,19 @@ pub async fn read_dir_from_web_storage(file_path: PathBuf) -> Vec<ReadDir> {
         vec_data.push(read_dir);
     }
     vec_data
+}
+
+#[allow(dead_code)]
+pub async fn exists(file_path: PathBuf) -> bool {
+    let js_val_async = fileExists(
+        file_path
+            .to_str()
+            .expect("Unable to get string for file path"),
+    )
+    .await;
+    let promise = js_sys::Promise::resolve(&js_val_async);
+    let result = wasm_bindgen_futures::JsFuture::from(promise).await;
+    let js_val = result.unwrap();
+    let data = js_sys::Boolean::from(js_val);
+    data.into()
 }

@@ -91,3 +91,13 @@ pub async fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
     }
     Ok(files_in_directory)
 }
+
+pub async fn exists(file_path: PathBuf) -> bool {
+    cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            crate::js_fs::exists(file_path).await
+        } else {
+            file_path.into_boxed_path().exists()
+        }
+    }
+}
