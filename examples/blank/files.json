@@ -1,0 +1,42 @@
+[
+  {
+    "filepath": ".DS_Store",
+    "fileUrl": null
+  },
+  {
+    "filepath": "robot.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "shadow.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "scene.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "files.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "link.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "scene.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "textures/main_mat_normal.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "textures/main_mat_baseColor.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "textures/main_mat_metallicRoughness.png",
+    "fileUrl": null
+  }
+]

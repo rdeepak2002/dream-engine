@@ -36,6 +36,8 @@ wasm-bindgen = { workspace = true }
 
 [build-dependencies]
 fs_extra = "1.2"
+serde = "1.0.163"
+serde_json = "1.0.96"
 cfg-if = { workspace = true }
 anyhow = { workspace = true }
 

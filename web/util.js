@@ -110,7 +110,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         const dirName = filepath_arr[i];
         if (dirName && dirName !== "") {
             curDir = await curDir.getDirectoryHandle(dirName, {create: true});
-            console.log('Created directory ', dirName);
+            // console.log('Created directory ', dirName);
         }
     }
     const fileName = filepath_arr[filepath_arr.length - 1];
@@ -119,7 +119,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
     // fetch the file from the URL and get the blob data
     let fetchedFileBlob;
     try {
-        console.log(`Downloading ${fileUrl}`);
+        // console.log(`Downloading ${fileUrl}`);
         if (showDownloadLogs) {
             updateLoaderBarText(`Downloading ${fileUrl}`);
         }
@@ -131,7 +131,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
     }
     // write the file to webkit persistent storage
     try {
-        console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`)
+        // console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`)
         const fileHandle = await curDir.getFileHandle(fileName, {create: true});
         const writable = await fileHandle.createWritable();
         await writable.write(fetchedFileBlob);
@@ -173,55 +173,16 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
 
     // TODO: in long run we want users to toggle between a local and cloud saved project
     // TODO: have JSON file (or db thingy) that specifies what files are a part of the project & urls (so in future we can do google docs approach if user chooses to do a cloud synced project)
-    // TODO: stream read json file that describes each resourceFileDescriptor (or read from db for cloud saved projects)
-    // TODO: use await navigator.storage.estimate() to ensure we have enough storage space available
-    const resources = [
-        {
-            filepath: "link.glb",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "cube.glb",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "ice_cube.glb",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "robot.glb",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "scene.gltf",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "scene.bin",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "textures/main_mat_baseColor.png",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "textures/main_mat_metallicRoughness.png",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "textures/main_mat_normal.png",
-            fileUrl: undefined,
-        },
-        {
-            filepath: "nested_folder_1/nested_folder_2/test.txt",
-            fileUrl: undefined,
-        },
-    ];
+    let paths = ["examples", "blank"];
+    const projectUrl = `${window.location.protocol}//${window.location.host}${paths.length === 0 ? "" : "/" + paths.join("/")}`;
+    const response = await fetch(`${projectUrl}/files.json`);
+    const resources = await response.json();
+    // console.log('got resources', resources);
 
     // fetch each resource file
     for (let i = 0; i < resources.length; i++) {
         let resourceFileDescriptor = resources[i];
-        await fetchResourceFile(root, ["examples", "blank"], resourceFileDescriptor, showDownloadLogs);
+        await fetchResourceFile(root, paths, resourceFileDescriptor, showDownloadLogs);
         updateLoaderBar((i + 1) / resources.length);
         await sleep(10);
     }

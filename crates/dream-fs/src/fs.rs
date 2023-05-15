@@ -15,12 +15,12 @@ pub enum FileKind {
 #[derive(PartialEq)]
 pub struct ReadDir {
     file_name: String,
-    file_path: std::path::PathBuf,
+    file_path: PathBuf,
     file_type: FileKind,
 }
 
 impl ReadDir {
-    pub fn new(file_name: String, file_path: std::path::PathBuf, file_type: FileKind) -> Self {
+    pub fn new(file_name: String, file_path: PathBuf, file_type: FileKind) -> Self {
         Self {
             file_name,
             file_path,
@@ -46,7 +46,7 @@ pub fn set_fs_root(fs_root: &str) {
     *FS_ROOT.lock().unwrap() = Some(String::from(fs_root));
 }
 
-pub fn get_fs_root() -> std::path::PathBuf {
+pub fn get_fs_root() -> PathBuf {
     let fs_root = FS_ROOT
         .lock()
         .unwrap()
@@ -55,7 +55,7 @@ pub fn get_fs_root() -> std::path::PathBuf {
     std::path::PathBuf::from(fs_root)
 }
 
-pub async fn read_binary(file_path: std::path::PathBuf) -> Result<Vec<u8>> {
+pub async fn read_binary(file_path: PathBuf) -> Result<Vec<u8>> {
     let fs_root = FS_ROOT.lock().unwrap().clone();
     let path = match fs_root {
         Some(root_path) => std::path::Path::new(&root_path).join(file_path),
@@ -71,7 +71,7 @@ pub async fn read_binary(file_path: std::path::PathBuf) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-pub async fn read_dir(file_path: std::path::PathBuf) -> Result<Vec<ReadDir>> {
+pub async fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             let files_in_directory = crate::js_fs::read_dir_from_web_storage(file_path).await;
