@@ -175,9 +175,15 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // TODO: have JSON file (or db thingy) that specifies what files are a part of the project & urls (so in future we can do google docs approach if user chooses to do a cloud synced project)
     let paths = ["examples", "blank"];
     const projectUrl = `${window.location.protocol}//${window.location.host}${paths.length === 0 ? "" : "/" + paths.join("/")}`;
-    const response = await fetch(`${projectUrl}/files.json`);
-    const resources = await response.json();
-    // console.log('got resources', resources);
+    let response, resources;
+    try {
+        response = await fetch(`${projectUrl}/files.json`);
+        resources = await response.json();
+    } catch (e) {
+        console.error('Unable to download and parse files.json', e);
+        alert('Unable to download and parse files.json');
+        return;
+    }
 
     // fetch each resource file
     for (let i = 0; i < resources.length; i++) {
