@@ -13,7 +13,10 @@ struct MetaData {
     guid: String,
 }
 
-pub async fn create_meta_file(file_path: PathBuf) {}
+pub async fn create_meta_file(file_path: PathBuf) {
+    // TODO: this (we need to have a dump binary method)
+    todo!()
+}
 
 pub async fn get_meta_data(file_path: PathBuf) -> MetaData {
     let binary = dream_fs::fs::read_binary(file_path).await.unwrap();
@@ -45,7 +48,10 @@ impl ResourceManager {
                     let file_path = res.get_path();
                     if !file_name.ends_with(".meta") {
                         let meta_file_path = file_path.join(".meta");
-                        if !dream_fs::fs::exists(meta_file_path).await {}
+                        if !dream_fs::fs::exists(meta_file_path.clone()).await {
+                            // create meta file if it does not exist
+                            create_meta_file(meta_file_path).await;
+                        }
                         // get the guid from the meta file
                         let meta_data = get_meta_data(file_path.clone()).await;
                         let guid = meta_data.guid;
