@@ -8,3 +8,5 @@ log = { workspace = true }
 once_cell = { workspace = true }
 cfg-if = { workspace = true }
 dream-fs = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
