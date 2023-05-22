@@ -16,7 +16,6 @@
 use dream_app::app::App;
 use dream_editor::EditorEguiWgpu;
 use dream_renderer::RendererWgpu;
-use dream_resource::resource_manager::ResourceManager;
 use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;

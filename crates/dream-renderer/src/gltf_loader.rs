@@ -14,7 +14,7 @@ pub async fn read_gltf(
     pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
     let gltf = gltf::Gltf::from_slice(
-        &read_binary(std::path::PathBuf::from(path))
+        &read_binary(std::path::PathBuf::from(path), false)
             .await
             .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
     )
@@ -28,7 +28,7 @@ pub async fn read_gltf(
                 };
             }
             Source::Uri(uri) => {
-                let bin = read_binary(std::path::PathBuf::from(uri))
+                let bin = read_binary(std::path::PathBuf::from(uri), false)
                     .await
                     .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);

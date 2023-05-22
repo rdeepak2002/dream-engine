@@ -7,8 +7,10 @@ use crate::fs::{FileKind, ReadDir};
 #[wasm_bindgen(module = "/js/dream-fs.js")]
 extern "C" {
     async fn readBinary(file_path: &str) -> JsValue;
+    async fn readString(file_path: &str) -> JsValue;
     async fn readDir(file_path: &str) -> JsValue;
     async fn fileExists(file_path: &str) -> JsValue;
+    async fn writeAll(file_path: &str, content: js_sys::Uint8Array);
 }
 
 #[allow(dead_code)]
@@ -19,6 +21,17 @@ pub async fn read_binary_from_web_storage(file_path: &str) -> Vec<u8> {
     let js_val = result.unwrap();
     let data = js_sys::Uint8Array::from(js_val);
     data.to_vec()
+}
+
+#[allow(dead_code)]
+pub async fn read_string_from_web_storage(file_path: &str) -> String {
+    let js_val_async = readString(file_path).await;
+    let promise = js_sys::Promise::resolve(&js_val_async);
+    let result = wasm_bindgen_futures::JsFuture::from(promise).await;
+    let js_val = result.unwrap();
+    js_val
+        .as_string()
+        .expect("Unable to convert javascript value to string")
 }
 
 #[allow(dead_code)]
@@ -67,4 +80,16 @@ pub async fn exists(file_path: PathBuf) -> bool {
     let js_val = result.unwrap();
     let data = js_sys::Boolean::from(js_val);
     data.into()
+}
+
+#[allow(dead_code)]
+pub async fn write_all_to_web_storage(file_path: PathBuf, content: Vec<u8>) {
+    let content = js_sys::Uint8Array::from(content.as_slice());
+    writeAll(
+        file_path
+            .to_str()
+            .expect("Unable to convert file path to a string"),
+        content,
+    )
+    .await;
 }

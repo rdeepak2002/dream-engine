@@ -2,6 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 pub struct ResourceManager {
     /// Map between guid and file path
@@ -13,14 +14,35 @@ struct MetaData {
     guid: String,
 }
 
-pub async fn create_meta_file(file_path: PathBuf) {
-    // TODO: this (we need to have a dump binary method)
-    todo!()
+impl Default for MetaData {
+    fn default() -> Self {
+        Self {
+            guid: Uuid::new_v4().to_string(),
+        }
+    }
 }
 
-pub async fn get_meta_data(file_path: PathBuf) -> MetaData {
-    let binary = dream_fs::fs::read_binary(file_path).await.unwrap();
-    serde_yaml::from_slice::<MetaData>(&binary).expect("Unable to deserialize meta data file")
+pub async fn create_meta_file(file_path: PathBuf) {
+    let new_meta_data = MetaData::default();
+    let res =
+        serde_yaml::to_string(&new_meta_data).expect("Unable to generate json file for new guid");
+    let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
+    let meta_file_path = PathBuf::from(meta_file_path.clone());
+    dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec()).await;
+}
+
+async fn get_meta_data(file_path: PathBuf) -> MetaData {
+    let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
+    let meta_file_path = PathBuf::from(meta_file_path.clone());
+    let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true)
+        .await
+        .unwrap_or_else(|_| {
+            panic!(
+                "Unable to retrieve bytes for {}",
+                meta_file_path.to_str().unwrap()
+            )
+        });
+    serde_yaml::from_slice(bytes.as_slice()).expect("Unable to get meta data")
 }
 
 impl ResourceManager {
@@ -39,24 +61,26 @@ impl ResourceManager {
                 files_in_dir.expect("Error reading directory for resource manager traversal");
             for i in 0..read_dir_result.len() {
                 let res = read_dir_result.get(i).unwrap();
-                log::error!("read file from dir: {}", res.get_name());
+                // populate map with guid : file path for non-meta data files
+                let file_name = res.get_name();
+                let file_path = res.get_path();
+                if !file_name.ends_with(".meta")
+                    && !file_name.starts_with('.')
+                    && file_name != "files.json"
+                {
+                    let meta_file_path = file_path.with_extension(".meta");
+                    if !dream_fs::fs::exists(meta_file_path.clone()).await {
+                        // create meta file if it does not exist
+                        create_meta_file(file_path.clone()).await;
+                    }
+                    // get the guid from the meta file
+                    let meta_data = get_meta_data(file_path.clone()).await;
+                    let guid = meta_data.guid;
+                    guid_to_filepath.insert(guid, file_path);
+                }
+                // if a directory is found, push it onto the traversal stack, so we will look into it
                 if res.is_dir() {
                     traversal_stack.push_front(res.get_path());
-                } else {
-                    // populate map with guid : file path for non-meta data files
-                    let file_name = res.get_name();
-                    let file_path = res.get_path();
-                    if !file_name.ends_with(".meta") {
-                        let meta_file_path = file_path.join(".meta");
-                        if !dream_fs::fs::exists(meta_file_path.clone()).await {
-                            // create meta file if it does not exist
-                            create_meta_file(meta_file_path).await;
-                        }
-                        // get the guid from the meta file
-                        let meta_data = get_meta_data(file_path.clone()).await;
-                        let guid = meta_data.guid;
-                        guid_to_filepath.insert(guid, file_path);
-                    }
                 }
             }
         }

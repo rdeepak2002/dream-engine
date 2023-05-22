@@ -131,7 +131,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
     }
     // write the file to webkit persistent storage
     try {
-        // console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`)
+        console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`);
         const fileHandle = await curDir.getFileHandle(fileName, {create: true});
         const writable = await fileHandle.createWritable();
         await writable.write(fetchedFileBlob);

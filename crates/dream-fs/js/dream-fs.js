@@ -23,6 +23,16 @@ export async function readBinary(file_path) {
 }
 
 /**
+ * Get string text from a file.
+ * @param file_path
+ * @returns {Promise<string>}
+ */
+export async function readString(file_path) {
+    let buf = await readBinary(file_path);
+    return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+/**
  * Get files in directory. Returns in format Array<[string, bool]> where the string is the file name and the bool
  * is whether the file is a directory.
  * @param file_path
@@ -85,4 +95,31 @@ export async function fileExists(file_path) {
             return false;
         }
     }
+}
+
+/**
+ * Dump Uint8Array content to a specific file
+ * @param file_path
+ * @param content
+ * @returns {Promise<void>}
+ */
+export async function writeAll(file_path, content) {
+    const filePath = file_path;
+    let root = await navigator.storage.getDirectory();
+    const filepath_arr = filePath.split('/');
+    const fileName = filepath_arr[filepath_arr.length - 1];
+    // create the necessary directories to place the file into
+    let curDir = root;
+    for (let i = 0; i < filepath_arr.length - 1; i++) {
+        const dirName = filepath_arr[i];
+        if (dirName && dirName !== "") {
+            curDir = await curDir.getDirectoryHandle(dirName, {create: true});
+        }
+    }
+    let fileHandle = await curDir.getFileHandle(fileName, {create: true});
+    const writable = await fileHandle.createWritable();
+    let blob = new Blob([content]);
+    await writable.write(blob);
+    await writable.close();
+    return null;
 }
