@@ -17,7 +17,6 @@
  **********************************************************************************/
 
 use anyhow::*;
-use image::{GenericImageView, ImageFormat};
 
 pub struct Texture {
     pub texture: wgpu::Texture,
@@ -116,74 +115,13 @@ impl Texture {
         }
     }
 
-    pub async fn from_gltf_texture<'a>(
-        texture: gltf::Texture<'a>,
+    pub fn new(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
-        buffer_data: &[Vec<u8>],
-    ) -> Self {
-        let texture_name = texture.name().unwrap_or("No texture name");
-        let texture_source = texture.source().source();
-        return match texture_source {
-            gltf::image::Source::View { view, mime_type } => {
-                let parent_buffer_data = &buffer_data[view.buffer().index()];
-                let begin = view.offset();
-                let end = view.offset() + view.length();
-                let buf_dat = &parent_buffer_data[begin..end];
-                let mime_type = Some(mime_type.to_string());
-                Self::from_bytes(device, queue, buf_dat, texture_name, mime_type)
-                    .expect("Couldn't load texture")
-            }
-            gltf::image::Source::Uri { uri, mime_type } => {
-                log::warn!(
-                    "TODO: get gltf texture from uri {} with mime type {}",
-                    uri,
-                    mime_type.unwrap_or("unknown")
-                );
-                let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
-                    .await
-                    .expect("unable to load binary");
-                let buf_dat: &[u8] = &bin;
-                Self::from_bytes(device, queue, buf_dat, texture_name, None)
-                    .expect("Couldn't load texture")
-            }
-        };
-    }
-
-    pub fn from_bytes(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        bytes: &[u8],
-        label: &str,
-        mime_type: Option<String>,
-    ) -> Result<Self> {
-        let img;
-        if mime_type.is_none() {
-            img = image::load_from_memory(bytes)?;
-        } else {
-            let mime_type = mime_type.unwrap();
-            if mime_type == "image/png" {
-                log::warn!("TODO: use png crate for faster image loading");
-                img = image::load_from_memory_with_format(bytes, ImageFormat::Png)?;
-            } else if mime_type == "image/jpeg" {
-                img = image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)?;
-            } else {
-                panic!("Unsupported mime_type provided: {}", mime_type);
-            }
-        }
-        let res = Self::from_image(device, queue, &img, Some(label));
-        return res;
-    }
-
-    pub fn from_image(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        img: &image::DynamicImage,
+        rgba: Vec<u8>,
+        dimensions: (u32, u32),
         label: Option<&str>,
     ) -> Result<Self> {
-        let rgba = img.to_rgba8();
-        let dimensions = img.dimensions();
-
         let size = wgpu::Extent3d {
             width: dimensions.0,
             height: dimensions.1,

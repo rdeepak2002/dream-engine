@@ -1,5 +1,7 @@
 use wgpu::util::DeviceExt;
 
+use crate::image::Image;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MaterialFactors {
@@ -61,6 +63,7 @@ pub struct Material {
     pub factor_alpha_cutoff: f32,
     pub alpha_blend_mode: AlphaBlendMode,
     pub double_sided: bool,
+    pub base_color_image: Image,
 }
 
 impl Material {
@@ -75,114 +78,135 @@ impl Material {
         let pbr_properties = material.pbr_metallic_roughness();
 
         // get base color texture
-        let base_color_texture;
+        let mut base_color_image = Image::default();
         match pbr_properties.base_color_texture() {
             None => {
+                // TODO
                 log::warn!("TODO: cache white texture");
-                // TODO: cache this
                 let bytes = include_bytes!("white.png");
-                base_color_texture =
-                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                        .expect("Couldn't load default texture");
+                base_color_image
+                    .load_from_bytes(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
-                base_color_texture = crate::texture::Texture::from_gltf_texture(
-                    texture_info.texture(),
-                    device,
-                    queue,
-                    buffer_data,
-                )
-                .await;
+                base_color_image
+                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .await;
             }
         }
+        let rgba_image = base_color_image.to_rgba8();
+        let base_color_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Base color texture"),
+        )
+        .expect("Unable to load base color texture");
 
         // get metallic texture
-        let metallic_texture;
+        let mut metallic_image = Image::default();
         match pbr_properties.metallic_roughness_texture() {
             None => {
+                // TODO
                 log::warn!("TODO: cache black texture");
-                // TODO: cache this
                 let bytes = include_bytes!("black.png");
-                metallic_texture =
-                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                        .expect("Couldn't load default texture");
+                metallic_image.load_from_bytes(bytes, "default", None).await;
             }
             Some(texture_info) => {
-                metallic_texture = crate::texture::Texture::from_gltf_texture(
-                    texture_info.texture(),
-                    device,
-                    queue,
-                    buffer_data,
-                )
-                .await;
+                metallic_image
+                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .await;
             }
         }
+        let rgba_image = metallic_image.to_rgba8();
+        let metallic_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Metallic texture"),
+        )
+        .expect("Unable to load metallic texture");
 
         // get normal map texture
-        let normal_map_texture;
+        let mut normal_map_image = Image::default();
         match material.normal_texture() {
             None => {
+                // TODO
                 log::warn!("TODO: cache default normal texture");
-                // TODO: cache this
                 let bytes = include_bytes!("default_normal.png");
-                normal_map_texture =
-                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                        .expect("Couldn't load default texture");
+                normal_map_image
+                    .load_from_bytes(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
-                normal_map_texture = crate::texture::Texture::from_gltf_texture(
-                    texture_info.texture(),
-                    device,
-                    queue,
-                    buffer_data,
-                )
-                .await;
+                normal_map_image
+                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .await;
             }
         }
+        let rgba_image = normal_map_image.to_rgba8();
+        let normal_map_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Normal map texture"),
+        )
+        .expect("Unable to load normal map texture");
 
         // get emissive texture
-        let emissive_texture;
+        let mut emissive_image = Image::default();
         match material.emissive_texture() {
             None => {
+                // TODO
                 log::warn!("TODO: cache black texture");
-                // TODO: cache this
                 let bytes = include_bytes!("black.png");
-                emissive_texture =
-                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                        .expect("Couldn't load default texture");
+                emissive_image.load_from_bytes(bytes, "default", None).await;
             }
             Some(texture_info) => {
-                emissive_texture = crate::texture::Texture::from_gltf_texture(
-                    texture_info.texture(),
-                    device,
-                    queue,
-                    buffer_data,
-                )
-                .await;
+                emissive_image
+                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .await;
             }
         }
+        let rgba_image = emissive_image.to_rgba8();
+        let emissive_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Emissive texture"),
+        )
+        .expect("Unable to load emissive texture");
 
         // get occlusion texture
-        let occlusion_texture;
+        let mut occlusion_image = Image::default();
         match material.occlusion_texture() {
             None => {
-                log::warn!("TODO: cache white texture");
-                // TODO: cache this
+                // TODO
+                log::warn!("TODO: cache black texture");
                 let bytes = include_bytes!("white.png");
-                occlusion_texture =
-                    crate::texture::Texture::from_bytes(device, queue, bytes, "default", None)
-                        .expect("Couldn't load default texture");
+                occlusion_image
+                    .load_from_bytes(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
-                occlusion_texture = crate::texture::Texture::from_gltf_texture(
-                    texture_info.texture(),
-                    device,
-                    queue,
-                    buffer_data,
-                )
-                .await;
+                occlusion_image
+                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .await;
             }
         }
+        let rgba_image = occlusion_image.to_rgba8();
+        let occlusion_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Occlusion texture"),
+        )
+        .expect("Unable to load occlusion texture");
 
         // define the material factors uniform
         let material_factors_uniform = MaterialFactors::new(
@@ -270,6 +294,7 @@ impl Material {
             factor_alpha_cutoff: material_factors_uniform.alpha_cutoff,
             alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
             double_sided: material.double_sided(),
+            base_color_image,
         }
     }
 }

@@ -17,3 +17,9 @@ wgpu = { workspace = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
 dream-fs = { workspace = true }
+dream-resource = { workspace = true }
+async-executor = "1.5.1"
+futures-lite = "1.13.0"
+async-task = "4.4.0"
+async-channel = "1.8.0"
+concurrent-queue = "2.2.0"

@@ -21,6 +21,7 @@ use std::iter;
 use wgpu::util::DeviceExt;
 
 use crate::camera_uniform::CameraUniform;
+use crate::image::Image;
 use crate::instance::{Instance, InstanceRaw};
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 use crate::path_not_found_error::PathNotFoundError;
@@ -28,6 +29,7 @@ use crate::path_not_found_error::PathNotFoundError;
 pub mod camera;
 pub mod camera_uniform;
 pub mod gltf_loader;
+pub mod image;
 pub mod instance;
 pub mod material;
 pub mod model;
@@ -65,9 +67,6 @@ pub struct RendererWgpu {
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
     pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
-    pub default_white_texture: texture::Texture,
-    pub default_black_texture: texture::Texture,
-    pub default_normal_texture: texture::Texture,
 }
 
 impl RendererWgpu {
@@ -77,7 +76,7 @@ impl RendererWgpu {
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::all(),
+            backends: wgpu::Backends::PRIMARY,
             dx12_shader_compiler: Default::default(),
         });
 
@@ -289,34 +288,38 @@ impl RendererWgpu {
         });
 
         let play_icon_texture_bytes = include_bytes!("icons/PlayIcon.png");
-        let play_icon_texture = texture::Texture::from_bytes(
-            &device,
-            &queue,
-            play_icon_texture_bytes,
-            "icons/PlayIcon.png",
-            None,
-        )
-        .unwrap();
+        let mut play_icon_image = Image::default();
+        play_icon_image
+            .load_from_bytes(play_icon_texture_bytes, "icons/PlayIcon.png", None)
+            .await;
+        let rgba = play_icon_image.to_rgba8();
+        let play_icon_texture =
+            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
+                .expect("Unable to load play icon texture");
 
         let file_icon_texture_bytes = include_bytes!("icons/FileIcon.png");
-        let file_icon_texture = texture::Texture::from_bytes(
-            &device,
-            &queue,
-            file_icon_texture_bytes,
-            "icons/FileIcon.png",
-            None,
-        )
-        .unwrap();
+        let mut file_icon_image = Image::default();
+        file_icon_image
+            .load_from_bytes(file_icon_texture_bytes, "icons/FileIcon.png", None)
+            .await;
+        let rgba = file_icon_image.to_rgba8();
+        let file_icon_texture =
+            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
+                .expect("Unable to load file icon texture");
 
         let directory_icon_texture_bytes = include_bytes!("icons/DirectoryIcon.png");
-        let directory_icon_texture = texture::Texture::from_bytes(
-            &device,
-            &queue,
-            directory_icon_texture_bytes,
-            "icons/FileIcon.png",
-            None,
-        )
-        .unwrap();
+        let mut directory_icon_image = Image::default();
+        directory_icon_image
+            .load_from_bytes(
+                directory_icon_texture_bytes,
+                "icons/DirectoryIcon.png",
+                None,
+            )
+            .await;
+        let rgba = directory_icon_image.to_rgba8();
+        let directory_icon_texture =
+            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
+                .expect("Unable to load directory icon texture");
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
@@ -393,37 +396,7 @@ impl RendererWgpu {
             multiview: None,
         });
 
-        let default_white_texture = crate::texture::Texture::from_bytes(
-            &device,
-            &queue,
-            include_bytes!("white.png"),
-            "default",
-            None,
-        )
-        .expect("Couldn't load default white texture");
-
-        let default_black_texture = crate::texture::Texture::from_bytes(
-            &device,
-            &queue,
-            include_bytes!("black.png"),
-            "default",
-            None,
-        )
-        .expect("Couldn't load default black texture");
-
-        let default_normal_texture = crate::texture::Texture::from_bytes(
-            &device,
-            &queue,
-            include_bytes!("default_normal.png"),
-            "default",
-            None,
-        )
-        .expect("Couldn't load default normal texture");
-
         Self {
-            default_white_texture,
-            default_black_texture,
-            default_normal_texture,
             surface,
             device,
             queue,

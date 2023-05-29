@@ -10,14 +10,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 struct FileIdentifier {
     filepath: String,
-    fileUrl: Option<String>,
+    #[serde(rename(serialize = "fileUrl", deserialize = "fileUrl"))]
+    file_url: Option<String>,
 }
 
 impl FileIdentifier {
     pub fn new(filepath: String) -> Self {
         Self {
             filepath,
-            fileUrl: None,
+            file_url: None,
         }
     }
 }
