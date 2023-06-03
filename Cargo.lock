@@ -161,17 +161,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-channel"
-version = "1.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf46fee83e5ccffc220104713af3292ff9bc7c64c7de289f66dae8e38d826833"
-dependencies = [
- "concurrent-queue",
- "event-listener",
- "futures-core",
-]
-
-[[package]]
 name = "async-executor"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -913,6 +902,7 @@ dependencies = [
  "dream-math",
  "dream-renderer",
  "dream-resource",
+ "dream-tasks",
  "gc",
  "log",
  "rustpython-common",
@@ -973,16 +963,13 @@ name = "dream-renderer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "async-channel",
  "async-executor",
- "async-task",
  "bytemuck",
  "cfg-if",
  "cgmath",
- "concurrent-queue",
  "dream-fs",
  "dream-resource",
- "futures-lite",
+ "dream-tasks",
  "gltf",
  "image",
  "log",
@@ -1001,6 +988,14 @@ dependencies = [
  "serde",
  "serde_yaml",
  "uuid",
+]
+
+[[package]]
+name = "dream-tasks"
+version = "0.1.0"
+dependencies = [
+ "async-executor",
+ "once_cell",
 ]
 
 [[package]]

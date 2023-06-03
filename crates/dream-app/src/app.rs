@@ -23,6 +23,7 @@ use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
+use dream_tasks::task_pool::get_task_pool;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
@@ -72,7 +73,8 @@ impl App {
         for i in 0..self.component_systems.len() {
             self.component_systems[i].update(self.dt);
         }
-        return self.dt;
+        get_task_pool().try_tick();
+        self.dt
     }
 
     pub fn draw(&mut self, renderer: &mut RendererWgpu) {

@@ -87,6 +87,9 @@ impl Material {
                 base_color_image
                     .load_from_bytes(bytes, "default", None)
                     .await;
+                base_color_image
+                    .load_from_bytes_threaded(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
                 base_color_image

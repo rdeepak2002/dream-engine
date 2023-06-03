@@ -82,6 +82,9 @@ anyhow = "1.0"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
 
+# asynchronous tasks
+async-executor = "1.5.1"
+
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }
 dream-renderer = { path = "crates/dream-renderer" }
@@ -91,3 +94,4 @@ dream-app = { path = "crates/dream-app" }
 dream-window = { path = "crates/dream-window" }
 dream-fs = { path = "crates/dream-fs" }
 dream-resource = { path = "crates/dream-resource" }
+dream-tasks = { path = "crates/dream-tasks" }

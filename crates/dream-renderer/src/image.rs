@@ -1,5 +1,7 @@
-use async_executor::Executor;
 use image::{DynamicImage, ImageFormat, RgbaImage};
+
+// use async_executor::Executor;
+use dream_tasks::task_pool::{get_task_pool, get_task_pool_to_write};
 
 #[derive(Default)]
 pub struct Image {
@@ -60,20 +62,26 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
 }
 
 impl Image {
-    pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
-        // Create a new executor.
-        let ex = Executor::new();
+    pub async fn load_from_bytes_threaded(
+        &mut self,
+        _bytes: &[u8],
+        _label: &str,
+        _mime_type: Option<String>,
+    ) {
+        //     self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
+        //     self.update_rgba();
 
-        let task = ex.spawn(async {
+        get_task_pool().spawn(async {
             println!("Loaded texture in async task");
             log::warn!("Loaded texture in async task");
-            self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
-            self.update_rgba();
+            // self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
+            // self.update_rgba();
         });
+    }
 
-        while !ex.is_empty() {
-            ex.tick().await;
-        }
+    pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
+        self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
+        self.update_rgba();
     }
 
     pub async fn load_from_gltf_texture<'a>(
@@ -82,27 +90,10 @@ impl Image {
         buffer_data: &[Vec<u8>],
     ) {
         let texture = texture.clone();
-
-        // Create a new executor.
-        let ex = Executor::new();
         let (bytes, label, mime_type) =
             get_texture_bytes_info_from_gltf(texture, buffer_data).await;
-
-        // Spawn a task.
-        let _task = ex.spawn(async move {
-            println!("Loaded texture in async task");
-            log::warn!("Loaded texture in async task");
-            self.dynamic_image = Some(dynamic_image_from_bytes(
-                bytes.as_slice(),
-                label.as_str(),
-                mime_type,
-            ));
-            self.update_rgba();
-        });
-
-        while !ex.is_empty() {
-            ex.tick().await;
-        }
+        self.load_from_bytes(&bytes, label.as_str(), mime_type)
+            .await;
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {
