@@ -6,7 +6,7 @@ use dream_fs::fs::read_binary;
 use crate::material::Material;
 use crate::model::Model;
 
-pub async fn read_gltf(
+pub async fn read_gltf<'a>(
     path: &str,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -42,7 +42,7 @@ pub async fn read_gltf(
 
     // get materials for model
     for material in gltf.materials() {
-        materials.push(
+        materials.push(Box::new(
             Material::new(
                 material,
                 device,
@@ -52,7 +52,7 @@ pub async fn read_gltf(
                 &buffer_data,
             )
             .await,
-        );
+        ));
     }
 
     // get meshes for model

@@ -104,12 +104,14 @@ impl Image {
     }
 
     pub fn update(&mut self) {
-        if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
-            let dim = dynamic_image.dimensions().0;
-            self.dynamic_image = Some(dynamic_image);
-            self.update_rgba();
-            println!("Loaded texture in async task (pt 2) {}", dim);
-            log::warn!("Loaded texture in async task (pt 2)");
+        if self.receiver.is_some() {
+            if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
+                let dim = dynamic_image.dimensions().0;
+                self.dynamic_image = Some(dynamic_image);
+                self.update_rgba();
+                println!("Loaded texture in async task (pt 2) {}", dim);
+                log::warn!("Loaded texture in async task (pt 2)");
+            }
         }
     }
 

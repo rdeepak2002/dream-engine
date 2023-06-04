@@ -301,7 +301,7 @@ impl Material {
         }
     }
 
-    pub fn update(mut self) {
+    pub fn update(&mut self) {
         self.base_color_image.update();
     }
 }

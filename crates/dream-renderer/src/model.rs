@@ -51,11 +51,11 @@ pub struct Mesh {
 
 pub struct Model {
     pub meshes: Vec<Mesh>,
-    pub materials: Vec<Material>,
+    pub materials: Vec<Box<Material>>,
 }
 
 impl Model {
-    pub fn new(meshes: Vec<Mesh>, materials: Vec<Material>) -> Self {
+    pub fn new(meshes: Vec<Mesh>, materials: Vec<Box<Material>>) -> Self {
         Self { meshes, materials }
     }
 }

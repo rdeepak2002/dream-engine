@@ -62,7 +62,7 @@ pub struct RendererWgpu {
     pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
     pub surface_format: wgpu::TextureFormat,
-    model_guids: std::collections::HashMap<String, Model>,
+    model_guids: std::collections::HashMap<String, Box<Model>>,
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
@@ -491,7 +491,8 @@ impl RendererWgpu {
             &self.pbr_material_textures_bind_group_layout,
         )
         .await;
-        self.model_guids.insert(model_guid.parse().unwrap(), model);
+        self.model_guids
+            .insert(model_guid.parse().unwrap(), Box::new(model));
         log::debug!("model with guid {} stored", model_guid);
         Ok(str::parse(model_guid).unwrap())
     }
@@ -554,6 +555,31 @@ impl RendererWgpu {
                     self.instance_buffer_map
                         .insert(render_map_key.clone(), instance_buffer);
                 }
+            }
+
+            // TODO: combine this with loop below to make things more concise
+            // update materials
+            for (render_map_key, _transforms) in &self.render_map {
+                let model_map = &mut self.model_guids;
+                let model_guid = render_map_key.model_guid.clone();
+                let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
+                    panic!("no model loaded in renderer with guid {}", model_guid)
+                });
+                let mesh_index = render_map_key.mesh_index;
+                let mesh = model
+                    .meshes
+                    .get_mut(mesh_index as usize)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "no mesh at index {} for model with guid {}",
+                            mesh_index, model_guid
+                        )
+                    });
+                let material = model
+                    .materials
+                    .get_mut(mesh.material)
+                    .expect("No material at index");
+                material.update();
             }
 
             // iterate through all meshes that should be instanced drawn
