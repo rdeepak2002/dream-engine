@@ -1,4 +1,8 @@
-use image::{DynamicImage, ImageFormat, RgbaImage};
+use std::mem;
+use std::sync::{Arc, Mutex};
+
+use crossbeam_channel::{unbounded, Receiver, Sender};
+use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage};
 
 use dream_tasks::task_pool::get_task_pool;
 
@@ -6,6 +10,8 @@ use dream_tasks::task_pool::get_task_pool;
 pub struct Image {
     dynamic_image: Option<DynamicImage>,
     rgba: Option<RgbaImage>,
+    sender: Option<Sender<DynamicImage>>,
+    receiver: Option<Receiver<DynamicImage>>,
 }
 
 fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String>) -> DynamicImage {
@@ -63,19 +69,48 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
 impl Image {
     pub async fn load_from_bytes_threaded(
         &mut self,
-        _bytes: &[u8],
-        _label: &str,
-        _mime_type: Option<String>,
+        bytes: &[u8],
+        label: &str,
+        mime_type: Option<String>,
     ) {
         //     self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
         //     self.update_rgba();
+        let bytes = bytes.to_owned();
+        let label = label.to_owned();
+        let mime_type = mime_type;
+        let (sx, rx) = unbounded();
 
-        get_task_pool().spawn(async {
-            println!("Loaded texture in async task");
-            log::warn!("Loaded texture in async task");
-            // self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
-            // self.update_rgba();
+        get_task_pool().spawn(async move {
+            let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
+            sx.clone()
+                .send(dynamic_image)
+                .expect("Unable to send dynamic image contents");
+            println!("Loaded texture in async task (pt 1)");
+            log::warn!("Loaded texture in async task (pt 1)");
         });
+
+        // self.sender = Some(sx);
+        self.receiver = Some(rx);
+
+        // r.recv().expect("Error receiving dynamic image contents");
+        // println!("receiveer length {}", rx.unwrap().len());
+        // if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
+        //     let dim = dynamic_image.dimensions().0;
+        //     self.dynamic_image = Some(dynamic_image);
+        //     self.update_rgba();
+        //     println!("Loaded texture in async task (pt 2) {}", dim);
+        //     log::warn!("Loaded texture in async task (pt 2)");
+        // }
+    }
+
+    pub fn update(&mut self) {
+        if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
+            let dim = dynamic_image.dimensions().0;
+            self.dynamic_image = Some(dynamic_image);
+            self.update_rgba();
+            println!("Loaded texture in async task (pt 2) {}", dim);
+            log::warn!("Loaded texture in async task (pt 2)");
+        }
     }
 
     pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {

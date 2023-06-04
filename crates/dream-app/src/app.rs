@@ -38,7 +38,7 @@ pub struct App {
 
 impl App {
     pub async fn new() -> Self {
-        get_task_pool().init(16);
+        get_task_pool().start_thread(16);
         Self {
             should_init: true,
             dt: 0.0,

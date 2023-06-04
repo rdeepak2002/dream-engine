@@ -7,5 +7,6 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+crossbeam-channel = { workspace = true }
 once_cell = { workspace = true }
 async-executor = { workspace = true }

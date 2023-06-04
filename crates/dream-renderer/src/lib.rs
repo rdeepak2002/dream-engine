@@ -558,13 +558,14 @@ impl RendererWgpu {
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in &self.render_map {
+                let model_map = &self.model_guids;
                 // get the mesh to be instance drawn
                 let model_guid = render_map_key.model_guid.clone();
-                if self.model_guids.get(&*model_guid).is_none() {
+                if model_map.get(&*model_guid).is_none() {
                     log::warn!("skipping drawing of model {}", model_guid);
                     continue;
                 }
-                let model = self.model_guids.get(&*model_guid).unwrap_or_else(|| {
+                let model = model_map.get(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)
                 });
                 let mesh_index = render_map_key.mesh_index;

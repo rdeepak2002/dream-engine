@@ -967,6 +967,7 @@ dependencies = [
  "bytemuck",
  "cfg-if",
  "cgmath",
+ "crossbeam-channel",
  "dream-fs",
  "dream-resource",
  "dream-tasks",
@@ -995,6 +996,7 @@ name = "dream-tasks"
 version = "0.1.0"
 dependencies = [
  "async-executor",
+ "crossbeam-channel",
  "once_cell",
 ]
 

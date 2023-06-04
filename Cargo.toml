@@ -85,6 +85,9 @@ wasm-bindgen-futures = "0.4.30"
 # asynchronous tasks
 async-executor = "1.5.1"
 
+# message passing
+crossbeam-channel = "0.5"
+
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }
 dream-renderer = { path = "crates/dream-renderer" }
