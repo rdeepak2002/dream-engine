@@ -38,6 +38,7 @@ pub struct App {
 
 impl App {
     pub async fn new() -> Self {
+        get_task_pool().init(16);
         Self {
             should_init: true,
             dt: 0.0,
@@ -73,7 +74,6 @@ impl App {
         for i in 0..self.component_systems.len() {
             self.component_systems[i].update(self.dt);
         }
-        get_task_pool().try_tick();
         self.dt
     }
 

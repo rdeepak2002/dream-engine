@@ -1,7 +1,6 @@
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
-// use async_executor::Executor;
-use dream_tasks::task_pool::{get_task_pool, get_task_pool_to_write};
+use dream_tasks::task_pool::get_task_pool;
 
 #[derive(Default)]
 pub struct Image {

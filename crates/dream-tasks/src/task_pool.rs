@@ -1,5 +1,6 @@
 use std::future::Future;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::{thread, time};
 
 use async_executor::Executor;
 use once_cell::sync::Lazy;
@@ -21,6 +22,13 @@ pub struct AsyncComputeTaskPool<'a> {
 }
 
 impl<'task> AsyncComputeTaskPool<'task> {
+    pub fn init(&self, sleep_millis: u64) {
+        thread::spawn(move || loop {
+            get_task_pool().try_tick();
+            thread::sleep(time::Duration::from_millis(sleep_millis));
+        });
+    }
+
     pub fn try_tick(&self) {
         if !self.executor.is_empty() {
             self.executor.try_tick();
