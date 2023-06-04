@@ -1,7 +1,6 @@
-use std::mem;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{unbounded, Receiver};
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage};
 
 use dream_tasks::task_pool::get_task_pool;
@@ -10,7 +9,6 @@ use dream_tasks::task_pool::get_task_pool;
 pub struct Image {
     dynamic_image: Option<DynamicImage>,
     rgba: Option<RgbaImage>,
-    sender: Option<Sender<DynamicImage>>,
     receiver: Option<Receiver<DynamicImage>>,
 }
 
@@ -89,18 +87,7 @@ impl Image {
             log::warn!("Loaded texture in async task (pt 1)");
         });
 
-        // self.sender = Some(sx);
         self.receiver = Some(rx);
-
-        // r.recv().expect("Error receiving dynamic image contents");
-        // println!("receiveer length {}", rx.unwrap().len());
-        // if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
-        //     let dim = dynamic_image.dimensions().0;
-        //     self.dynamic_image = Some(dynamic_image);
-        //     self.update_rgba();
-        //     println!("Loaded texture in async task (pt 2) {}", dim);
-        //     log::warn!("Loaded texture in async task (pt 2)");
-        // }
     }
 
     pub fn update(&mut self) {
