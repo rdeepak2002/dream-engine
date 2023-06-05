@@ -998,6 +998,7 @@ dependencies = [
  "async-executor",
  "cfg-if",
  "crossbeam-channel",
+ "log",
  "once_cell",
 ]
 
