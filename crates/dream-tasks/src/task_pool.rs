@@ -1,9 +1,16 @@
 use std::future::Future;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
-use std::{thread, time};
 
 use async_executor::Executor;
 use once_cell::sync::Lazy;
+
+cfg_if::cfg_if! {
+    if #[cfg(target_arch = "wasm32")] {
+        use std::time;
+    } else {
+        use std::{thread, time};
+    }
+}
 
 static ASYNC_COMPUTE_TASK_POOL: Lazy<RwLock<AsyncComputeTaskPool>> =
     Lazy::new(|| RwLock::new(AsyncComputeTaskPool::default()));
@@ -23,14 +30,19 @@ pub struct AsyncComputeTaskPool<'a> {
 
 impl<'task> AsyncComputeTaskPool<'task> {
     pub fn start_thread(&self, sleep_millis: u64) {
-        // TODO: instead of polling, use sender, receiver to tell us when we should call try_tick()
-        thread::Builder::new()
-            .name("child thread 1".to_string())
-            .spawn(move || loop {
-                get_task_pool().try_tick();
-                thread::sleep(time::Duration::from_millis(sleep_millis));
-            })
-            .expect("unable to create child thread 1");
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                log::error!("TODO: start thread to execute background tasks");
+            } else {
+                thread::Builder::new()
+                .name("child thread 1".to_string())
+                .spawn(move || loop {
+                    get_task_pool().try_tick();
+                    thread::sleep(time::Duration::from_millis(sleep_millis));
+                })
+                .expect("unable to create child thread 1");
+            }
+        }
     }
 
     pub fn try_tick(&self) {
