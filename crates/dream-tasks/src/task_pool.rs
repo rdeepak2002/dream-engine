@@ -3,7 +3,6 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::{thread, time};
 
 use async_executor::Executor;
-use crossbeam_channel::unbounded;
 use once_cell::sync::Lazy;
 
 static ASYNC_COMPUTE_TASK_POOL: Lazy<RwLock<AsyncComputeTaskPool>> =
