@@ -74,7 +74,6 @@ impl Material {
     pub(crate) async fn new<'a>(
         material: gltf::Material<'a>,
         device: &wgpu::Device,
-        queue: &wgpu::Queue,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
         buffer_data: &[Vec<u8>],
     ) -> Self {
@@ -84,15 +83,12 @@ impl Material {
         let mut base_color_image = Image::default();
         match pbr_properties.base_color_texture() {
             None => {
-                // TODO
-                log::warn!("TODO: cache white texture");
                 let bytes = include_bytes!("white.png");
                 base_color_image
-                    .load_from_bytes(bytes, "default", None)
+                    .load_from_bytes_threaded(bytes, "default", None)
                     .await;
             }
             Some(texture_info) => {
-                let bytes = include_bytes!("white.png");
                 base_color_image
                     .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
@@ -103,10 +99,10 @@ impl Material {
         let mut metallic_image = Image::default();
         match pbr_properties.metallic_roughness_texture() {
             None => {
-                // TODO
-                log::warn!("TODO: cache black texture");
                 let bytes = include_bytes!("black.png");
-                metallic_image.load_from_bytes(bytes, "default", None).await;
+                metallic_image
+                    .load_from_bytes_threaded(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
                 metallic_image
@@ -119,11 +115,9 @@ impl Material {
         let mut normal_map_image = Image::default();
         match material.normal_texture() {
             None => {
-                // TODO
-                log::warn!("TODO: cache default normal texture");
                 let bytes = include_bytes!("default_normal.png");
                 normal_map_image
-                    .load_from_bytes(bytes, "default", None)
+                    .load_from_bytes_threaded(bytes, "default", None)
                     .await;
             }
             Some(texture_info) => {
@@ -137,10 +131,10 @@ impl Material {
         let mut emissive_image = Image::default();
         match material.emissive_texture() {
             None => {
-                // TODO
-                log::warn!("TODO: cache black texture");
                 let bytes = include_bytes!("black.png");
-                emissive_image.load_from_bytes(bytes, "default", None).await;
+                emissive_image
+                    .load_from_bytes_threaded(bytes, "default", None)
+                    .await;
             }
             Some(texture_info) => {
                 emissive_image
@@ -153,11 +147,9 @@ impl Material {
         let mut occlusion_image = Image::default();
         match material.occlusion_texture() {
             None => {
-                // TODO
-                log::warn!("TODO: cache black texture");
                 let bytes = include_bytes!("white.png");
                 occlusion_image
-                    .load_from_bytes(bytes, "default", None)
+                    .load_from_bytes_threaded(bytes, "default", None)
                     .await;
             }
             Some(texture_info) => {
@@ -182,6 +174,7 @@ impl Material {
             contents: bytemuck::cast_slice(&[material_factors_uniform]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
+
         let pbr_material_factors_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: pbr_material_factors_bind_group_layout,
@@ -212,7 +205,7 @@ impl Material {
         }
     }
 
-    pub fn load_textures(
+    pub fn update_textures(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -346,7 +339,7 @@ impl Material {
             }));
     }
 
-    pub fn update(&mut self) {
+    pub fn update_images(&mut self) {
         if !self.base_color_image.loaded() {
             self.base_color_image.update();
         }
@@ -368,7 +361,19 @@ impl Material {
         }
     }
 
-    pub fn is_loaded(&self) -> bool {
-        self.base_color_image.loaded()
+    pub fn get_progress(&self) -> f32 {
+        let base_color_image = self.base_color_image.loaded() as i32;
+        let metallic_image = self.metallic_image.loaded() as i32;
+        let normal_map_image = self.normal_map_image.loaded() as i32;
+        let emissive_image = self.emissive_image.loaded() as i32;
+        let occlusion_image = self.occlusion_image.loaded() as i32;
+
+        (base_color_image + metallic_image + normal_map_image + emissive_image + occlusion_image)
+            as f32
+            / 5.0
+    }
+
+    pub fn loaded(&self) -> bool {
+        self.pbr_material_textures_bind_group.is_some()
     }
 }

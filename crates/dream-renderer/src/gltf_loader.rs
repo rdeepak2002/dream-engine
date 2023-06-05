@@ -45,7 +45,6 @@ pub async fn read_gltf<'a>(
             Material::new(
                 material,
                 device,
-                queue,
                 pbr_material_factors_bind_group_layout,
                 &buffer_data,
             )

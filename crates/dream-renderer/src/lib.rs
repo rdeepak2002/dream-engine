@@ -579,12 +579,22 @@ impl RendererWgpu {
                     .materials
                     .get_mut(mesh.material)
                     .expect("No material at index");
-                material.update();
-                material.load_textures(
-                    &self.device,
-                    &self.queue,
-                    &self.pbr_material_textures_bind_group_layout,
-                );
+                if !material.loaded() {
+                    material.update_images();
+                    material.update_textures(
+                        &self.device,
+                        &self.queue,
+                        &self.pbr_material_textures_bind_group_layout,
+                    );
+                    println!(
+                        "material loading progress: {:.2}%",
+                        material.get_progress() * 100.0
+                    );
+                    log::warn!(
+                        "material loading progress: {:.2}%",
+                        material.get_progress() * 100.0
+                    );
+                }
             }
 
             // iterate through all meshes that should be instanced drawn

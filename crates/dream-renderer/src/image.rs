@@ -5,7 +5,7 @@ use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage};
 
 use dream_tasks::task_pool::get_task_pool;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct Image {
     dynamic_image: Option<DynamicImage>,
     rgba8: Option<RgbaImage>,
@@ -82,8 +82,8 @@ impl Image {
             sx.clone()
                 .send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
-            println!("Loaded texture in async task (pt 1)");
-            log::warn!("Loaded texture in async task (pt 1)");
+            // println!("Loaded texture in async task (pt 1)");
+            // log::warn!("Loaded texture in async task (pt 1)");
         });
 
         self.receiver = Some(rx);
@@ -106,8 +106,8 @@ impl Image {
             if let Some((dynamic_image, rgba8)) = self.receiver.clone().unwrap().try_iter().last() {
                 self.dynamic_image = Some(dynamic_image);
                 self.rgba8 = Some(rgba8);
-                println!("Loaded texture in async task (pt 2)");
-                log::warn!("Loaded texture in async task (pt 2)");
+                // println!("Loaded texture in async task (pt 2)");
+                // log::warn!("Loaded texture in async task (pt 2)");
             }
         }
     }
