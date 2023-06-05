@@ -54,7 +54,7 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 
 pub struct Material {
     pub pbr_material_factors_bind_group: wgpu::BindGroup,
-    pub pbr_material_textures_bind_group: wgpu::BindGroup,
+    pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
     pub factor_base_color: cgmath::Vector3<f32>,
     pub factor_emissive: cgmath::Vector3<f32>,
     pub factor_metallic: f32,
@@ -64,6 +64,10 @@ pub struct Material {
     pub alpha_blend_mode: AlphaBlendMode,
     pub double_sided: bool,
     pub base_color_image: Image,
+    pub metallic_image: Image,
+    pub normal_map_image: Image,
+    pub emissive_image: Image,
+    pub occlusion_image: Image,
 }
 
 impl Material {
@@ -72,8 +76,7 @@ impl Material {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
-        pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
-        buffer_data: &Vec<Vec<u8>>,
+        buffer_data: &[Vec<u8>],
     ) -> Self {
         let pbr_properties = material.pbr_metallic_roughness();
 
@@ -87,25 +90,14 @@ impl Material {
                 base_color_image
                     .load_from_bytes(bytes, "default", None)
                     .await;
-                base_color_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
             }
             Some(texture_info) => {
+                let bytes = include_bytes!("white.png");
                 base_color_image
-                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
             }
         }
-        let rgba_image = base_color_image.to_rgba8();
-        let base_color_texture = crate::texture::Texture::new(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Base color texture"),
-        )
-        .expect("Unable to load base color texture");
 
         // get metallic texture
         let mut metallic_image = Image::default();
@@ -118,19 +110,10 @@ impl Material {
             }
             Some(texture_info) => {
                 metallic_image
-                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
             }
         }
-        let rgba_image = metallic_image.to_rgba8();
-        let metallic_texture = crate::texture::Texture::new(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Metallic texture"),
-        )
-        .expect("Unable to load metallic texture");
 
         // get normal map texture
         let mut normal_map_image = Image::default();
@@ -145,19 +128,10 @@ impl Material {
             }
             Some(texture_info) => {
                 normal_map_image
-                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
             }
         }
-        let rgba_image = normal_map_image.to_rgba8();
-        let normal_map_texture = crate::texture::Texture::new(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Normal map texture"),
-        )
-        .expect("Unable to load normal map texture");
 
         // get emissive texture
         let mut emissive_image = Image::default();
@@ -170,19 +144,10 @@ impl Material {
             }
             Some(texture_info) => {
                 emissive_image
-                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
             }
         }
-        let rgba_image = emissive_image.to_rgba8();
-        let emissive_texture = crate::texture::Texture::new(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Emissive texture"),
-        )
-        .expect("Unable to load emissive texture");
 
         // get occlusion texture
         let mut occlusion_image = Image::default();
@@ -197,19 +162,10 @@ impl Material {
             }
             Some(texture_info) => {
                 occlusion_image
-                    .load_from_gltf_texture(texture_info.texture(), buffer_data)
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
                     .await;
             }
         }
-        let rgba_image = occlusion_image.to_rgba8();
-        let occlusion_texture = crate::texture::Texture::new(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Occlusion texture"),
-        )
-        .expect("Unable to load occlusion texture");
 
         // define the material factors uniform
         let material_factors_uniform = MaterialFactors::new(
@@ -236,9 +192,113 @@ impl Material {
                 label: None,
             });
 
-        // create bind group for base color texture
-        let pbr_material_textures_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
+        // define this struct
+        Self {
+            pbr_material_factors_bind_group,
+            pbr_material_textures_bind_group: None,
+            factor_base_color: material_factors_uniform.base_color.into(),
+            factor_emissive: material_factors_uniform.emissive.into(),
+            factor_metallic: material_factors_uniform.metallic,
+            factor_roughness: material_factors_uniform.roughness,
+            factor_alpha: material_factors_uniform.alpha,
+            factor_alpha_cutoff: material_factors_uniform.alpha_cutoff,
+            alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
+            double_sided: material.double_sided(),
+            base_color_image,
+            metallic_image,
+            normal_map_image,
+            emissive_image,
+            occlusion_image,
+        }
+    }
+
+    pub fn load_textures(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
+    ) {
+        if self.pbr_material_textures_bind_group.is_some() {
+            return;
+        }
+
+        if !self.base_color_image.loaded() {
+            return;
+        }
+
+        if !self.metallic_image.loaded() {
+            return;
+        }
+
+        if !self.normal_map_image.loaded() {
+            return;
+        }
+
+        if !self.emissive_image.loaded() {
+            return;
+        }
+
+        if !self.occlusion_image.loaded() {
+            return;
+        }
+
+        // load base color image
+        let rgba_image = self.base_color_image.to_rgba8();
+        let base_color_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Base color texture"),
+        )
+        .expect("Unable to load base color texture");
+
+        // load metallic image
+        let rgba_image = self.metallic_image.to_rgba8();
+        let metallic_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Metallic texture"),
+        )
+        .expect("Unable to load metallic texture");
+
+        // load normal map image
+        let rgba_image = self.normal_map_image.to_rgba8();
+        let normal_map_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Normal map texture"),
+        )
+        .expect("Unable to load normal map texture");
+
+        // load emissive image
+        let rgba_image = self.emissive_image.to_rgba8();
+        let emissive_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Emissive texture"),
+        )
+        .expect("Unable to load emissive texture");
+
+        // load occlusion image
+        let rgba_image = self.occlusion_image.to_rgba8();
+        let occlusion_texture = crate::texture::Texture::new(
+            device,
+            queue,
+            rgba_image.to_vec(),
+            rgba_image.dimensions(),
+            Some("Occlusion texture"),
+        )
+        .expect("Unable to load occlusion texture");
+
+        self.pbr_material_textures_bind_group =
+            Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: pbr_material_textures_bind_group_layout,
                 entries: &[
                     wgpu::BindGroupEntry {
@@ -283,25 +343,32 @@ impl Material {
                     },
                 ],
                 label: Some("pbr_textures_bind_group"),
-            });
-
-        // define this struct
-        Self {
-            pbr_material_factors_bind_group,
-            pbr_material_textures_bind_group,
-            factor_base_color: material_factors_uniform.base_color.into(),
-            factor_emissive: material_factors_uniform.emissive.into(),
-            factor_metallic: material_factors_uniform.metallic,
-            factor_roughness: material_factors_uniform.roughness,
-            factor_alpha: material_factors_uniform.alpha,
-            factor_alpha_cutoff: material_factors_uniform.alpha_cutoff,
-            alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
-            double_sided: material.double_sided(),
-            base_color_image,
-        }
+            }));
     }
 
     pub fn update(&mut self) {
-        self.base_color_image.update();
+        if !self.base_color_image.loaded() {
+            self.base_color_image.update();
+        }
+
+        if !self.metallic_image.loaded() {
+            self.metallic_image.update();
+        }
+
+        if !self.normal_map_image.loaded() {
+            self.normal_map_image.update();
+        }
+
+        if !self.emissive_image.loaded() {
+            self.emissive_image.update();
+        }
+
+        if !self.occlusion_image.loaded() {
+            self.occlusion_image.update();
+        }
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.base_color_image.loaded()
     }
 }

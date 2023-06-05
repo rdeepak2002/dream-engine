@@ -11,7 +11,6 @@ pub async fn read_gltf<'a>(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
-    pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
     let gltf = gltf::Gltf::from_slice(
         &read_binary(std::path::PathBuf::from(path), false)
@@ -48,7 +47,6 @@ pub async fn read_gltf<'a>(
                 device,
                 queue,
                 pbr_material_factors_bind_group_layout,
-                pbr_material_textures_bind_group_layout,
                 &buffer_data,
             )
             .await,

@@ -102,15 +102,15 @@ impl Window {
         //     .await
         //     .expect("Error loading link model");
 
-        renderer
-            .store_model(Some("robot"), "robot.glb")
-            .await
-            .expect("unable to store robot.glb model");
-
         // renderer
-        //     .store_model(Some("robot"), "scene.gltf")
+        //     .store_model(Some("robot"), "robot.glb")
         //     .await
-        //     .expect("Error loading robot-gltf model");
+        //     .expect("unable to store robot.glb model");
+
+        renderer
+            .store_model(Some("robot"), "scene.gltf")
+            .await
+            .expect("Error loading robot-gltf model");
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {

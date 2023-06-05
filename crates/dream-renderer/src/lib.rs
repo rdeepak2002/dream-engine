@@ -488,7 +488,7 @@ impl RendererWgpu {
             &self.device,
             &self.queue,
             &self.pbr_material_factors_bind_group_layout,
-            &self.pbr_material_textures_bind_group_layout,
+            // &self.pbr_material_textures_bind_group_layout,
         )
         .await;
         self.model_guids
@@ -580,6 +580,11 @@ impl RendererWgpu {
                     .get_mut(mesh.material)
                     .expect("No material at index");
                 material.update();
+                material.load_textures(
+                    &self.device,
+                    &self.queue,
+                    &self.pbr_material_textures_bind_group_layout,
+                );
             }
 
             // iterate through all meshes that should be instanced drawn
@@ -612,10 +617,16 @@ impl RendererWgpu {
                     .materials
                     .get(mesh.material)
                     .expect("No material at index");
-                render_pass.set_bind_group(1, &material.pbr_material_factors_bind_group, &[]);
-                render_pass.set_bind_group(2, &material.pbr_material_textures_bind_group, &[]);
-                // draw the mesh
-                render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+                if material.pbr_material_textures_bind_group.is_some() {
+                    render_pass.set_bind_group(1, &material.pbr_material_factors_bind_group, &[]);
+                    render_pass.set_bind_group(
+                        2,
+                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                        &[],
+                    );
+                    // draw the mesh
+                    render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+                }
             }
         }
 
