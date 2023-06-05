@@ -8,8 +8,8 @@ use dream_tasks::task_pool::get_task_pool;
 #[derive(Default)]
 pub struct Image {
     dynamic_image: Option<DynamicImage>,
-    rgba: Option<RgbaImage>,
-    receiver: Option<Receiver<DynamicImage>>,
+    rgba8: Option<RgbaImage>,
+    receiver: Option<Receiver<(DynamicImage, RgbaImage)>>,
 }
 
 fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String>) -> DynamicImage {
@@ -78,8 +78,9 @@ impl Image {
 
         get_task_pool().spawn(async move {
             let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
+            let rgba8 = dynamic_image.to_rgba8();
             sx.clone()
-                .send(dynamic_image)
+                .send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
             println!("Loaded texture in async task (pt 1)");
             log::warn!("Loaded texture in async task (pt 1)");
@@ -102,11 +103,10 @@ impl Image {
 
     pub fn update(&mut self) {
         if self.receiver.is_some() {
-            if let Some(dynamic_image) = self.receiver.clone().unwrap().try_iter().last() {
-                let dim = dynamic_image.dimensions().0;
+            if let Some((dynamic_image, rgba8)) = self.receiver.clone().unwrap().try_iter().last() {
                 self.dynamic_image = Some(dynamic_image);
-                // self.update_rgba();
-                println!("Loaded texture in async task (pt 2) {}", dim);
+                self.rgba8 = Some(rgba8);
+                println!("Loaded texture in async task (pt 2)");
                 log::warn!("Loaded texture in async task (pt 2)");
             }
         }
@@ -114,7 +114,7 @@ impl Image {
 
     pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
         self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
-        // self.update_rgba();
+        self.update_rgba();
     }
 
     pub async fn load_from_gltf_texture<'a>(
@@ -130,26 +130,22 @@ impl Image {
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {
-        self.dynamic_image
+        self.rgba8
             .as_ref()
-            .expect("Image not loaded")
-            .to_rgba8()
-        // self.rgba
-        //     .as_ref()
-        //     .expect("Image not loaded, so rgba does not exist")
-        //     .clone()
+            .expect("Image not loaded, so rgba does not exist")
+            .clone()
     }
 
     pub fn loaded(&self) -> bool {
         self.dynamic_image.is_some()
     }
 
-    // fn update_rgba(&mut self) {
-    //     self.rgba = Some(
-    //         self.dynamic_image
-    //             .as_ref()
-    //             .expect("Image not loaded")
-    //             .to_rgba8(),
-    //     );
-    // }
+    fn update_rgba(&mut self) {
+        self.rgba8 = Some(
+            self.dynamic_image
+                .as_ref()
+                .expect("Image not loaded")
+                .to_rgba8(),
+        );
+    }
 }
