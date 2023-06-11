@@ -9,6 +9,8 @@ if [ $? -eq 0 ]; then
   fi
   echo "Build succeeded"
   # start server
+  cd ..
+  cd ..
   http-server -o web
 else
   # build failed

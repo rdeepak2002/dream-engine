@@ -1,0 +1,41 @@
+[package]
+name = "dream-runner"
+version = "0.1.0"
+edition = "2021"
+readme = "README.md"
+keywords = ["game", "engine", "gamedev", "graphics", "dream"]
+repository = "https://github.com/rdeepak2002/dream-rs"
+homepage = "https://github.com/rdeepak2002/dream-rs"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+env_logger = "0.10"
+pollster = "0.3.0"
+cfg-if = { workspace = true }
+winit = { workspace = true }
+wgpu = { workspace = true }
+egui = { workspace = true }
+log = { workspace = true }
+dream-editor = { workspace = true }
+dream-renderer = { workspace = true }
+dream-ecs = { workspace = true }
+dream-math = { workspace = true }
+dream-app = { workspace = true }
+dream-window = { workspace = true }
+dream-fs = { workspace = true }
+dream-resource = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+console_error_panic_hook = "0.1.6"
+console_log = "1.0.0"
+wasm-bindgen-futures = { workspace = true }
+wasm-bindgen = { workspace = true }
+
+[build-dependencies]
+fs_extra = "1.2"
+serde_json = "1.0.96"
+serde = { workspace = true }
+cfg-if = { workspace = true }
+anyhow = { workspace = true }

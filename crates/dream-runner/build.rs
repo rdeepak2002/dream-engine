@@ -24,7 +24,10 @@ impl FileIdentifier {
 }
 
 fn main() -> anyhow::Result<()> {
-    let example_folder = "examples";
+    let example_folder_path_buf = Path::new("..").join("..").join("examples");
+    let example_folder = example_folder_path_buf
+        .to_str()
+        .expect("Unable to genereate string for examples folder location");
     // println!(
     //     "cargo:rerun-if-changed={}{}*",
     //     example_folder,
@@ -63,7 +66,14 @@ fn main() -> anyhow::Result<()> {
     .unwrap();
 
     // delete old / previously-copied examples folder from the last time this script was run
-    let old_example_folder = String::from(Path::new("web").join(example_folder).to_str().unwrap());
+    let old_example_folder = String::from(
+        Path::new("..")
+            .join("..")
+            .join("web")
+            .join("examples")
+            .to_str()
+            .unwrap(),
+    );
     let paths_to_remove = vec![old_example_folder];
     remove_items(&paths_to_remove).expect("unable to remove paths");
 
@@ -77,7 +87,7 @@ fn main() -> anyhow::Result<()> {
     copy_items(&paths_to_copy, out_dir, &copy_options)?;
 
     // copy examples folder to out directory for web build
-    let web_out_dir = Path::new("web");
+    let web_out_dir = Path::new("..").join("..").join("web");
     copy_items(&paths_to_copy, web_out_dir.to_str().unwrap(), &copy_options)?;
 
     Ok(())

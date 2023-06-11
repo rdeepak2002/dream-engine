@@ -862,35 +862,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
-name = "dream"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "cfg-if",
- "console_error_panic_hook",
- "console_log",
- "dream-app",
- "dream-ecs",
- "dream-editor",
- "dream-fs",
- "dream-math",
- "dream-renderer",
- "dream-resource",
- "dream-window",
- "egui",
- "env_logger",
- "fs_extra",
- "log",
- "pollster",
- "serde",
- "serde_json",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wgpu",
- "winit",
-]
-
-[[package]]
 name = "dream-app"
 version = "0.1.0"
 dependencies = [
@@ -989,6 +960,35 @@ dependencies = [
  "serde",
  "serde_yaml",
  "uuid",
+]
+
+[[package]]
+name = "dream-runner"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cfg-if",
+ "console_error_panic_hook",
+ "console_log",
+ "dream-app",
+ "dream-ecs",
+ "dream-editor",
+ "dream-fs",
+ "dream-math",
+ "dream-renderer",
+ "dream-resource",
+ "dream-window",
+ "egui",
+ "env_logger",
+ "fs_extra",
+ "log",
+ "pollster",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]
