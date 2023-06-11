@@ -1,6 +1,4 @@
-#export RUSTFLAGS="--cfg=web_sys_unstable_apis"
-wasm-pack build --target web --out-dir ../../web/build --release
-# cargo +nightly run -Z build-std --target x86_64-unknown-linux-gnu
+rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
 
 # start server is build succeeded
 if [ $? -eq 0 ]; then

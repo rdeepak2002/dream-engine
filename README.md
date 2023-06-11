@@ -34,8 +34,10 @@ rustup target add wasm32-unknown-unknown
 
 ## Build for Desktop
 
+Run the following command in ``crates/dream-runner``
+
 ```shell
-cargo run
+cargo run +nightly --package dream-runner --bin dream-runner  --release
 ```
 
 ## Build for Web
@@ -43,7 +45,7 @@ cargo run
 Run the following command in ``crates/dream-runner``
 
 ```shell
-wasm-pack build --target web --out-dir web/build --release
+rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
 ```
 
 Serve ``index.html`` from ``web`` folder
