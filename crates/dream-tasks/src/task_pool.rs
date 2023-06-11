@@ -3,16 +3,18 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use async_executor::Executor;
 use once_cell::sync::Lazy;
+use rayon::iter::IntoParallelRefIterator;
+use rayon::prelude::*;
 
-// use rayon::iter::IntoParallelRefIterator;
-// use rayon::prelude::*;
-// use wasm_bindgen::prelude::*;
-// pub use wasm_bindgen_rayon::init_thread_pool;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+pub use wasm_bindgen_rayon::init_thread_pool;
 
-// #[wasm_bindgen]
-// pub fn sum_of_squares(numbers: &[i32]) -> i32 {
-//     numbers.par_iter().map(|x| x * x).sum()
-// }
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn sum_of_squares(numbers: &[i32]) -> i32 {
+    numbers.par_iter().map(|x| x * x).sum()
+}
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
@@ -42,28 +44,18 @@ impl<'task> AsyncComputeTaskPool<'task> {
     pub fn start_thread(&self, sleep_millis: u64) {
         rayon::spawn(move || {
             log::warn!("starting background task");
-            get_task_pool().try_tick();
-            // thread::sleep(time::Duration::from_millis(sleep_millis));
-            cfg_if::cfg_if! {
-                if #[cfg(target_arch = "wasm32")] {
-                } else {
-                    thread::sleep(time::Duration::from_millis(sleep_millis));
+            loop {
+                log::warn!("running background task");
+                get_task_pool().try_tick();
+                // thread::sleep(time::Duration::from_millis(sleep_millis));
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                    } else {
+                        thread::sleep(time::Duration::from_millis(sleep_millis));
+                    }
                 }
             }
         });
-        // cfg_if::cfg_if! {
-        //     if #[cfg(target_arch = "wasm32")] {
-        //         // log::error!("TODO: start thread to execute background tasks");
-        //     } else {
-        //         thread::Builder::new()
-        //         .name("child thread 1".to_string())
-        //         .spawn(move || loop {
-        //             get_task_pool().try_tick();
-        //             thread::sleep(time::Duration::from_millis(sleep_millis));
-        //         })
-        //         .expect("unable to create child thread 1");
-        //     }
-        // }
     }
 
     pub fn try_tick(&self) {

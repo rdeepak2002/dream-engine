@@ -1,4 +1,4 @@
-import init, {initThreadPool} from './build/dream_runner.js';
+import init, {initThreadPool, sum_of_squares} from './build/dream_runner.js';
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -210,12 +210,26 @@ const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(() => {
-            initThreadPool(navigator.hardwareConcurrency).then(() => {
-                disableWebKeyboardEvents();
-            }).catch((err) => {
-                alert('Unable to initialize thread pool');
-                console.error('Unable to initialize thread pool', err);
-            })
+            disableWebKeyboardEvents();
+            // alert('yo 1');
+            const startThreadFunc = async function () {
+                // alert('yo 2');
+                console.log('a');
+                console.error(sum_of_squares(new Int32Array([1, 2, 3])));
+                console.log('b');
+                await initThreadPool(navigator.hardwareConcurrency);
+                console.error(sum_of_squares(new Int32Array([1, 2, 3])));   // question: why does this not run? cuz previous call fails...
+            };
+            startThreadFunc();
+            // initThreadPool(navigator.hardwareConcurrency).then(() => {
+            //     alert('yo 2');
+            //     console.warn("sum of squares");
+            //     console.error(sum_of_squares(new Int32Array([1, 2, 3])));
+            //     disableWebKeyboardEvents();
+            // }).catch((err) => {
+            //     alert('Unable to initialize thread pool');
+            //     console.error('Unable to initialize thread pool', err);
+            // })
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);

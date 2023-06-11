@@ -586,14 +586,14 @@ impl RendererWgpu {
                         &self.queue,
                         &self.pbr_material_textures_bind_group_layout,
                     );
-                    println!(
-                        "material loading progress: {:.2}%",
-                        material.get_progress() * 100.0
-                    );
-                    log::warn!(
-                        "material loading progress: {:.2}%",
-                        material.get_progress() * 100.0
-                    );
+                    // println!(
+                    //     "material loading progress: {:.2}%",
+                    //     material.get_progress() * 100.0
+                    // );
+                    // log::warn!(
+                    //     "material loading progress: {:.2}%",
+                    //     material.get_progress() * 100.0
+                    // );
                 }
             }
 
