@@ -1,3 +1,6 @@
+use rayon::iter::IntoParallelRefIterator;
+use rayon::prelude::*;
+
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///
@@ -19,6 +22,13 @@ use dream_renderer::RendererWgpu;
 use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::*;
+pub use wasm_bindgen_rayon::init_thread_pool;
+
+#[wasm_bindgen]
+pub fn sum_of_squares(numbers: &[i32]) -> i32 {
+    numbers.par_iter().map(|x| x * x).sum()
+}
 
 /// Update function called every update loop which returns true when the application should close
 fn update(

@@ -1,4 +1,4 @@
-import init from './build/dream.js';
+import init, {initThreadPool} from './build/dream_runner.js';
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -210,7 +210,12 @@ const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(() => {
-            disableWebKeyboardEvents();
+            initThreadPool(navigator.hardwareConcurrency).then(() => {
+                disableWebKeyboardEvents();
+            }).catch((err) => {
+                alert('Unable to initialize thread pool');
+                console.error('Unable to initialize thread pool', err);
+            })
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);

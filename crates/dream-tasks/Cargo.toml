@@ -12,8 +12,8 @@ cfg-if = { workspace = true }
 crossbeam-channel = { workspace = true }
 once_cell = { workspace = true }
 async-executor = { workspace = true }
+rayon = "1.5"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }
-rayon = "1.5"
 wasm-bindgen-rayon = "1.0"
