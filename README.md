@@ -40,8 +40,9 @@ cargo run
 
 ## Build for Web
 
+Run the following command in ``crates/dream-runner``
+
 ```shell
-export RUSTFLAGS="--cfg=web_sys_unstable_apis"
 wasm-pack build --target web --out-dir web/build --release
 ```
 
