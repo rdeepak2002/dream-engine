@@ -10,7 +10,9 @@ if [ $? -eq 0 ]; then
   # start server
   cd ..
   cd ..
-  http-server -o web
+  cd web
+  npm i
+  npm run start
 else
   # build failed
   if [[ $OSTYPE == 'darwin'* ]]; then
