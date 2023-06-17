@@ -1,4 +1,5 @@
 import init, {initThreadPool, sum_of_squares} from './build/dream_runner.js';
+import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -206,8 +207,24 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // });
 }
 
+async function setupWorker() {
+    let handlers = await Comlink.wrap(
+        new Worker(new URL('./wasm-worker.js', import.meta.url), {
+            type: 'module'
+        })
+    ).handlers;
+
+    console.log('handlers', handlers);
+}
+
 const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
+        // setupWorker().then(() => {
+        //     console.log("Worker setup");
+        // }).catch((e) => {
+        //     console.error("Unable to setup worker", e);
+        // });
+
         // initialize web assembly application and disable possible keyboard input events
         init().then(() => {
             disableWebKeyboardEvents();
