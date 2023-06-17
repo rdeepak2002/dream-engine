@@ -209,14 +209,14 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
 
 async function setupWorker() {
     try {
-        let handler = await Comlink.wrap(
+        let wasmRuntime = await Comlink.wrap(
             new Worker(new URL('./wasm-worker.js', import.meta.url), {
                 type: 'module'
             })
-        ).handler;
+        ).wasmRuntime;
 
-        console.log('sum of squares', await handler("sum-of-squares"));
-        handler("start-thread");
+        console.log('sum of squares', await wasmRuntime("sum-of-squares"));
+        await wasmRuntime("start-thread");
     } catch (e) {
         throw e;
     }
@@ -237,7 +237,6 @@ const startApplication = (showDownloadLogs = false) => {
         init().then(() => {
             disableWebKeyboardEvents();
 
-            // TODO: fix this (have to call a web worker)
             const startThreadFunc = async function () {
                 console.log('calling initThreadPool(navigator.hardwareConcurrency)');
                 await initThreadPool(navigator.hardwareConcurrency);
