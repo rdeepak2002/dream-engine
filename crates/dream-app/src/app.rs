@@ -23,7 +23,7 @@ use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
-use dream_tasks::task_pool::get_task_pool;
+use dream_tasks::task_pool::{get_task_pool, start_thread};
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
@@ -38,7 +38,12 @@ pub struct App {
 
 impl App {
     pub async fn new() -> Self {
-        get_task_pool().start_thread(16);
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+            } else {
+                start_thread(16);
+            }
+        }
         Self {
             should_init: true,
             dt: 0.0,

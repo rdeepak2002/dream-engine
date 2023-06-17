@@ -40,24 +40,25 @@ pub struct AsyncComputeTaskPool<'a> {
     executor: Executor<'a>,
 }
 
-impl<'task> AsyncComputeTaskPool<'task> {
-    pub fn start_thread(&self, sleep_millis: u64) {
-        rayon::spawn(move || {
-            log::warn!("starting background task");
-            loop {
-                log::warn!("running background task");
-                get_task_pool().try_tick();
-                // thread::sleep(time::Duration::from_millis(sleep_millis));
-                cfg_if::cfg_if! {
-                    if #[cfg(target_arch = "wasm32")] {
-                    } else {
-                        thread::sleep(time::Duration::from_millis(sleep_millis));
-                    }
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn start_thread(sleep_millis: u64) {
+    rayon::spawn(move || {
+        log::warn!("starting background task");
+        loop {
+            log::warn!("running background task");
+            get_task_pool().try_tick();
+            // thread::sleep(time::Duration::from_millis(sleep_millis));
+            cfg_if::cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                } else {
+                    thread::sleep(time::Duration::from_millis(sleep_millis));
                 }
             }
-        });
-    }
+        }
+    });
+}
 
+impl<'task> AsyncComputeTaskPool<'task> {
     pub fn try_tick(&self) {
         if !self.executor.is_empty() {
             self.executor.try_tick();

@@ -211,25 +211,14 @@ const startApplication = (showDownloadLogs = false) => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(() => {
             disableWebKeyboardEvents();
-            // alert('yo 1');
+
+            // TODO: fix this (have to call a web worker)
             const startThreadFunc = async function () {
-                // alert('yo 2');
-                console.log('a');
-                console.error(sum_of_squares(new Int32Array([1, 2, 3])));
-                console.log('b');
+                console.log('calling initThreadPool(navigator.hardwareConcurrency)');
                 await initThreadPool(navigator.hardwareConcurrency);
                 console.error(sum_of_squares(new Int32Array([1, 2, 3])));   // question: why does this not run? cuz previous call fails...
             };
             startThreadFunc();
-            // initThreadPool(navigator.hardwareConcurrency).then(() => {
-            //     alert('yo 2');
-            //     console.warn("sum of squares");
-            //     console.error(sum_of_squares(new Int32Array([1, 2, 3])));
-            //     disableWebKeyboardEvents();
-            // }).catch((err) => {
-            //     alert('Unable to initialize thread pool');
-            //     console.error('Unable to initialize thread pool', err);
-            // })
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);
