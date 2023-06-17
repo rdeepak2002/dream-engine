@@ -208,22 +208,29 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
 }
 
 async function setupWorker() {
-    let handler = await Comlink.wrap(
-        new Worker(new URL('./wasm-worker.js', import.meta.url), {
-            type: 'module'
-        })
-    ).handler;
+    try {
+        let handler = await Comlink.wrap(
+            new Worker(new URL('./wasm-worker.js', import.meta.url), {
+                type: 'module'
+            })
+        ).handler;
 
-    console.log('sum of squares', await handler("sum-of-squares"));
-    handler("start-thread");
+        console.log('sum of squares', await handler("sum-of-squares"));
+        handler("start-thread");
+    } catch (e) {
+        throw e;
+    }
+
+    return "success";
 }
 
 const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
         // setupWorker().then(() => {
-        //     console.log("Worker setup");
+        //     console.log("Worker thread successfully setup");
         // }).catch((e) => {
-        //     console.error("Unable to setup worker", e);
+        //     console.error("Unable to setup worker thread", e);
+        //     alert("Unable to setup worker thread");
         // });
 
         // initialize web assembly application and disable possible keyboard input events
