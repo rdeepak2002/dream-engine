@@ -208,13 +208,14 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
 }
 
 async function setupWorker() {
-    let handlers = await Comlink.wrap(
+    let handler = await Comlink.wrap(
         new Worker(new URL('./wasm-worker.js', import.meta.url), {
             type: 'module'
         })
-    ).handlers;
+    ).handler;
 
-    console.log('handlers', handlers);
+    console.log('sum of squares', await handler("sum-of-squares"));
+    handler("start-thread");
 }
 
 const startApplication = (showDownloadLogs = false) => {
