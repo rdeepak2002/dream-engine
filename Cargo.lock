@@ -945,6 +945,9 @@ dependencies = [
  "gltf",
  "image",
  "log",
+ "rayon",
+ "wasm-bindgen",
+ "wasm-bindgen-rayon",
  "wgpu",
  "winit",
 ]

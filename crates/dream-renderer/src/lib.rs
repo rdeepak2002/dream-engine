@@ -17,6 +17,7 @@
  **********************************************************************************/
 
 use std::iter;
+use std::sync::Arc;
 
 use wgpu::util::DeviceExt;
 
@@ -45,8 +46,8 @@ struct RenderMapKey {
 
 pub struct RendererWgpu {
     pub surface: wgpu::Surface,
-    pub device: wgpu::Device,
-    pub queue: wgpu::Queue,
+    pub device: Arc<wgpu::Device>,
+    pub queue: Arc<wgpu::Queue>,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
@@ -398,8 +399,8 @@ impl RendererWgpu {
 
         Self {
             surface,
-            device,
-            queue,
+            device: Arc::new(device),
+            queue: Arc::new(queue),
             size,
             config,
             render_pipeline,

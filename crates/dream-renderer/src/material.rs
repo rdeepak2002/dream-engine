@@ -1,3 +1,4 @@
+use crossbeam_channel::unbounded;
 use wgpu::util::DeviceExt;
 
 use crate::image::Image;

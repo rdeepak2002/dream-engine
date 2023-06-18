@@ -31,10 +31,6 @@ pub fn get_task_pool<'a>() -> RwLockReadGuard<'static, AsyncComputeTaskPool<'a>>
     return ASYNC_COMPUTE_TASK_POOL.read().unwrap();
 }
 
-pub fn get_task_pool_to_write<'a>() -> RwLockWriteGuard<'static, AsyncComputeTaskPool<'a>> {
-    return ASYNC_COMPUTE_TASK_POOL.write().unwrap();
-}
-
 #[derive(Default)]
 pub struct AsyncComputeTaskPool<'a> {
     executor: Executor<'a>,
@@ -43,11 +39,9 @@ pub struct AsyncComputeTaskPool<'a> {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn start_thread(sleep_millis: u64) {
     rayon::spawn(move || {
-        log::warn!("starting background task");
-        log::warn!("TODO: limit background task execution time for wasm - maybe on worker JS side just have a timeout function that sleeps");
+        log::warn!("TODO: limit background task execution frequency for wasm");
         loop {
             get_task_pool().try_tick();
-            // thread::sleep(time::Duration::from_millis(sleep_millis));
             if sleep_millis != 0 {
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
@@ -68,7 +62,7 @@ impl<'task> AsyncComputeTaskPool<'task> {
     }
 
     pub fn spawn<T: Send + 'task>(&self, future: impl Future<Output = T> + Send + 'task) {
-        let task = self.executor.spawn(async move { future.await });
+        let task = self.executor.spawn(future);
         task.detach();
     }
 }

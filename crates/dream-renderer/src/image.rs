@@ -1,7 +1,5 @@
-use std::sync::Mutex;
-
 use crossbeam_channel::{unbounded, Receiver};
-use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage};
+use image::{DynamicImage, ImageFormat, RgbaImage};
 
 use dream_tasks::task_pool::get_task_pool;
 
@@ -77,8 +75,6 @@ impl Image {
             sx.clone()
                 .send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
-            // println!("Loaded texture in async task (pt 1)");
-            // log::warn!("Loaded texture in async task (pt 1)");
         });
 
         self.receiver = Some(rx);
@@ -101,8 +97,7 @@ impl Image {
             if let Some((dynamic_image, rgba8)) = self.receiver.clone().unwrap().try_iter().last() {
                 self.dynamic_image = Some(dynamic_image);
                 self.rgba8 = Some(rgba8);
-                // println!("Loaded texture in async task (pt 2)");
-                // log::warn!("Loaded texture in async task (pt 2)");
+                self.receiver = None;
             }
         }
     }
