@@ -8,6 +8,8 @@ class PlayerController {
         let position = entity.getPosition();
         if (position.x < 3.0) {
             entity.setPosition(new Vector3(position.x + 1.0 * dt, position.y, position.z));
+        } else {
+            entity.setPosition(new Vector3(-3.0, position.y, position.z));
         }
     }
 }
