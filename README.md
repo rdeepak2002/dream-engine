@@ -22,7 +22,7 @@ DREAM stands for D(eepak's game engine is) REA(lly a) M(azing).
 
 ## Requirements
 
-- [rust](https://www.rust-lang.org/tools/install) (Version 1.68.0)
+- [rust](https://www.rust-lang.org/tools/install) (Version 1.72.0-nightly)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (Version 0.10.3)
 
 - wasm32-unknown-unknown target for Rust
@@ -45,10 +45,15 @@ cargo run +nightly --package dream-runner --bin dream-runner  --release
 Run the following command in ``crates/dream-runner``
 
 ```shell
+# build project
 rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+
+# serve it on the web
+npm i
+npm run start
 ```
 
-Serve ``index.html`` from ``web`` folder
+Visit [http://localhost:3000](http://localhost:3000) on the latest version of Chrome to view the application
 
 ## Run Tests
 
