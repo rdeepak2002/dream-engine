@@ -1,4 +1,4 @@
-import init, {initThreadPool, sum_of_squares} from './build/dream_runner.js';
+import init from './build/dream_runner.js';
 import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
 
 function sleep(ms) {
@@ -139,7 +139,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         await writable.close();
     } catch (e) {
         console.error(`Unable to write ${filePath} to file system`, e);
-        throw new Error(`Unable to write ${filePath} to file system`)
+        throw new Error(`Unable to write ${filePath} to file system`);
     }
 }
 
@@ -207,42 +207,18 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // });
 }
 
-async function setupWorker() {
-    try {
-        let wasmRuntime = await Comlink.wrap(
-            new Worker(new URL('./wasm-worker.js', import.meta.url), {
-                type: 'module'
-            })
-        ).wasmRuntime;
-
-        console.log('sum of squares', await wasmRuntime("sum-of-squares"));
-        await wasmRuntime("start-thread");
-    } catch (e) {
-        throw e;
-    }
-
-    return "success";
-}
-
 const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
-        // setupWorker().then(() => {
-        //     console.log("Worker thread successfully setup");
-        // }).catch((e) => {
-        //     console.error("Unable to setup worker thread", e);
-        //     alert("Unable to setup worker thread");
-        // });
-
         // initialize web assembly application and disable possible keyboard input events
-        init().then(() => {
+        init().then(async (wasmRuntime) => {
+            const mem = wasmRuntime.memory;
+            let workerInstance = await Comlink.wrap(
+                new Worker(new URL('./wasm-worker.js', import.meta.url), {
+                    type: 'module'
+                })
+            );
+            await workerInstance.initSharedMem(mem);
             disableWebKeyboardEvents();
-
-            const startThreadFunc = async function () {
-                console.log('calling initThreadPool(navigator.hardwareConcurrency)');
-                await initThreadPool(navigator.hardwareConcurrency);
-                console.error(sum_of_squares(new Int32Array([1, 2, 3])));   // question: why does this not run? cuz previous call fails...
-            };
-            startThreadFunc();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);

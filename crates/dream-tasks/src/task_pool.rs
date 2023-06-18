@@ -44,8 +44,8 @@ pub struct AsyncComputeTaskPool<'a> {
 pub fn start_thread(sleep_millis: u64) {
     rayon::spawn(move || {
         log::warn!("starting background task");
+        log::warn!("TODO: limit background task execution time for wasm - maybe on worker JS side just have a timeout function that sleeps");
         loop {
-            log::warn!("running background task");
             get_task_pool().try_tick();
             // thread::sleep(time::Duration::from_millis(sleep_millis));
             cfg_if::cfg_if! {

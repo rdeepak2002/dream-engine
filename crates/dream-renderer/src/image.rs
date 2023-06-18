@@ -50,11 +50,6 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
             )
         }
         gltf::image::Source::Uri { uri, mime_type } => {
-            log::warn!(
-                "TODO: get gltf texture from uri {} with mime type {}",
-                uri,
-                mime_type.unwrap_or("unknown")
-            );
             let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
                 .await
                 .expect("unable to load binary");
