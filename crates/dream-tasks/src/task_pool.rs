@@ -48,10 +48,12 @@ pub fn start_thread(sleep_millis: u64) {
         loop {
             get_task_pool().try_tick();
             // thread::sleep(time::Duration::from_millis(sleep_millis));
-            cfg_if::cfg_if! {
-                if #[cfg(target_arch = "wasm32")] {
-                } else {
-                    thread::sleep(time::Duration::from_millis(sleep_millis));
+            if sleep_millis != 0 {
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                    } else {
+                        thread::sleep(time::Duration::from_millis(sleep_millis));
+                    }
                 }
             }
         }
