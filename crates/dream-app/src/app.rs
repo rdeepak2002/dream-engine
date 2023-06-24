@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::sync::Arc;
+
 use cgmath::prelude::*;
 
 use dream_ecs::component::Transform;
@@ -22,7 +24,7 @@ use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
-use dream_resource::resource_manager::ResourceManager;
+use dream_resource::resource_manager::{ResourceHandle, ResourceManager};
 use dream_tasks::task_pool::{get_task_pool, start_thread};
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
@@ -92,6 +94,22 @@ impl App {
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
             let entity_position = entity.get_component::<Transform>().unwrap().position;
+
+            // let original_resource_handle = self
+            //     .resource_manager
+            //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"));
+
+            // if original_resource_handle.is_some() {
+            //     println!(
+            //         "strong count (a): {}",
+            //         Arc::strong_count(original_resource_handle.unwrap())
+            //     );
+            //     let resource_handle = original_resource_handle.clone();
+            //     println!(
+            //         "strong count (b): {}",
+            //         Arc::strong_count(original_resource_handle.unwrap())
+            //     );
+            // }
 
             for i in 0..2 {
                 renderer.draw_mesh(

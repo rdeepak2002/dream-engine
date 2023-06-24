@@ -95,7 +95,7 @@ pub async fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
             let files_in_directory = crate::js_fs::read_dir_from_web_storage(file_path).await;
         } else {
             let mut files_in_directory: Vec<ReadDir> = Vec::new();
-            let paths = std::fs::read_dir(file_path).unwrap();
+            let paths = std::fs::read_dir(file_path.clone()).unwrap_or_else(|_| panic!("Unable to read file paths in folder {}", file_path.to_str().unwrap_or("none")));
             for path in paths {
                 let dir_entry = path.unwrap();
                 let file_name = String::from(dir_entry.file_name().to_str().unwrap());

@@ -1,12 +1,41 @@
 use std::collections::{HashMap, VecDeque};
+use std::ops::Add;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct ResourceHandle {
+    key: String,
+    path: PathBuf,
+}
+
+impl ResourceHandle {
+    pub fn new(key: String, path: PathBuf) -> Self {
+        Self { key, path }
+    }
+}
+
+impl Drop for ResourceHandle {
+    fn drop(&mut self) {
+        log::warn!(
+            "Dropping resource handle with key {} and path {}",
+            self.key,
+            self.path.to_str().unwrap_or("no path")
+        );
+        println!(
+            "Dropping resource handle with key {} and path {}",
+            self.key,
+            self.path.to_str().unwrap_or("no path")
+        );
+    }
+}
+
 pub struct ResourceManager {
     /// Map between guid and file path
-    guid_to_filepath: HashMap<String, PathBuf>,
+    guid_to_filepath: HashMap<String, Arc<ResourceHandle>>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -68,15 +97,26 @@ impl ResourceManager {
                     && !file_name.starts_with('.')
                     && file_name != "files.json"
                 {
-                    let meta_file_path = file_path.with_extension(".meta");
+                    // let meta_file_path = file_path.push(".meta");
+                    let meta_file_path =
+                        PathBuf::from(String::from(file_path.to_str().unwrap()).add(".meta"));
                     if !dream_fs::fs::exists(meta_file_path.clone()).await {
                         // create meta file if it does not exist
+                        log::warn!(
+                            "Creating metafile for path {}",
+                            file_path.clone().to_str().unwrap_or("none")
+                        );
+                        println!(
+                            "Creating metafile for path {}",
+                            file_path.clone().to_str().unwrap_or("none")
+                        );
                         create_meta_file(file_path.clone()).await;
                     }
                     // get the guid from the meta file
                     let meta_data = get_meta_data(file_path.clone()).await;
                     let guid = meta_data.guid;
-                    guid_to_filepath.insert(guid, file_path);
+                    guid_to_filepath
+                        .insert(guid.clone(), Arc::new(ResourceHandle::new(guid, file_path)));
                 }
                 // if a directory is found, push it onto the traversal stack, so we will look into it
                 if res.is_dir() {
@@ -86,5 +126,9 @@ impl ResourceManager {
         }
 
         Self { guid_to_filepath }
+    }
+
+    pub fn get_resource(&self, key: String) -> Option<&Arc<ResourceHandle>> {
+        self.guid_to_filepath.get(key.as_str())
     }
 }
