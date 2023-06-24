@@ -98,17 +98,11 @@ impl App {
             // let original_resource_handle = self
             //     .resource_manager
             //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"));
-
-            // if original_resource_handle.is_some() {
-            //     println!(
-            //         "strong count (a): {}",
-            //         Arc::strong_count(original_resource_handle.unwrap())
-            //     );
-            //     let resource_handle = original_resource_handle.clone();
-            //     println!(
-            //         "strong count (b): {}",
-            //         Arc::strong_count(original_resource_handle.unwrap())
-            //     );
+            //
+            // if let Some(resource_handle) = original_resource_handle {
+            //     println!("strong count (a): {}", Arc::strong_count(resource_handle));
+            //     let resource_handle_cloned = resource_handle.clone();
+            //     println!("strong count (b): {}", Arc::strong_count(resource_handle));
             // }
 
             for i in 0..2 {
