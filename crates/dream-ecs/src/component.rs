@@ -1,6 +1,8 @@
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use dream_math::Vector3;
+use dream_resource::resource_manager::ResourceHandle;
 
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
@@ -45,3 +47,24 @@ impl Hierarchy {
         }
     }
 }
+
+#[derive(shipyard::Component, Debug, Clone, Default, PartialEq)]
+pub struct MeshRenderer {
+    pub resource_handle: Option<Arc<ResourceHandle>>,
+}
+
+impl MeshRenderer {
+    pub fn new(resource_handle: Option<Arc<ResourceHandle>>) -> Self {
+        Self { resource_handle }
+    }
+}
+
+// impl Drop for MeshRenderer {
+//     fn drop(&mut self) {
+//         if self.resource_handle.is_some() {
+//             // TODO: globally access resource_manager as singleton and notify it
+//             // let rh = self.resource_handle.unwrap();
+//             // Arc::strong_count(&rh);
+//         }
+//     }
+// }

@@ -471,6 +471,10 @@ impl RendererWgpu {
         }
     }
 
+    pub fn is_model_stored(&self, model_guid: &str) -> bool {
+        self.model_guids.contains_key(model_guid)
+    }
+
     pub async fn store_model(
         &mut self,
         model_guid_in: Option<&str>,

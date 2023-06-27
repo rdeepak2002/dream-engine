@@ -5,6 +5,12 @@ use winit::{
     window::WindowBuilder,
 };
 
+// use async_winit::{
+//     event::*,
+//     event_loop::{ControlFlow, EventLoop},
+//     window::WindowBuilder,
+// };
+
 pub struct Window {
     pub window: winit::window::Window,
     pub event_loop: EventLoop<()>,
@@ -92,24 +98,6 @@ impl Window {
             &self.event_loop,
         )
         .await;
-
-        // TODO: figure out why link is slow (just print stuff to see what stages are slow)
-        // TODO: i think the repeated load bytes for default textures is the bottle neck
-
-        // renderer
-        //     .store_model(Some("link"), "link.glb")
-        //     .await
-        //     .expect("Error loading link model");
-
-        // renderer
-        //     .store_model(Some("robot"), "robot.glb")
-        //     .await
-        //     .expect("unable to store robot.glb model");
-
-        renderer
-            .store_model(Some("robot"), "scene.gltf")
-            .await
-            .expect("Error loading robot-gltf model");
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {

@@ -6,30 +6,15 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ResourceHandle {
-    key: String,
-    path: PathBuf,
+    pub key: String,
+    pub path: PathBuf,
 }
 
 impl ResourceHandle {
     pub fn new(key: String, path: PathBuf) -> Self {
         Self { key, path }
-    }
-}
-
-impl Drop for ResourceHandle {
-    fn drop(&mut self) {
-        log::warn!(
-            "Dropping resource handle with key {} and path {}",
-            self.key,
-            self.path.to_str().unwrap_or("no path")
-        );
-        println!(
-            "Dropping resource handle with key {} and path {}",
-            self.key,
-            self.path.to_str().unwrap_or("no path")
-        );
     }
 }
 

@@ -8,3 +8,4 @@ shipyard = "0.6.2"
 cgmath = { workspace = true }
 once_cell = { workspace = true }
 dream-math = { workspace = true }
+dream-resource = { workspace = true }

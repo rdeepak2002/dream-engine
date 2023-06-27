@@ -15,11 +15,10 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use std::sync::Arc;
-
+use async_executor::Executor;
 use cgmath::prelude::*;
 
-use dream_ecs::component::Transform;
+use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
 use dream_renderer::instance::Instance;
@@ -62,8 +61,17 @@ impl App {
             e1 = Some(scene.create_entity());
         }
         {
+            // e1.unwrap()
+            //     .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+        }
+        {
+            let resource_handle = self
+                .resource_manager
+                .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
+                .expect("Resource handle cannot be found");
+            let resource_handle = resource_handle.clone();
             e1.unwrap()
-                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+                .add_component(MeshRenderer::new(Some(resource_handle)));
         }
         // init component systems
         self.component_systems
@@ -89,84 +97,61 @@ impl App {
         let transform_entities: Vec<u64>;
         {
             let scene = get_current_scene_read_only();
-            transform_entities = scene.transform_entities().clone();
+            transform_entities = scene.transform_entities();
         }
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
-            let entity_position = entity.get_component::<Transform>().unwrap().position;
+            if let Some(transform) = entity.get_component::<Transform>() {
+                if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
+                    if let Some(resource_handle) = mesh_renderer.resource_handle {
+                        let resource_handle = resource_handle.as_ref();
+                        let resource_key = resource_handle.key.clone();
+                        let resource_path = resource_handle.path.clone();
 
-            // let original_resource_handle = self
-            //     .resource_manager
-            //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"));
-            //
-            // if let Some(resource_handle) = original_resource_handle {
-            //     println!("strong count (a): {}", Arc::strong_count(resource_handle));
-            //     let resource_handle_cloned = resource_handle.clone();
-            //     println!("strong count (b): {}", Arc::strong_count(resource_handle));
-            // }
-
-            for i in 0..2 {
-                renderer.draw_mesh(
-                    "robot",
-                    i,
-                    Instance {
-                        position: cgmath::Vector3::from(entity_position),
-                        rotation: cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::new(0., 0., 1.),
-                            cgmath::Deg(0.0),
-                        ) * cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::new(0., 1., 0.),
-                            cgmath::Deg(-0.0),
-                        ) * cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::new(1., 0., 0.),
-                            cgmath::Deg(-90.0),
-                        ),
-                        scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
-                    },
-                );
+                        if renderer.is_model_stored(resource_key.as_str()) {
+                            for i in 0..2 {
+                                renderer.draw_mesh(
+                                    resource_key.as_str(),
+                                    i,
+                                    Instance {
+                                        position: cgmath::Vector3::from(transform.position),
+                                        rotation: cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(0., 0., 1.),
+                                            cgmath::Deg(0.0),
+                                        ) * cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(0., 1., 0.),
+                                            cgmath::Deg(-0.0),
+                                        ) * cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(1., 0., 0.),
+                                            cgmath::Deg(-90.0),
+                                        ),
+                                        scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
+                                    },
+                                );
+                            }
+                        } else {
+                            todo!();
+                            // TODO: fix web build
+                            // let executor = Executor::default();
+                            // let task = executor.spawn(async {
+                            //     renderer
+                            //         .store_model(
+                            //             Some(resource_key.as_str()),
+                            //             resource_path
+                            //                 .to_str()
+                            //                 .expect("Unable to convert resource path to a string"),
+                            //         )
+                            //         .await
+                            //         .expect("Unable to store model");
+                            // });
+                            // task.detach();
+                            // while !executor.is_empty() {
+                            //     executor.try_tick();
+                            // }
+                        }
+                    }
+                }
             }
-
-            // for i in 0..18 {
-            //     renderer.draw_mesh(
-            //         "link",
-            //         i,
-            //         dream_renderer::Instance {
-            //             position: cgmath::Vector3::from(entity_position),
-            //             rotation: cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(1., 0., 0.),
-            //                 cgmath::Deg(0.0),
-            //             ) * cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(0., 1., 0.),
-            //                 cgmath::Deg(0.0),
-            //             ) * cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(0., 0., 1.),
-            //                 cgmath::Deg(0.0),
-            //             ),
-            //             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
-            //         },
-            //     );
-            // }
-
-            // for i in 0..6 {
-            //     renderer.draw_mesh(
-            //         "ice_cube",
-            //         i,
-            //         dream_renderer::Instance {
-            //             position: cgmath::Vector3::from(entity_position),
-            //             rotation: cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(1., 0., 0.),
-            //                 cgmath::Deg(0.0),
-            //             ) * cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(0., 1., 0.),
-            //                 cgmath::Deg(0.0),
-            //             ) * cgmath::Quaternion::from_axis_angle(
-            //                 cgmath::Vector3::new(0., 0., 1.),
-            //                 cgmath::Deg(0.0),
-            //             ),
-            //             scale: cgmath::Vector3::new(1.0, 1.0, 1.0),
-            //         },
-            //     );
-            // }
         }
     }
 }
