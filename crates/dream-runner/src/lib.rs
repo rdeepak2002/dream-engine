@@ -20,51 +20,6 @@ use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-/// Update function called every update loop which returns true when the application should close
-fn update(
-    app: &mut App,
-    renderer: &mut RendererWgpu,
-    editor: &mut EditorEguiWgpu,
-    editor_raw_input: egui::RawInput,
-    editor_pixels_per_point: f32,
-) -> bool {
-    // update component systems (scripts, physics, etc.)
-    app.update();
-    app.draw(renderer);
-
-    // draw the scene (to texture)
-    match renderer.render() {
-        Ok(_) => {}
-        // reconfigure the surface if it's lost or outdated
-        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-            renderer.resize(renderer.size);
-            editor.handle_resize(renderer);
-        }
-        // quit when system is out of memory
-        Err(wgpu::SurfaceError::OutOfMemory) => {
-            log::error!("Quitting because system out of memory");
-            return true;
-        }
-        // ignore timeout
-        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-    }
-
-    // draw editor
-    match editor.render_wgpu(renderer, editor_raw_input, editor_pixels_per_point) {
-        Ok(_) => {
-            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
-        }
-        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-            renderer.resize(renderer.size);
-            editor.handle_resize(renderer);
-        }
-        Err(wgpu::SurfaceError::OutOfMemory) => return true,
-        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-    }
-
-    false
-}
-
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
     // setup logging (TODO: move logging logic to a new crate)
@@ -90,7 +45,6 @@ pub async fn run() {
         }
     }
 
-    let app = Box::new(App::new().await);
     let window = Window::default();
-    window.run(app, update).await;
+    window.run().await;
 }

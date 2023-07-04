@@ -5,6 +5,8 @@ use winit::{
     window::WindowBuilder,
 };
 
+use dream_app::app::App;
+
 // use async_winit::{
 //     event::*,
 //     event_loop::{ControlFlow, EventLoop},
@@ -57,17 +59,7 @@ impl Default for Window {
 }
 
 impl Window {
-    pub async fn run(
-        self,
-        mut app: Box<dream_app::app::App>,
-        update_func: fn(
-            &mut dream_app::app::App,
-            &mut dream_renderer::RendererWgpu,
-            &mut dream_editor::EditorEguiWgpu,
-            egui::RawInput,
-            f32,
-        ) -> bool,
-    ) {
+    pub async fn run(self) {
         // listen for screen resizing events for web build
         #[allow(unused_variables)]
         let (tx, rx) = unbounded::<winit::dpi::LogicalSize<f32>>();
@@ -91,6 +83,7 @@ impl Window {
             closure.forget();
         }
 
+        let mut app = Box::new(App::new().await);
         let mut renderer = dream_renderer::RendererWgpu::new(&self.window).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
@@ -109,14 +102,38 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    if update_func(
-                        app.as_mut(),
-                        &mut renderer,
-                        &mut editor,
-                        editor_raw_input,
-                        editor_pixels_per_point,
-                    ) {
-                        *control_flow = ControlFlow::Exit;
+                    // update component systems (scripts, physics, etc.)
+                    app.update();
+                    app.draw(&mut renderer);
+
+                    // draw the scene (to texture)
+                    match renderer.render() {
+                        Ok(_) => {}
+                        // reconfigure the surface if it's lost or outdated
+                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                            renderer.resize(renderer.size);
+                            editor.handle_resize(&mut renderer);
+                        }
+                        // quit when system is out of memory
+                        Err(wgpu::SurfaceError::OutOfMemory) => {
+                            log::error!("Quitting because system out of memory");
+                            *control_flow = ControlFlow::Exit
+                        }
+                        // ignore timeout
+                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                    }
+
+                    // draw editor
+                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
+                        Ok(_) => {
+                            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                        }
+                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                            renderer.resize(renderer.size);
+                            editor.handle_resize(&renderer);
+                        }
+                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                     }
                 }
                 Event::WindowEvent { event, .. } => {

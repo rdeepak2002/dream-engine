@@ -13,6 +13,8 @@ dream-app = { workspace = true }
 dream-editor = { workspace = true }
 dream-renderer = { workspace = true }
 dream-fs = { workspace = true }
+dream-tasks = { workspace = true }
+wgpu = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }

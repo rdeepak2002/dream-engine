@@ -1014,10 +1014,12 @@ dependencies = [
  "dream-editor",
  "dream-fs",
  "dream-renderer",
+ "dream-tasks",
  "egui",
  "log",
  "wasm-bindgen",
  "web-sys",
+ "wgpu",
  "winit",
 ]
 

@@ -130,7 +130,7 @@ impl App {
                                 );
                             }
                         } else {
-                            todo!();
+                            // todo!();
                             // TODO: fix web build
                             // let executor = Executor::default();
                             // let task = executor.spawn(async {
