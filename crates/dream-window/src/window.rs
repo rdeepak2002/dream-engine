@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crossbeam_channel::unbounded;
 use winit::{
     event::*,
@@ -84,7 +86,9 @@ impl Window {
         }
 
         let mut app = Box::new(App::new().await);
-        let mut renderer = dream_renderer::RendererWgpu::new(&self.window).await;
+        let renderer = Arc::new(Mutex::new(
+            dream_renderer::RendererWgpu::new(&self.window).await,
+        ));
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
             self.window.scale_factor() as f32,
@@ -104,15 +108,17 @@ impl Window {
 
                     // update component systems (scripts, physics, etc.)
                     app.update();
-                    app.draw(&mut renderer);
+                    app.draw(&renderer);
 
                     // draw the scene (to texture)
-                    match renderer.render() {
+                    let mut ren = renderer.lock().unwrap();
+                    let size = ren.size;
+                    match ren.render() {
                         Ok(_) => {}
                         // reconfigure the surface if it's lost or outdated
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&mut renderer);
+                            ren.resize(size);
+                            editor.handle_resize(&mut ren);
                         }
                         // quit when system is out of memory
                         Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -124,30 +130,33 @@ impl Window {
                     }
 
                     // draw editor
-                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
+                    match editor.render_wgpu(&ren, editor_raw_input, editor_pixels_per_point) {
                         Ok(_) => {
-                            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                            ren.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&renderer);
+                            ren.resize(size);
+                            editor.handle_resize(&ren);
                         }
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                         Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                     }
                 }
+
                 Event::WindowEvent { event, .. } => {
+                    let mut ren2 = renderer.lock().unwrap();
+
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                renderer.resize(physical_size);
-                                editor.handle_resize(&renderer);
+                                ren2.resize(physical_size);
+                                editor.handle_resize(&ren2);
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(*new_inner_size);
-                                editor.handle_resize(&renderer);
+                                ren2.resize(*new_inner_size);
+                                editor.handle_resize(&ren2);
                             }
                             _ => (),
                         }

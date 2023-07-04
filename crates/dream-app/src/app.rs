@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::sync::{Arc, Mutex};
+
 use async_executor::Executor;
 use cgmath::prelude::*;
 
@@ -92,8 +94,10 @@ impl App {
         self.dt
     }
 
-    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
+    pub fn draw(&mut self, renderer: &Arc<Mutex<RendererWgpu>>) {
         // TODO: traverse in tree fashion
+        let renderer = renderer.clone();
+        let mut renderer = renderer.lock().unwrap();
         let transform_entities: Vec<u64>;
         {
             let scene = get_current_scene_read_only();
