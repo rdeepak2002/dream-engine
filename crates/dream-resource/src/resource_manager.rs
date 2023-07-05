@@ -60,9 +60,64 @@ async fn get_meta_data(file_path: PathBuf) -> MetaData {
 }
 
 impl ResourceManager {
-    pub async fn new() -> Self {
-        // traverse all files in project folder and map guid's to file paths
+    pub fn new() -> Self {
         let mut guid_to_filepath = HashMap::default();
+        Self { guid_to_filepath }
+        // // traverse all files in project folder and map guid's to file paths
+        // let mut guid_to_filepath = HashMap::default();
+        // let project_root = dream_fs::fs::get_fs_root();
+        //
+        // let mut traversal_stack: VecDeque<PathBuf> = VecDeque::default();
+        // traversal_stack.push_front(project_root);
+        //
+        // while !traversal_stack.is_empty() {
+        //     let cur_dir = traversal_stack.pop_front().expect("Traversal queue empty");
+        //     let files_in_dir = dream_fs::fs::read_dir(cur_dir).await;
+        //     let read_dir_result =
+        //         files_in_dir.expect("Error reading directory for resource manager traversal");
+        //     for i in 0..read_dir_result.len() {
+        //         let res = read_dir_result.get(i).unwrap();
+        //         // populate map with guid : file path for non-meta data files
+        //         let file_name = res.get_name();
+        //         let file_path = res.get_path();
+        //         if !file_name.ends_with(".meta")
+        //             && !file_name.starts_with('.')
+        //             && file_name != "files.json"
+        //         {
+        //             // let meta_file_path = file_path.push(".meta");
+        //             let meta_file_path =
+        //                 PathBuf::from(String::from(file_path.to_str().unwrap()).add(".meta"));
+        //             if !dream_fs::fs::exists(meta_file_path.clone()).await {
+        //                 // create meta file if it does not exist
+        //                 log::warn!(
+        //                     "Creating metafile for path {}",
+        //                     file_path.clone().to_str().unwrap_or("none")
+        //                 );
+        //                 println!(
+        //                     "Creating metafile for path {}",
+        //                     file_path.clone().to_str().unwrap_or("none")
+        //                 );
+        //                 create_meta_file(file_path.clone()).await;
+        //             }
+        //             // get the guid from the meta file
+        //             let meta_data = get_meta_data(file_path.clone()).await;
+        //             let guid = meta_data.guid;
+        //             guid_to_filepath
+        //                 .insert(guid.clone(), Arc::new(ResourceHandle::new(guid, file_path)));
+        //         }
+        //         // if a directory is found, push it onto the traversal stack, so we will look into it
+        //         if res.is_dir() {
+        //             traversal_stack.push_front(res.get_path());
+        //         }
+        //     }
+        // }
+        //
+        // Self { guid_to_filepath }
+    }
+
+    pub async fn init(&mut self) {
+        // traverse all files in project folder and map guid's to file paths
+        let mut guid_to_filepath: HashMap<String, Arc<ResourceHandle>> = HashMap::default();
         let project_root = dream_fs::fs::get_fs_root();
 
         let mut traversal_stack: VecDeque<PathBuf> = VecDeque::default();
@@ -110,7 +165,7 @@ impl ResourceManager {
             }
         }
 
-        Self { guid_to_filepath }
+        self.guid_to_filepath = guid_to_filepath;
     }
 
     pub fn get_resource(&self, key: String) -> Option<&Arc<ResourceHandle>> {

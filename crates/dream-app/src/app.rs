@@ -40,7 +40,7 @@ pub struct App {
 }
 
 impl App {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
             } else {
@@ -51,11 +51,14 @@ impl App {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
-            resource_manager: ResourceManager::new().await,
+            resource_manager: ResourceManager::new(),
         }
     }
 
-    fn initialize(&mut self) {
+    async fn initialize(&mut self) {
+        // TODO: ensure this does not happen repeatedly
+        self.resource_manager.init().await;
+
         // init scene
         let e1;
         {
@@ -85,9 +88,9 @@ impl App {
         //         as Arc<Mutex<dyn System + Send>>);
     }
 
-    pub fn update(&mut self) -> f32 {
+    pub async fn update(&mut self) -> f32 {
         if self.should_init {
-            self.initialize();
+            self.initialize().await;
             self.should_init = false;
         }
         self.dt = 1.0 / 60.0;
@@ -97,6 +100,8 @@ impl App {
         }
         self.dt
     }
+
+    pub async fn update_async(&mut self) {}
 
     pub fn draw(&mut self, renderer: &Arc<Mutex<RendererWgpu>>) {
         // TODO: traverse in tree fashion

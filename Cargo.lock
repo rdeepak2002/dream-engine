@@ -1018,6 +1018,7 @@ dependencies = [
  "egui",
  "futures",
  "log",
+ "once_cell",
  "wasm-bindgen",
  "web-sys",
  "wgpu",

@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::unbounded;
+use once_cell::sync::Lazy;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -15,6 +16,9 @@ use dream_tasks::task_pool::get_task_pool;
 //     event_loop::{ControlFlow, EventLoop},
 //     window::WindowBuilder,
 // };
+
+static APP: Lazy<Arc<futures::lock::Mutex<App>>> =
+    Lazy::new(|| Arc::new(futures::lock::Mutex::new(App::new())));
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -86,7 +90,7 @@ impl Window {
             closure.forget();
         }
 
-        let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
+        // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
         let renderer = Arc::new(Mutex::new(
             dream_renderer::RendererWgpu::new(&self.window).await,
         ));
@@ -97,15 +101,22 @@ impl Window {
         )
         .await;
 
-        // TODO: should create a special spawn_on_app_thread() cuz otherwise this will block model resource loading thread
+        let (sx, rx1) = unbounded();
+
         get_task_pool().spawn(async move {
-            let mut app0 = app.lock().await;
             loop {
-                log::warn!("Looping app update");
-                println!("Looping app update");
-                app0.update();
-                // TODO: call app.draw(renderer)
-                // app0.draw(&renderer);
+                if let Some(x) = rx1.clone().try_iter().last() {
+                    if x {
+                        log::warn!("Looping app update");
+                        println!("Looping app update");
+                        let a0 = APP.as_ref();
+                        let mut a = a0.lock().await;
+                        a.update().await;
+
+                        // TODO: figure out how to call app.draw() here...
+                        todo!()
+                    }
+                }
             }
         });
 
@@ -119,9 +130,14 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    // update component systems (scripts, physics, etc.)
-                    // app.update();
-                    // app.draw(&renderer);
+                    let a0 = APP.as_ref();
+                    let mut a = a0.try_lock();
+                    if a.is_some() {
+                        log::warn!("Calling app draw");
+                        println!("Calling app draw");
+                        a.unwrap().draw(&renderer);
+                        sx.clone().send(true).expect("Unable to send true");
+                    }
 
                     // draw the scene (to texture)
                     let mut ren = renderer.lock().unwrap();
