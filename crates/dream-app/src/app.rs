@@ -35,7 +35,7 @@ use crate::system::System;
 pub struct App {
     should_init: bool,
     pub dt: f32,
-    pub component_systems: Vec<Box<dyn System>>,
+    pub component_systems: Vec<Arc<Mutex<dyn System + Send>>>,
     pub resource_manager: ResourceManager,
 }
 
@@ -77,9 +77,12 @@ impl App {
         }
         // init component systems
         self.component_systems
-            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
-        self.component_systems
-            .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn System>);
+            .push(Arc::new(Mutex::new(JavaScriptScriptComponentSystem::new()))
+                as Arc<Mutex<dyn System + Send>>);
+        // TODO: to support this maybe call the update loop in the main thread and only .draw() in the new thread?
+        // self.component_systems
+        //     .push(Arc::new(Mutex::new(PythonScriptComponentSystem::new()))
+        //         as Arc<Mutex<dyn System + Send>>);
     }
 
     pub fn update(&mut self) -> f32 {
@@ -89,7 +92,8 @@ impl App {
         }
         self.dt = 1.0 / 60.0;
         for i in 0..self.component_systems.len() {
-            self.component_systems[i].update(self.dt);
+            let cs = &self.component_systems[i].clone();
+            cs.lock().unwrap().update(self.dt);
         }
         self.dt
     }

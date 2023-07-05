@@ -8,6 +8,7 @@ use winit::{
 };
 
 use dream_app::app::App;
+use dream_tasks::task_pool::get_task_pool;
 
 // use async_winit::{
 //     event::*,
@@ -85,7 +86,7 @@ impl Window {
             closure.forget();
         }
 
-        let mut app = Box::new(App::new().await);
+        let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
         let renderer = Arc::new(Mutex::new(
             dream_renderer::RendererWgpu::new(&self.window).await,
         ));
@@ -95,6 +96,18 @@ impl Window {
             &self.event_loop,
         )
         .await;
+
+        // TODO: should create a special spawn_on_app_thread() cuz otherwise this will block model resource loading thread
+        get_task_pool().spawn(async move {
+            let mut app0 = app.lock().await;
+            loop {
+                log::warn!("Looping app update");
+                println!("Looping app update");
+                app0.update();
+                // TODO: call app.draw(renderer)
+                // app0.draw(&renderer);
+            }
+        });
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -107,8 +120,8 @@ impl Window {
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
                     // update component systems (scripts, physics, etc.)
-                    app.update();
-                    app.draw(&renderer);
+                    // app.update();
+                    // app.draw(&renderer);
 
                     // draw the scene (to texture)
                     let mut ren = renderer.lock().unwrap();
