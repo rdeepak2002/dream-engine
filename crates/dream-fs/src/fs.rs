@@ -72,27 +72,10 @@ pub fn read_binary(file_path: PathBuf, absolute: bool) -> Result<Vec<u8>> {
     Ok(data)
 }
 
-pub async fn read_string(file_path: PathBuf) -> Result<String> {
-    let path = get_full_path(file_path);
+pub fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            let data = crate::js_fs::read_string_from_web_storage(path.to_str().unwrap()).await;
-        } else {
-            // let data = std::fs::read_to_string(path)?;
-            use std::io::Read;
-            let mut file_content = Vec::new();
-            let mut file = std::fs::File::open(path).expect("Unable to open file");
-            file.read_to_end(&mut file_content).expect("Unable to read");
-            let data = String::from_utf8(file_content).expect("Unable to convert content to utf-8");
-        }
-    }
-    Ok(data)
-}
-
-pub async fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
-    cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            let files_in_directory = crate::js_fs::read_dir_from_web_storage(file_path).await;
+            let files_in_directory = crate::js_fs::read_dir_from_web_storage(file_path);
         } else {
             let mut files_in_directory: Vec<ReadDir> = Vec::new();
             let paths = std::fs::read_dir(file_path.clone()).unwrap_or_else(|_| panic!("Unable to read file paths in folder {}", file_path.to_str().unwrap_or("none")));
@@ -110,10 +93,10 @@ pub async fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
     Ok(files_in_directory)
 }
 
-pub async fn write_binary(file_path: PathBuf, content: Vec<u8>) {
+pub fn write_binary(file_path: PathBuf, content: Vec<u8>) {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            crate::js_fs::write_all_to_web_storage(file_path, content).await;
+            crate::js_fs::write_all_to_web_storage(file_path, content);
         } else {
             use std::io::Write;
             let mut file = std::fs::File::create(file_path.clone()).unwrap_or_else(|_| panic!("Unable to create file {}", file_path.to_str().unwrap()));
@@ -123,10 +106,10 @@ pub async fn write_binary(file_path: PathBuf, content: Vec<u8>) {
     }
 }
 
-pub async fn exists(file_path: PathBuf) -> bool {
+pub fn exists(file_path: PathBuf) -> bool {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            crate::js_fs::exists(file_path).await
+            crate::js_fs::exists(file_path)
         } else {
             file_path.into_boxed_path().exists()
         }

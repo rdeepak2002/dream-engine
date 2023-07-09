@@ -36,13 +36,14 @@ impl Default for MetaData {
     }
 }
 
-pub async fn create_meta_file(file_path: PathBuf) {
+pub fn create_meta_file(file_path: PathBuf) {
     let new_meta_data = MetaData::default();
     let res =
         serde_yaml::to_string(&new_meta_data).expect("Unable to generate json file for new guid");
     let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
     let meta_file_path = PathBuf::from(meta_file_path.clone());
-    dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec()).await;
+    log::warn!("meta file path {}", meta_file_path.to_str().unwrap());
+    dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec());
 }
 
 fn get_meta_data(file_path: PathBuf) -> MetaData {
@@ -113,7 +114,7 @@ impl ResourceManager {
         // Self { guid_to_filepath }
     }
 
-    pub async fn init(&mut self) {
+    pub fn init(&mut self) {
         // traverse all files in project folder and map guid's to file paths
         let mut guid_to_filepath: HashMap<String, Arc<ResourceHandle>> = HashMap::default();
         let project_root = dream_fs::fs::get_fs_root();
@@ -123,7 +124,7 @@ impl ResourceManager {
 
         while !traversal_stack.is_empty() {
             let cur_dir = traversal_stack.pop_front().expect("Traversal queue empty");
-            let files_in_dir = dream_fs::fs::read_dir(cur_dir).await;
+            let files_in_dir = dream_fs::fs::read_dir(cur_dir);
             let read_dir_result =
                 files_in_dir.expect("Error reading directory for resource manager traversal");
             for i in 0..read_dir_result.len() {
@@ -138,7 +139,7 @@ impl ResourceManager {
                     // let meta_file_path = file_path.push(".meta");
                     let meta_file_path =
                         PathBuf::from(String::from(file_path.to_str().unwrap()).add(".meta"));
-                    if !dream_fs::fs::exists(meta_file_path.clone()).await {
+                    if !dream_fs::fs::exists(meta_file_path.clone()) {
                         // create meta file if it does not exist
                         log::warn!(
                             "Creating metafile for path {}",
@@ -148,7 +149,7 @@ impl ResourceManager {
                             "Creating metafile for path {}",
                             file_path.clone().to_str().unwrap_or("none")
                         );
-                        create_meta_file(file_path.clone()).await;
+                        create_meta_file(file_path.clone());
                     }
                     // get the guid from the meta file
                     let meta_data = get_meta_data(file_path.clone());

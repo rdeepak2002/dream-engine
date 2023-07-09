@@ -115,6 +115,7 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         if (dirName && dirName !== "") {
             curDir = await curDir.getDirectoryHandle(dirName, {create: true});
             if (!fs.existsSync(runningMemFsDir)) {
+                console.log("Creating directory in memfs", runningMemFsDir);
                 fs.mkdirSync(runningMemFsDir);
             }
         }

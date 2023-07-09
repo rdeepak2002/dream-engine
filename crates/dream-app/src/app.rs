@@ -35,7 +35,7 @@ use crate::system::System;
 pub struct App {
     should_init: bool,
     pub dt: f32,
-    pub component_systems: Vec<Arc<Mutex<dyn System + Send>>>,
+    pub component_systems: Vec<Arc<Mutex<dyn System>>>,
     pub resource_manager: ResourceManager,
 }
 
@@ -55,9 +55,9 @@ impl App {
         }
     }
 
-    async fn initialize(&mut self) {
+    fn initialize(&mut self) {
         // TODO: ensure this does not happen repeatedly
-        self.resource_manager.init().await;
+        self.resource_manager.init();
 
         // init scene
         let e1;
@@ -81,16 +81,15 @@ impl App {
         // init component systems
         self.component_systems
             .push(Arc::new(Mutex::new(JavaScriptScriptComponentSystem::new()))
-                as Arc<Mutex<dyn System + Send>>);
-        // TODO: to support this maybe call the update loop in the main thread and only .draw() in the new thread?
-        // self.component_systems
-        //     .push(Arc::new(Mutex::new(PythonScriptComponentSystem::new()))
-        //         as Arc<Mutex<dyn System + Send>>);
+                as Arc<Mutex<dyn System>>);
+        self.component_systems.push(
+            Arc::new(Mutex::new(PythonScriptComponentSystem::new())) as Arc<Mutex<dyn System>>
+        );
     }
 
-    pub async fn update(&mut self) -> f32 {
+    pub fn update(&mut self) -> f32 {
         if self.should_init {
-            self.initialize().await;
+            self.initialize();
             self.should_init = false;
         }
         self.dt = 1.0 / 60.0;
