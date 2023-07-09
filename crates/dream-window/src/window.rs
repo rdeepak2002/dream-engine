@@ -1,4 +1,7 @@
+use std::sync::{Arc, Mutex};
+
 use crossbeam_channel::unbounded;
+use once_cell::sync::Lazy;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -6,12 +9,16 @@ use winit::{
 };
 
 use dream_app::app::App;
+use dream_tasks::task_pool::get_task_pool;
 
 // use async_winit::{
 //     event::*,
 //     event_loop::{ControlFlow, EventLoop},
 //     window::WindowBuilder,
 // };
+
+static APP: Lazy<Arc<futures::lock::Mutex<App>>> =
+    Lazy::new(|| Arc::new(futures::lock::Mutex::new(App::new())));
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -83,14 +90,35 @@ impl Window {
             closure.forget();
         }
 
-        let mut app = Box::new(App::new().await);
-        let mut renderer = dream_renderer::RendererWgpu::new(&self.window).await;
+        // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
+        let renderer = Arc::new(Mutex::new(
+            dream_renderer::RendererWgpu::new(&self.window).await,
+        ));
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
             self.window.scale_factor() as f32,
             &self.event_loop,
         )
         .await;
+
+        let (sx, rx1) = unbounded();
+
+        get_task_pool().spawn(async move {
+            loop {
+                if let Some(x) = rx1.clone().try_iter().last() {
+                    if x {
+                        log::warn!("Looping app update");
+                        println!("Looping app update");
+                        let a0 = APP.as_ref();
+                        let mut a = a0.lock().await;
+                        a.update().await;
+
+                        // TODO: figure out how to call app.draw() here...
+                        todo!()
+                    }
+                }
+            }
+        });
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -102,17 +130,24 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    // update component systems (scripts, physics, etc.)
-                    app.update();
-                    app.draw(&mut renderer);
+                    let a0 = APP.as_ref();
+                    let mut a = a0.try_lock();
+                    if a.is_some() {
+                        log::warn!("Calling app draw");
+                        println!("Calling app draw");
+                        a.unwrap().draw(&renderer);
+                        sx.clone().send(true).expect("Unable to send true");
+                    }
 
                     // draw the scene (to texture)
-                    match renderer.render() {
+                    let mut ren = renderer.lock().unwrap();
+                    let size = ren.size;
+                    match ren.render() {
                         Ok(_) => {}
                         // reconfigure the surface if it's lost or outdated
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&mut renderer);
+                            ren.resize(size);
+                            editor.handle_resize(&mut ren);
                         }
                         // quit when system is out of memory
                         Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -124,30 +159,33 @@ impl Window {
                     }
 
                     // draw editor
-                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
+                    match editor.render_wgpu(&ren, editor_raw_input, editor_pixels_per_point) {
                         Ok(_) => {
-                            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                            ren.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(renderer.size);
-                            editor.handle_resize(&renderer);
+                            ren.resize(size);
+                            editor.handle_resize(&ren);
                         }
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                         Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                     }
                 }
+
                 Event::WindowEvent { event, .. } => {
+                    let mut ren2 = renderer.lock().unwrap();
+
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                renderer.resize(physical_size);
-                                editor.handle_resize(&renderer);
+                                ren2.resize(physical_size);
+                                editor.handle_resize(&ren2);
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(*new_inner_size);
-                                editor.handle_resize(&renderer);
+                                ren2.resize(*new_inner_size);
+                                editor.handle_resize(&ren2);
                             }
                             _ => (),
                         }

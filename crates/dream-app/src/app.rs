@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
+use std::sync::{Arc, Mutex};
+
 use async_executor::Executor;
 use cgmath::prelude::*;
 
@@ -33,12 +35,12 @@ use crate::system::System;
 pub struct App {
     should_init: bool,
     pub dt: f32,
-    pub component_systems: Vec<Box<dyn System>>,
+    pub component_systems: Vec<Arc<Mutex<dyn System + Send>>>,
     pub resource_manager: ResourceManager,
 }
 
 impl App {
-    pub async fn new() -> Self {
+    pub fn new() -> Self {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
             } else {
@@ -49,11 +51,14 @@ impl App {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
-            resource_manager: ResourceManager::new().await,
+            resource_manager: ResourceManager::new(),
         }
     }
 
-    fn initialize(&mut self) {
+    async fn initialize(&mut self) {
+        // TODO: ensure this does not happen repeatedly
+        self.resource_manager.init().await;
+
         // init scene
         let e1;
         {
@@ -75,25 +80,33 @@ impl App {
         }
         // init component systems
         self.component_systems
-            .push(Box::new(JavaScriptScriptComponentSystem::new()) as Box<dyn System>);
-        self.component_systems
-            .push(Box::new(PythonScriptComponentSystem::new()) as Box<dyn System>);
+            .push(Arc::new(Mutex::new(JavaScriptScriptComponentSystem::new()))
+                as Arc<Mutex<dyn System + Send>>);
+        // TODO: to support this maybe call the update loop in the main thread and only .draw() in the new thread?
+        // self.component_systems
+        //     .push(Arc::new(Mutex::new(PythonScriptComponentSystem::new()))
+        //         as Arc<Mutex<dyn System + Send>>);
     }
 
-    pub fn update(&mut self) -> f32 {
+    pub async fn update(&mut self) -> f32 {
         if self.should_init {
-            self.initialize();
+            self.initialize().await;
             self.should_init = false;
         }
         self.dt = 1.0 / 60.0;
         for i in 0..self.component_systems.len() {
-            self.component_systems[i].update(self.dt);
+            let cs = &self.component_systems[i].clone();
+            cs.lock().unwrap().update(self.dt);
         }
         self.dt
     }
 
-    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
+    pub async fn update_async(&mut self) {}
+
+    pub fn draw(&mut self, renderer: &Arc<Mutex<RendererWgpu>>) {
         // TODO: traverse in tree fashion
+        let renderer = renderer.clone();
+        let mut renderer = renderer.lock().unwrap();
         let transform_entities: Vec<u64>;
         {
             let scene = get_current_scene_read_only();
