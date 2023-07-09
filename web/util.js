@@ -1,5 +1,6 @@
 import init from './build/dream_runner.js';
 import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
+import {fs} from 'https://cdn.jsdelivr.net/npm/memfs@4.2.0/+esm';
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -107,11 +108,15 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
     const filepath_arr = full_file_path.split('/');
     // create the necessary directories to place the file into
     let curDir = root;
+    let runningMemFsDir = "";
     for (let i = 0; i < filepath_arr.length - 1; i++) {
         const dirName = filepath_arr[i];
+        runningMemFsDir += `/${filepath_arr[i]}`;
         if (dirName && dirName !== "") {
             curDir = await curDir.getDirectoryHandle(dirName, {create: true});
-            // console.log('Created directory ', dirName);
+            if (!fs.existsSync(runningMemFsDir)) {
+                fs.mkdirSync(runningMemFsDir);
+            }
         }
     }
     const fileName = filepath_arr[filepath_arr.length - 1];
@@ -137,6 +142,10 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         const writable = await fileHandle.createWritable();
         await writable.write(fetchedFileBlob);
         await writable.close();
+
+        // memfs
+        const arr = new Uint8Array(await fetchedFileBlob.arrayBuffer());
+        fs.writeFileSync(filePath, arr);
     } catch (e) {
         console.error(`Unable to write ${filePath} to file system`, e);
         throw new Error(`Unable to write ${filePath} to file system`);

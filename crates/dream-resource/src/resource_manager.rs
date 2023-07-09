@@ -45,17 +45,15 @@ pub async fn create_meta_file(file_path: PathBuf) {
     dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec()).await;
 }
 
-async fn get_meta_data(file_path: PathBuf) -> MetaData {
+fn get_meta_data(file_path: PathBuf) -> MetaData {
     let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
     let meta_file_path = PathBuf::from(meta_file_path.clone());
-    let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true)
-        .await
-        .unwrap_or_else(|_| {
-            panic!(
-                "Unable to retrieve bytes for {}",
-                meta_file_path.to_str().unwrap()
-            )
-        });
+    let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true).unwrap_or_else(|_| {
+        panic!(
+            "Unable to retrieve bytes for {}",
+            meta_file_path.to_str().unwrap()
+        )
+    });
     serde_yaml::from_slice(bytes.as_slice()).expect("Unable to get meta data")
 }
 
@@ -98,7 +96,7 @@ impl ResourceManager {
                         create_meta_file(file_path.clone()).await;
                     }
                     // get the guid from the meta file
-                    let meta_data = get_meta_data(file_path.clone()).await;
+                    let meta_data = get_meta_data(file_path.clone());
                     let guid = meta_data.guid;
                     guid_to_filepath
                         .insert(guid.clone(), Arc::new(ResourceHandle::new(guid, file_path)));

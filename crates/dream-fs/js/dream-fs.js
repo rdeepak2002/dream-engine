@@ -1,25 +1,12 @@
+import {fs} from 'https://cdn.jsdelivr.net/npm/memfs@4.2.0/+esm';
+
 /**
  * Get bytes for a file.
  * @param file_path
  * @returns {Promise<Uint8Array>}
  */
-export async function readBinary(file_path) {
-    const filePath = file_path;
-    let root = await navigator.storage.getDirectory();
-    const filepath_arr = filePath.split('/');
-    const fileName = filepath_arr[filepath_arr.length - 1];
-    // create the necessary directories to place the file into
-    let curDir = root;
-    for (let i = 0; i < filepath_arr.length - 1; i++) {
-        const dirName = filepath_arr[i];
-        if (dirName && dirName !== "") {
-            curDir = await curDir.getDirectoryHandle(dirName, {create: false});
-        }
-    }
-    let fileHandle = await curDir.getFileHandle(fileName);
-    const file = await fileHandle.getFile();
-    const buffer = await file.arrayBuffer();
-    return new Uint8Array(buffer);
+export function readBinary(file_path) {
+    return fs.readFileSync(file_path);
 }
 
 /**
@@ -28,7 +15,10 @@ export async function readBinary(file_path) {
  * @returns {Promise<string>}
  */
 export async function readString(file_path) {
-    let buf = await readBinary(file_path);
+    // TODO: untested
+    // TODO: make sync
+    console.error("TODO in dream-fs!");
+    let buf = fs.readFileSync(file_path);
     return String.fromCharCode.apply(null, new Uint16Array(buf));
 }
 
@@ -39,6 +29,9 @@ export async function readString(file_path) {
  * @returns {Promise<*[]>}
  */
 export async function readDir(file_path) {
+    // TODO: start using fs sync
+    // TODO: make sync
+    console.error("TODO in dream-fs!");
     const filePath = file_path;
     // throw new Error("test 1");
     let root = await navigator.storage.getDirectory();
@@ -68,6 +61,9 @@ export async function readDir(file_path) {
  * @returns {Promise<boolean>}
  */
 export async function fileExists(file_path) {
+    // TODO: use fs sync
+    // TODO: make sync
+    console.error("TODO in dream-fs!");
     const filePath = file_path;
     let root = await navigator.storage.getDirectory();
     const filepath_arr = filePath.split('/');
@@ -104,22 +100,26 @@ export async function fileExists(file_path) {
  * @returns {Promise<void>}
  */
 export async function writeAll(file_path, content) {
-    const filePath = file_path;
-    let root = await navigator.storage.getDirectory();
-    const filepath_arr = filePath.split('/');
-    const fileName = filepath_arr[filepath_arr.length - 1];
-    // create the necessary directories to place the file into
-    let curDir = root;
-    for (let i = 0; i < filepath_arr.length - 1; i++) {
-        const dirName = filepath_arr[i];
-        if (dirName && dirName !== "") {
-            curDir = await curDir.getDirectoryHandle(dirName, {create: true});
-        }
-    }
-    let fileHandle = await curDir.getFileHandle(fileName, {create: true});
-    const writable = await fileHandle.createWritable();
-    let blob = new Blob([content]);
-    await writable.write(blob);
-    await writable.close();
-    return null;
+    // TODO: make method sync
+    // TODO: make directory if necessary
+    console.error("TODO in dream-fs!");
+    fs.writeFileSync(file_path, content);
+    // const filePath = file_path;
+    // let root = await navigator.storage.getDirectory();
+    // const filepath_arr = filePath.split('/');
+    // const fileName = filepath_arr[filepath_arr.length - 1];
+    // // create the necessary directories to place the file into
+    // let curDir = root;
+    // for (let i = 0; i < filepath_arr.length - 1; i++) {
+    //     const dirName = filepath_arr[i];
+    //     if (dirName && dirName !== "") {
+    //         curDir = await curDir.getDirectoryHandle(dirName, {create: true});
+    //     }
+    // }
+    // let fileHandle = await curDir.getFileHandle(fileName, {create: true});
+    // const writable = await fileHandle.createWritable();
+    // let blob = new Blob([content]);
+    // await writable.write(blob);
+    // await writable.close();
+    // return null;
 }

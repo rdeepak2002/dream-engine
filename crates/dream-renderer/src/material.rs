@@ -74,7 +74,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub(crate) async fn new<'a>(
+    pub(crate) fn new<'a>(
         material: gltf::Material<'a>,
         device: &wgpu::Device,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
@@ -87,14 +87,11 @@ impl Material {
         match pbr_properties.base_color_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
-                base_color_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
+                base_color_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
                 base_color_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
-                    .await;
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -103,14 +100,10 @@ impl Material {
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
-                metallic_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
+                metallic_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                metallic_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
-                    .await;
+                metallic_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -119,14 +112,11 @@ impl Material {
         match material.normal_texture() {
             None => {
                 let bytes = include_bytes!("default_normal.png");
-                normal_map_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
+                normal_map_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
                 normal_map_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
-                    .await;
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -135,14 +125,10 @@ impl Material {
         match material.emissive_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
-                emissive_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
+                emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                emissive_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
-                    .await;
+                emissive_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -151,14 +137,11 @@ impl Material {
         match material.occlusion_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
-                occlusion_image
-                    .load_from_bytes_threaded(bytes, "default", None)
-                    .await;
+                occlusion_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
                 occlusion_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data)
-                    .await;
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 

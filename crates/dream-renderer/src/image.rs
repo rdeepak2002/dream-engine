@@ -28,7 +28,7 @@ fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String
     }
 }
 
-pub async fn get_texture_bytes_info_from_gltf<'a>(
+pub fn get_texture_bytes_info_from_gltf<'a>(
     texture: gltf::Texture<'a>,
     buffer_data: &[Vec<u8>],
 ) -> (Vec<u8>, String, Option<String>) {
@@ -48,8 +48,7 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
             )
         }
         gltf::image::Source::Uri { uri, mime_type } => {
-            let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
-                .await
+            let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), true)
                 .expect("unable to load binary");
             let buf_dat: &[u8] = &bin;
             (buf_dat.to_vec(), String::from(texture_name), None)
@@ -58,7 +57,7 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
 }
 
 impl Image {
-    pub async fn load_from_bytes_threaded(
+    pub fn load_from_bytes_threaded(
         &mut self,
         bytes: &[u8],
         label: &str,
@@ -80,16 +79,14 @@ impl Image {
         self.receiver = Some(rx);
     }
 
-    pub async fn load_from_gltf_texture_threaded<'a>(
+    pub fn load_from_gltf_texture_threaded<'a>(
         &mut self,
         texture: gltf::Texture<'a>,
         buffer_data: &[Vec<u8>],
     ) {
         let texture = texture.clone();
-        let (bytes, label, mime_type) =
-            get_texture_bytes_info_from_gltf(texture, buffer_data).await;
-        self.load_from_bytes_threaded(&bytes, label.as_str(), mime_type)
-            .await;
+        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
+        self.load_from_bytes_threaded(&bytes, label.as_str(), mime_type);
     }
 
     pub fn update(&mut self) {
@@ -107,16 +104,14 @@ impl Image {
         self.update_rgba();
     }
 
-    pub async fn load_from_gltf_texture<'a>(
+    pub fn load_from_gltf_texture<'a>(
         &mut self,
         texture: gltf::Texture<'a>,
         buffer_data: &[Vec<u8>],
     ) {
         let texture = texture.clone();
-        let (bytes, label, mime_type) =
-            get_texture_bytes_info_from_gltf(texture, buffer_data).await;
-        self.load_from_bytes(&bytes, label.as_str(), mime_type)
-            .await;
+        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
+        self.load_from_bytes(&bytes, label.as_str(), mime_type);
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {

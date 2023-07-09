@@ -6,7 +6,7 @@ use crate::fs::{FileKind, ReadDir};
 
 #[wasm_bindgen(module = "/js/dream-fs.js")]
 extern "C" {
-    async fn readBinary(file_path: &str) -> JsValue;
+    fn readBinary(file_path: &str) -> JsValue;
     async fn readString(file_path: &str) -> JsValue;
     async fn readDir(file_path: &str) -> JsValue;
     async fn fileExists(file_path: &str) -> JsValue;
@@ -14,13 +14,8 @@ extern "C" {
 }
 
 #[allow(dead_code)]
-pub async fn read_binary_from_web_storage(file_path: &str) -> Vec<u8> {
-    let js_val_async = readBinary(file_path).await;
-    let promise = js_sys::Promise::resolve(&js_val_async);
-    let result = wasm_bindgen_futures::JsFuture::from(promise).await;
-    let js_val = result.unwrap();
-    let data = js_sys::Uint8Array::from(js_val);
-    data.to_vec()
+pub fn read_binary_from_web_storage(file_path: &str) -> Vec<u8> {
+    js_sys::Uint8Array::from(readBinary(file_path)).to_vec()
 }
 
 #[allow(dead_code)]

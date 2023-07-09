@@ -130,24 +130,14 @@ impl App {
                                 );
                             }
                         } else {
-                            // todo!();
-                            // TODO: fix web build
-                            // let executor = Executor::default();
-                            // let task = executor.spawn(async {
-                            //     renderer
-                            //         .store_model(
-                            //             Some(resource_key.as_str()),
-                            //             resource_path
-                            //                 .to_str()
-                            //                 .expect("Unable to convert resource path to a string"),
-                            //         )
-                            //         .await
-                            //         .expect("Unable to store model");
-                            // });
-                            // task.detach();
-                            // while !executor.is_empty() {
-                            //     executor.try_tick();
-                            // }
+                            renderer
+                                .store_model(
+                                    Some(resource_key.as_str()),
+                                    resource_path
+                                        .to_str()
+                                        .expect("Unable to convert resource path to a string"),
+                                )
+                                .expect("Unable to store model");
                         }
                     }
                 }

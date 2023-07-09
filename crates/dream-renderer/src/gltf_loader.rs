@@ -6,15 +6,14 @@ use dream_fs::fs::read_binary;
 use crate::material::Material;
 use crate::model::Model;
 
-pub async fn read_gltf<'a>(
+pub fn read_gltf<'a>(
     path: &str,
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
     let gltf = gltf::Gltf::from_slice(
-        &read_binary(std::path::PathBuf::from(path), false)
-            .await
+        &read_binary(std::path::PathBuf::from(path), true)
             .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
     )
     .expect("Error loading from slice for glb");
@@ -27,8 +26,7 @@ pub async fn read_gltf<'a>(
                 };
             }
             Source::Uri(uri) => {
-                let bin = read_binary(std::path::PathBuf::from(uri), false)
-                    .await
+                let bin = read_binary(std::path::PathBuf::from(uri), true)
                     .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);
             }
@@ -41,15 +39,12 @@ pub async fn read_gltf<'a>(
 
     // get materials for model
     for material in gltf.materials() {
-        materials.push(Box::new(
-            Material::new(
-                material,
-                device,
-                pbr_material_factors_bind_group_layout,
-                &buffer_data,
-            )
-            .await,
-        ));
+        materials.push(Box::new(Material::new(
+            material,
+            device,
+            pbr_material_factors_bind_group_layout,
+            &buffer_data,
+        )));
     }
 
     // get meshes for model
