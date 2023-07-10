@@ -491,9 +491,7 @@ impl RendererWgpu {
         let model = gltf_loader::read_gltf(
             model_path,
             &self.device,
-            &self.queue,
             &self.pbr_material_factors_bind_group_layout,
-            // &self.pbr_material_textures_bind_group_layout,
         );
         self.model_guids
             .insert(model_guid.parse().unwrap(), Box::new(model));
