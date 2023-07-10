@@ -650,8 +650,10 @@ impl RendererWgpu {
             .create_view(&wgpu::TextureViewDescriptor::default());
         self.frame_texture_view = Some(output_texture_view);
 
-        self.render_map.clear();
-
         Ok(())
+    }
+
+    pub fn clear(&mut self) {
+        self.render_map.clear();
     }
 }

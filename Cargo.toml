@@ -49,6 +49,9 @@ crossbeam-channel = "0.5"
 rayon = "1.5"
 wasm-bindgen-rayon = { git = "https://github.com/rdeepak2002/wasm-bindgen-rayon.git" }
 
+# cross-platform 'now'
+instant = { version = "0.1", features = ["stdweb"] }
+
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }
 dream-renderer = { path = "crates/dream-renderer" }

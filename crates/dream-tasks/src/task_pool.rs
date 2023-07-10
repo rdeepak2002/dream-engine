@@ -2,6 +2,7 @@ use std::future::Future;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use async_executor::Executor;
+use instant::Instant;
 use once_cell::sync::Lazy;
 use rayon::iter::IntoParallelRefIterator;
 use rayon::prelude::*;
@@ -39,9 +40,13 @@ pub struct AsyncComputeTaskPool<'a> {
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn start_thread(sleep_millis: u64) {
     rayon::spawn(move || {
-        log::warn!("TODO: limit background task execution frequency for wasm");
+        let mut last_update_time = Instant::now();
         loop {
-            get_task_pool().try_tick();
+            let now = Instant::now();
+            if (now - last_update_time).as_millis() > sleep_millis as u128 {
+                get_task_pool().try_tick();
+                last_update_time = Instant::now();
+            }
             if sleep_millis != 0 {
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {

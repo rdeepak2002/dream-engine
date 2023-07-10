@@ -44,7 +44,7 @@ impl Default for App {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
             } else {
-                start_thread(16);
+                start_thread(33);
             }
         }
         Self {
@@ -101,6 +101,7 @@ impl App {
         // TODO: traverse in tree fashion
         let renderer = renderer.clone();
         let mut renderer = renderer.lock().unwrap();
+        renderer.clear();
         let transform_entities = get_entities_with_component::<Transform>();
         for entity_id in transform_entities {
             if let Some(transform) = Entity::from_handle(entity_id).get_component::<Transform>() {

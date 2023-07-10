@@ -16,7 +16,7 @@ dream-fs = { workspace = true }
 dream-tasks = { workspace = true }
 wgpu = { workspace = true }
 once_cell = { workspace = true }
-futures = "0.3.28"
+instant = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }

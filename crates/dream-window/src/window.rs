@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::unbounded;
-use once_cell::sync::Lazy;
+use instant::Instant;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -9,16 +9,6 @@ use winit::{
 };
 
 use dream_app::app::App;
-use dream_tasks::task_pool::get_task_pool;
-
-// use async_winit::{
-//     event::*,
-//     event_loop::{ControlFlow, EventLoop},
-//     window::WindowBuilder,
-// };
-
-// static APP: Lazy<Arc<futures::lock::Mutex<App>>> =
-//     Lazy::new(|| Arc::new(futures::lock::Mutex::new(App::new())));
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -102,6 +92,8 @@ impl Window {
         )
         .await;
 
+        let sleep_millis: u64 = 16;
+        let mut last_update_time = Instant::now();
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {
@@ -112,8 +104,12 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    app.update();
-                    app.draw(&renderer);
+                    let now = Instant::now();
+                    if (now - last_update_time).as_millis() > sleep_millis as u128 {
+                        app.update();
+                        app.draw(&renderer);
+                        last_update_time = Instant::now();
+                    }
 
                     // draw the scene (to texture)
                     let mut ren = renderer.lock().unwrap();
