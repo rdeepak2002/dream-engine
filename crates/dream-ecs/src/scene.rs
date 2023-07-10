@@ -34,18 +34,23 @@ pub struct Scene {
 
 impl Default for Scene {
     fn default() -> Scene {
-        let name = "scene";
-        let handle = shipyard::World::new();
-        return Self {
-            name,
-            handle,
+        Self {
+            name: "scene",
+            handle: shipyard::World::new(),
             root_entity_runtime_id: None,
-        };
+        }
     }
 }
 
+pub fn create_entity() -> Option<u64> {
+    if let Ok(mut scn) = SCENE.lock() {
+        return Some(scn.create_entity().handle);
+    }
+    None
+}
+
 impl Scene {
-    pub fn create_entity(&mut self) -> Entity {
+    pub(crate) fn create_entity(&mut self) -> Entity {
         let handle = self
             .handle
             .add_entity((Transform::new(), Hierarchy::new()))

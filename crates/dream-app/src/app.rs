@@ -22,7 +22,7 @@ use cgmath::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::SCENE;
+use dream_ecs::scene::{create_entity, SCENE};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::{ResourceHandle, ResourceManager};
@@ -59,17 +59,15 @@ impl Default for App {
 impl App {
     fn initialize(&mut self) {
         // populate scene
-        let entity_handle = Some(SCENE.lock().unwrap().create_entity()).unwrap().handle;
-        {
+        let entity_handle = create_entity();
+        if let Some(entity_handle) = entity_handle {
             Entity::from_handle(entity_handle)
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
-        }
-        {
             let resource_handle = self
                 .resource_manager
                 .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
-                .expect("Resource handle cannot be found");
-            let resource_handle = resource_handle.clone();
+                .expect("Resource handle cannot be found")
+                .clone();
             Entity::from_handle(entity_handle)
                 .add_component(MeshRenderer::new(Some(resource_handle)));
         }
