@@ -47,7 +47,7 @@ pub fn read_gltf<'a>(
         )));
     }
 
-    let mut mesh_list = Box::new(Vec::new());
+    let mut mesh_list = Vec::new();
     for scene in gltf.scenes() {
         for node in scene.nodes() {
             match node.mesh() {
@@ -63,7 +63,7 @@ pub fn read_gltf<'a>(
         }
     }
 
-    for mesh in *mesh_list {
+    for mesh in mesh_list {
         let meshes_new = get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data);
         for m in meshes_new {
             meshes.push(m);
@@ -73,7 +73,7 @@ pub fn read_gltf<'a>(
     Model::new(meshes, materials)
 }
 
-fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &mut Box<Vec<Mesh<'a>>>) {
+fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &mut Vec<Mesh<'a>>) {
     match child_node.mesh() {
         None => {
             for child in child_node.children() {
@@ -85,19 +85,6 @@ fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &mut Box<V
         }
     }
 }
-
-// fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &'a mut std::vec::Vec<gltf::Mesh<'a>>) {
-//     match child_node.mesh() {
-//         None => {
-//             for child in child_node.children() {
-//                 process_gltf_child_node(child, mesh_list);
-//             }
-//         }
-//         Some(mesh) => {
-//             mesh_list.push(mesh);
-//         }
-//     }
-// }
 
 fn get_dream_meshes_from_gltf_mesh(
     device: &wgpu::Device,
