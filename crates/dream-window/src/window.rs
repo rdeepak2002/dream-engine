@@ -97,9 +97,10 @@ impl Window {
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {
-                    if let Some(size) = rx.clone().try_iter().last() {
+                    if let Some(size) = rx.try_iter().last() {
                         self.window.set_inner_size(size);
                     }
+                    let mut ren = renderer.lock().unwrap();
 
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
@@ -107,12 +108,11 @@ impl Window {
                     let now = Instant::now();
                     if (now - last_update_time).as_millis() > sleep_millis as u128 {
                         app.update();
-                        app.draw(&renderer);
+                        app.draw(&mut ren);
                         last_update_time = Instant::now();
                     }
 
                     // draw the scene (to texture)
-                    let mut ren = renderer.lock().unwrap();
                     let size = ren.size;
                     match ren.render() {
                         Ok(_) => {}

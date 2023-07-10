@@ -89,10 +89,8 @@ impl App {
 
     pub async fn update_async(&mut self) {}
 
-    pub fn draw(&mut self, renderer: &Arc<Mutex<RendererWgpu>>) {
+    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
         // TODO: traverse in tree fashion
-        let renderer = renderer.clone();
-        let mut renderer = renderer.lock().unwrap();
         renderer.clear();
         let transform_entities = get_entities_with_component::<Transform>();
         for entity_id in transform_entities {
