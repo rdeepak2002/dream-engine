@@ -41,27 +41,17 @@ export function fileExists(file_path) {
  * @returns {Promise<void>}
  */
 export function writeAll(file_path, content) {
-    // TODO: make method sync
-    // TODO: make directory if necessary
-    console.error("TODO in dream-fs!");
-    console.warn("writing file", file_path);
+    const filepath_arr = file_path.split('/');
+    // create the necessary directories to place the file into
+    let runningMemFsDir = "";
+    for (let i = 0; i < filepath_arr.length - 1; i++) {
+        const dirName = filepath_arr[i];
+        runningMemFsDir += `/${filepath_arr[i]}`;
+        if (dirName && dirName !== "") {
+            if (!fs.existsSync(runningMemFsDir)) {
+                fs.mkdirSync(runningMemFsDir);
+            }
+        }
+    }
     fs.writeFileSync(file_path, content);
-    // const filePath = file_path;
-    // let root = await navigator.storage.getDirectory();
-    // const filepath_arr = filePath.split('/');
-    // const fileName = filepath_arr[filepath_arr.length - 1];
-    // // create the necessary directories to place the file into
-    // let curDir = root;
-    // for (let i = 0; i < filepath_arr.length - 1; i++) {
-    //     const dirName = filepath_arr[i];
-    //     if (dirName && dirName !== "") {
-    //         curDir = await curDir.getDirectoryHandle(dirName, {create: true});
-    //     }
-    // }
-    // let fileHandle = await curDir.getFileHandle(fileName, {create: true});
-    // const writable = await fileHandle.createWritable();
-    // let blob = new Blob([content]);
-    // await writable.write(blob);
-    // await writable.close();
-    // return null;
 }
