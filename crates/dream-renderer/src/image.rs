@@ -1,7 +1,7 @@
 use crossbeam_channel::{unbounded, Receiver};
 use image::{DynamicImage, ImageFormat, RgbaImage};
 
-use dream_tasks::task_pool::get_task_pool;
+// use dream_tasks::task_pool::get_async_task_pool;
 
 #[derive(Clone, Default)]
 pub struct Image {
@@ -48,7 +48,7 @@ pub fn get_texture_bytes_info_from_gltf<'a>(
             )
         }
         gltf::image::Source::Uri { uri, mime_type } => {
-            let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), true)
+            let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
                 .expect("unable to load binary");
             let buf_dat: &[u8] = &bin;
             (buf_dat.to_vec(), String::from(texture_name), None)
@@ -68,13 +68,21 @@ impl Image {
         let mime_type = mime_type;
         let (sx, rx) = unbounded();
 
-        get_task_pool().spawn(async move {
+        rayon::spawn(move || {
             let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
             let rgba8 = dynamic_image.to_rgba8();
             sx.clone()
                 .send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
         });
+
+        // get_async_task_pool().spawn(async move {
+        //     let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
+        //     let rgba8 = dynamic_image.to_rgba8();
+        //     sx.clone()
+        //         .send((dynamic_image, rgba8))
+        //         .expect("Unable to send dynamic image contents");
+        // });
 
         self.receiver = Some(rx);
     }

@@ -20,8 +20,8 @@ use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub async fn run() {
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub async fn run_main() {
     // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {

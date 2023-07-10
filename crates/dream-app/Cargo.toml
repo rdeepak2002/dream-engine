@@ -15,6 +15,8 @@ dream-renderer = { workspace = true }
 dream-resource = { workspace = true }
 dream-tasks = { workspace = true }
 async-executor = { workspace = true }
+rayon = { workspace = true }
+wasm-bindgen = { workspace = true }
 
 # javascript interpreter
 boa_engine = { version = "0.16.0", features = ["console"] }
@@ -26,3 +28,6 @@ rustpython-parser = { git = "https://github.com/RustPython/RustPython", tag = "v
 rustpython-pylib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
 rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
 rustpython-vm = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, features = ["compiler", "encodings"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-rayon = { workspace = true }

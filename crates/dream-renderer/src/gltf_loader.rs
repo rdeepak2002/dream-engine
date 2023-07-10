@@ -26,7 +26,7 @@ pub fn read_gltf<'a>(
                 };
             }
             Source::Uri(uri) => {
-                let bin = read_binary(std::path::PathBuf::from(uri), true)
+                let bin = read_binary(std::path::PathBuf::from(uri), false)
                     .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);
             }

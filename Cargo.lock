@@ -883,11 +883,14 @@ dependencies = [
  "dream-tasks",
  "gc",
  "log",
+ "rayon",
  "rustpython-common",
  "rustpython-parser",
  "rustpython-pylib",
  "rustpython-stdlib",
  "rustpython-vm",
+ "wasm-bindgen",
+ "wasm-bindgen-rayon",
  "winit",
 ]
 

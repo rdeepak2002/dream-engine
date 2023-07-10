@@ -5,7 +5,7 @@ const workerInstance = {
         const multiThread = await import('./build/dream_runner.js');
         await multiThread.default(undefined, sharedMemory);
         await multiThread.initThreadPool(navigator.hardwareConcurrency);
-        await multiThread.start_thread(BigInt(500));
+        // await multiThread.start_thread(BigInt(500));
     }
 };
 

@@ -19,6 +19,8 @@ use std::sync::{Arc, Mutex};
 
 use async_executor::Executor;
 use cgmath::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
@@ -26,7 +28,8 @@ use dream_ecs::scene::{create_entity, get_entities_with_component};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
-use dream_tasks::task_pool::start_thread;
+#[cfg(target_arch = "wasm32")]
+pub use wasm_bindgen_rayon::init_thread_pool;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
@@ -44,7 +47,8 @@ impl Default for App {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
             } else {
-                start_thread(33);
+
+                // start_thread(33);
             }
         }
         Self {
@@ -63,9 +67,14 @@ impl App {
         if let Some(entity_handle) = entity_handle {
             Entity::from_handle(entity_handle)
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+            // let resource_handle = self
+            //     .resource_manager
+            //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
+            //     .expect("Resource handle cannot be found")
+            //     .clone();
             let resource_handle = self
                 .resource_manager
-                .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
+                .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
                 .expect("Resource handle cannot be found")
                 .clone();
             Entity::from_handle(entity_handle)

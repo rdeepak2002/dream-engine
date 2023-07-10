@@ -17,5 +17,5 @@
  **********************************************************************************/
 
 fn main() {
-    pollster::block_on(dream_runner::run());
+    pollster::block_on(dream_runner::run_main());
 }
