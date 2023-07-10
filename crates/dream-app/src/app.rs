@@ -36,7 +36,6 @@ use crate::python_script_component_system::PythonScriptComponentSystem;
 use crate::system::System;
 
 pub struct App {
-    should_init: bool,
     pub dt: f32,
     pub component_systems: Vec<Arc<Mutex<dyn System>>>,
     pub resource_manager: ResourceManager,
@@ -44,36 +43,18 @@ pub struct App {
 
 impl Default for App {
     fn default() -> App {
-        cfg_if::cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-            } else {
+        let resource_manager = ResourceManager::default();
 
-                // start_thread(33);
-            }
-        }
-        Self {
-            should_init: true,
-            dt: 0.0,
-            component_systems: Vec::new(),
-            resource_manager: ResourceManager::default(),
-        }
-    }
-}
-
-impl App {
-    fn initialize(&mut self) {
         // populate scene
         let entity_handle = create_entity();
         if let Some(entity_handle) = entity_handle {
             Entity::from_handle(entity_handle)
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
-            // let resource_handle = self
-            //     .resource_manager
+            // let resource_handle = resource_manager
             //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
             //     .expect("Resource handle cannot be found")
             //     .clone();
-            let resource_handle = self
-                .resource_manager
+            let resource_handle = resource_manager
                 .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
                 .expect("Resource handle cannot be found")
                 .clone();
@@ -82,20 +63,22 @@ impl App {
         }
 
         // init component systems
-        self.component_systems.push(
+        let mut component_systems = vec![
             Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
                 as Arc<Mutex<dyn System>>,
-        );
-        self.component_systems
-            .push(Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-                as Arc<Mutex<dyn System>>);
-    }
+            Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
+        ];
 
-    pub fn update(&mut self) -> f32 {
-        if self.should_init {
-            self.initialize();
-            self.should_init = false;
+        Self {
+            dt: 0.0,
+            component_systems,
+            resource_manager,
         }
+    }
+}
+
+impl App {
+    pub fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         for i in 0..self.component_systems.len() {
             let cs = &self.component_systems[i].clone();
