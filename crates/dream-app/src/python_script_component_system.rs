@@ -1,7 +1,7 @@
 use rustpython_vm as vm;
 
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::SCENE;
+use dream_ecs::scene::{transform_entities, SCENE};
 
 use crate::system::System;
 
@@ -19,11 +19,7 @@ impl PythonScriptComponentSystem {
 
 impl System for PythonScriptComponentSystem {
     fn update(&mut self, _dt: f32) {
-        let transform_entities: Vec<u64>;
-        {
-            let scene = SCENE.lock().unwrap();
-            transform_entities = scene.transform_entities();
-        }
+        let transform_entities = transform_entities();
         for entity_id in transform_entities {
             let _entity = Entity::from_handle(entity_id);
             #[allow(clippy::needless_late_init)]

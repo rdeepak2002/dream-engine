@@ -49,6 +49,11 @@ pub fn create_entity() -> Option<u64> {
     None
 }
 
+// TODO: generalize this
+pub fn transform_entities() -> Vec<u64> {
+    SCENE.lock().unwrap().transform_entities()
+}
+
 impl Scene {
     pub(crate) fn create_entity(&mut self) -> Entity {
         let handle = self
@@ -80,7 +85,7 @@ impl Scene {
     // }
 
     // TODO: generalize this
-    pub fn transform_entities(&self) -> Vec<u64> {
+    pub(crate) fn transform_entities(&self) -> Vec<u64> {
         let mut entity_id_vec = Vec::new();
         self.handle
             .run(|vm_transform: shipyard::ViewMut<Transform>| {
@@ -93,7 +98,7 @@ impl Scene {
         for entity_id in &entity_id_vec {
             entity_vec.push(entity_id.inner());
         }
-        return entity_vec;
+        entity_vec
     }
 }
 

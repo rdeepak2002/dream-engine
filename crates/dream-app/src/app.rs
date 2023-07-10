@@ -22,7 +22,7 @@ use cgmath::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{create_entity, SCENE};
+use dream_ecs::scene::{create_entity, transform_entities, SCENE};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::{ResourceHandle, ResourceManager};
@@ -100,15 +100,12 @@ impl App {
         // TODO: traverse in tree fashion
         let renderer = renderer.clone();
         let mut renderer = renderer.lock().unwrap();
-        let transform_entities: Vec<u64>;
-        {
-            let scene = SCENE.lock().unwrap();
-            transform_entities = scene.transform_entities();
-        }
+        let transform_entities = transform_entities();
         for entity_id in transform_entities {
-            let entity = Entity::from_handle(entity_id);
-            if let Some(transform) = entity.get_component::<Transform>() {
-                if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
+            if let Some(transform) = Entity::from_handle(entity_id).get_component::<Transform>() {
+                if let Some(mesh_renderer) =
+                    Entity::from_handle(entity_id).get_component::<MeshRenderer>()
+                {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {
                         let resource_handle = resource_handle.as_ref();
                         let resource_key = resource_handle.key.clone();
