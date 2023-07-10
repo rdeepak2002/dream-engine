@@ -100,27 +100,22 @@ function disableWebKeyboardEvents() {
     }
 }
 
-const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownloadLogs = false) => {
+const fetchResourceFile = async (paths, resourceFileDescriptor, showDownloadLogs = false) => {
     let joinedPaths = paths.join("/");
     // url of the file system for debugging purposes
-    const filesystemUrl = `filesystem:${window.location.protocol}//${window.location.host}/temporary`
     const full_file_path = `${joinedPaths ? `${joinedPaths}/` : joinedPaths}${resourceFileDescriptor.filepath}`;
     const filepath_arr = full_file_path.split('/');
     // create the necessary directories to place the file into
-    let curDir = root;
     let runningMemFsDir = "";
     for (let i = 0; i < filepath_arr.length - 1; i++) {
         const dirName = filepath_arr[i];
         runningMemFsDir += `/${filepath_arr[i]}`;
         if (dirName && dirName !== "") {
-            curDir = await curDir.getDirectoryHandle(dirName, {create: true});
             if (!fs.existsSync(runningMemFsDir)) {
-                // console.log("Creating directory in memfs", runningMemFsDir);
                 fs.mkdirSync(runningMemFsDir);
             }
         }
     }
-    const fileName = filepath_arr[filepath_arr.length - 1];
     const filePath = `/${full_file_path}`;
     const fileUrl = resourceFileDescriptor?.fileUrl || `${filePath}`;
     // fetch the file from the URL and get the blob data
@@ -136,17 +131,11 @@ const fetchResourceFile = async (root, paths, resourceFileDescriptor, showDownlo
         console.error(`Unable to download ${fileUrl}`, e);
         throw new Error(`Unable to download ${fileUrl}`);
     }
-    // write the file to webkit persistent storage
+    // write the file to memfs
     try {
-        console.log(`Writing file downloaded from ${fileUrl} to ${filesystemUrl}${filePath}`);
-        const fileHandle = await curDir.getFileHandle(fileName, {create: true});
-        const writable = await fileHandle.createWritable();
-        await writable.write(fetchedFileBlob);
-        await writable.close();
-
-        // memfs
         const arr = new Uint8Array(await fetchedFileBlob.arrayBuffer());
         fs.writeFileSync(filePath, arr);
+        // TODO: also persist in idb
     } catch (e) {
         console.error(`Unable to write ${filePath} to file system`, e);
         throw new Error(`Unable to write ${filePath} to file system`);
@@ -163,24 +152,6 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
         updateLoaderBarText("Retrieving filesystem root");
     }
     updateLoaderBar(0.0 / 9);
-
-    // get root directory of file system
-    let root;
-    try {
-        root = await navigator.storage.getDirectory();
-    } catch (e) {
-        console.error(`Unable to get root directory of temporary file system`, e);
-        throw new Error(`Unable to get root directory of temporary file system`);
-    }
-    // clear file system by clearing root directory
-    try {
-        root.remove();
-        root = await navigator.storage.getDirectory();
-    } catch (e) {
-        // TODO: doesn't work on safari and firefox
-        console.error(`Unable to delete root directory`, e);
-    }
-    root = await navigator.storage.getDirectory();
 
     // TODO: in long run we want users to toggle between a local and cloud saved project
     // TODO: have JSON file (or db thingy) that specifies what files are a part of the project & urls (so in future we can do google docs approach if user chooses to do a cloud synced project)
@@ -199,7 +170,7 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // fetch each resource file
     for (let i = 0; i < resources.length; i++) {
         let resourceFileDescriptor = resources[i];
-        await fetchResourceFile(root, paths, resourceFileDescriptor, showDownloadLogs);
+        await fetchResourceFile(paths, resourceFileDescriptor, showDownloadLogs);
         updateLoaderBar((i + 1) / resources.length);
         await sleep(10);
     }
@@ -208,6 +179,11 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
         updateLoaderBarText("Done downloading resources");
     }
     hideWindowOverlay();
+
+    // TODO: when deciding which things to fetch and which things to use from index db:
+    // TODO STEP 1: check local storage 'lastSynced' variable indicating when we pulled down data
+    // TODO STEP 2: send query to server for all project resources with updatedAt timestamp greater than lastSynced
+    // TODO STEP 3: server will only send back things we need, so only pull those things and overwrite indexed db thing
 
     // TODO (keep below code): below is an example of fetching file from url (useful when we do cloud syncing like google docs, where each file will be stored in storage bucket)
     // and the filepath + url can be stored in a db collection as a single db entry
