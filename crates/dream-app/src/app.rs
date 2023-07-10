@@ -73,12 +73,13 @@ impl App {
         }
 
         // init component systems
-        self.component_systems
-            .push(Arc::new(Mutex::new(JavaScriptScriptComponentSystem::new()))
-                as Arc<Mutex<dyn System>>);
         self.component_systems.push(
-            Arc::new(Mutex::new(PythonScriptComponentSystem::new())) as Arc<Mutex<dyn System>>
+            Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
+                as Arc<Mutex<dyn System>>,
         );
+        self.component_systems
+            .push(Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
+                as Arc<Mutex<dyn System>>);
     }
 
     pub fn update(&mut self) -> f32 {

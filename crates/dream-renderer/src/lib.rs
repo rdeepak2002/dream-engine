@@ -255,7 +255,7 @@ impl RendererWgpu {
             zfar: 1000.0,
         };
 
-        let mut camera_uniform = CameraUniform::new();
+        let mut camera_uniform = CameraUniform::default();
         camera_uniform.update_view_proj(&camera);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

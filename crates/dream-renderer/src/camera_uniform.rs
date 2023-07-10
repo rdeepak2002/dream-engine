@@ -9,13 +9,15 @@ pub struct CameraUniform {
 }
 
 impl CameraUniform {
-    pub(crate) fn new() -> Self {
+    pub fn update_view_proj(&mut self, camera: &camera::Camera) {
+        self.view_proj = camera.build_view_projection_matrix().into();
+    }
+}
+
+impl Default for CameraUniform {
+    fn default() -> Self {
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
         }
-    }
-
-    pub fn update_view_proj(&mut self, camera: &camera::Camera) {
-        self.view_proj = camera.build_view_projection_matrix().into();
     }
 }

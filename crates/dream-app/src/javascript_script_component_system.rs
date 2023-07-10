@@ -27,8 +27,8 @@ use crate::system::System;
 
 pub struct JavaScriptScriptComponentSystem {}
 
-impl JavaScriptScriptComponentSystem {
-    pub fn new() -> JavaScriptScriptComponentSystem {
+impl Default for JavaScriptScriptComponentSystem {
+    fn default() -> Self {
         Self {}
     }
 }

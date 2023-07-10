@@ -10,8 +10,8 @@ pub struct PythonScriptComponentSystem {
     pub interpreter: rustpython_vm::Interpreter,
 }
 
-impl PythonScriptComponentSystem {
-    pub fn new() -> Self {
+impl Default for PythonScriptComponentSystem {
+    fn default() -> Self {
         Self {
             interpreter: vm::Interpreter::without_stdlib(Default::default()),
         }

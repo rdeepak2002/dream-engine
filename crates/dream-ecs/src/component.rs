@@ -12,7 +12,7 @@ pub struct Transform {
 impl Default for Transform {
     fn default() -> Self {
         Self {
-            position: Vector3::new(),
+            position: Vector3::default(),
         }
     }
 }
