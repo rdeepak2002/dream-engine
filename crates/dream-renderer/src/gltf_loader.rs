@@ -50,23 +50,13 @@ pub fn read_gltf<'a>(
     let mut mesh_list = Vec::new();
     for scene in gltf.scenes() {
         for node in scene.nodes() {
-            match node.mesh() {
-                None => {
-                    for child in node.children() {
-                        process_gltf_child_node(child, &mut mesh_list);
-                    }
-                }
-                Some(mesh) => {
-                    mesh_list.push(mesh);
-                }
-            }
+            process_gltf_child_node(node, &mut mesh_list);
         }
     }
 
     for mesh in mesh_list {
-        let meshes_new = get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data);
-        for m in meshes_new {
-            meshes.push(m);
+        for mesh in get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data) {
+            meshes.push(mesh);
         }
     }
 
@@ -93,8 +83,6 @@ fn get_dream_meshes_from_gltf_mesh(
 ) -> Vec<crate::model::Mesh> {
     let mut meshes = Vec::new();
     mesh.index();
-    // println!("Mesh for node {}", node.name().expect("No name for node"));
-    // println!("{} children for mesh node", node.children().count());
     let primitives = mesh.primitives();
     primitives.for_each(|primitive| {
         let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));
@@ -147,14 +135,6 @@ fn get_dream_meshes_from_gltf_mesh(
             contents: bytemuck::cast_slice(&indices),
             usage: wgpu::BufferUsages::INDEX,
         });
-
-        // meshes.push(crate::model::Mesh {
-        //     name: mesh_name.to_string(),
-        //     vertex_buffer,
-        //     index_buffer,
-        //     num_elements: indices.len() as u32,
-        //     material: primitive.material().index().unwrap_or(0),
-        // });
         meshes.push(crate::model::Mesh {
             name: mesh_name.to_string(),
             vertex_buffer,
