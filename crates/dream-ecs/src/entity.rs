@@ -201,7 +201,7 @@ impl Entity {
             comp_opt = Some(comp.clone());
         };
         scene.handle.run(system);
-        return comp_opt;
+        comp_opt
     }
 
     pub fn has_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> bool {

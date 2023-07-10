@@ -18,8 +18,9 @@
 
 use boa_engine::JsValue;
 
+use dream_ecs::component::Transform;
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{transform_entities, SCENE};
+use dream_ecs::scene::get_entities_with_component;
 
 use crate::entity_js::{EntityJS, Vector3JS};
 use crate::system::System;
@@ -34,7 +35,7 @@ impl JavaScriptScriptComponentSystem {
 
 impl System for JavaScriptScriptComponentSystem {
     fn update(&mut self, dt: f32) {
-        let transform_entities = transform_entities();
+        let transform_entities = get_entities_with_component::<Transform>();
         for entity_id in transform_entities {
             let entity = Entity::from_handle(entity_id);
             // TODO: read this using read bytes method defined in dream-fs

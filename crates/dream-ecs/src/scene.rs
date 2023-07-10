@@ -19,12 +19,12 @@
 use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
-use shipyard::{IntoIter, IntoWithId};
+use shipyard::{Get, IntoIter, IntoWithId};
 
 use crate::component::{Hierarchy, Transform};
 use crate::entity::Entity;
 
-pub static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
+pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
 
 pub struct Scene {
     pub name: &'static str,
@@ -49,9 +49,8 @@ pub fn create_entity() -> Option<u64> {
     None
 }
 
-// TODO: generalize this
-pub fn transform_entities() -> Vec<u64> {
-    SCENE.lock().unwrap().transform_entities()
+pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>() -> Vec<u64> {
+    SCENE.lock().unwrap().get_entities_with_component::<T>()
 }
 
 impl Scene {
@@ -84,16 +83,16 @@ impl Scene {
     //     child_entity.attach_to_back_with_scene(Some(parent_handle), self);
     // }
 
-    // TODO: generalize this
-    pub(crate) fn transform_entities(&self) -> Vec<u64> {
+    pub(crate) fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>(
+        &self,
+    ) -> Vec<u64> {
         let mut entity_id_vec = Vec::new();
-        self.handle
-            .run(|vm_transform: shipyard::ViewMut<Transform>| {
-                for t in vm_transform.iter().with_id() {
-                    let entity_id = t.0;
-                    entity_id_vec.push(entity_id);
-                }
-            });
+        self.handle.run(|vm_transform: shipyard::ViewMut<T>| {
+            for t in vm_transform.iter().with_id() {
+                let entity_id = t.0;
+                entity_id_vec.push(entity_id);
+            }
+        });
         let mut entity_vec = Vec::new();
         for entity_id in &entity_id_vec {
             entity_vec.push(entity_id.inner());
