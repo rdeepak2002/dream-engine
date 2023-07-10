@@ -19,7 +19,7 @@
 use boa_engine::JsValue;
 
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::get_current_scene_read_only;
+use dream_ecs::scene::SCENE;
 
 use crate::entity_js::{EntityJS, Vector3JS};
 use crate::system::System;
@@ -38,7 +38,7 @@ impl System for JavaScriptScriptComponentSystem {
         let transform_entities: Vec<u64>;
         {
             // let scene = SCENE.read().unwrap();
-            let scene = get_current_scene_read_only();
+            let scene = SCENE.lock().unwrap();
             transform_entities = scene.transform_entities().clone();
         }
         for entity_id in transform_entities {

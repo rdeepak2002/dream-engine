@@ -19,7 +19,7 @@
 use shipyard::{EntityId, Get};
 
 use crate::component::{Hierarchy, Transform};
-use crate::scene::{get_current_scene, get_current_scene_read_only, Scene};
+use crate::scene::{Scene, SCENE};
 
 #[derive(Debug, Clone)]
 pub struct Entity {
@@ -178,14 +178,14 @@ impl Entity {
     }
 
     pub fn add_component<T: shipyard::TupleAddComponent>(&self, component: T) {
-        let mut scene = get_current_scene();
+        let mut scene = SCENE.lock().unwrap();
         scene
             .handle
             .add_component(EntityId::from_inner(self.handle).unwrap(), component);
     }
 
     pub fn remove_component<T: shipyard::TupleRemove>(&self) {
-        let mut scene = get_current_scene();
+        let mut scene = SCENE.lock().unwrap();
         scene
             .handle
             .remove::<T>(EntityId::from_inner(self.handle).unwrap());
@@ -193,7 +193,7 @@ impl Entity {
 
     pub fn get_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> Option<T> {
         let mut comp_opt: Option<T> = None;
-        let scene = get_current_scene_read_only();
+        let scene = SCENE.lock().unwrap();
         let system = |vm_pos: shipyard::ViewMut<T>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())

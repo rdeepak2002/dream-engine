@@ -22,7 +22,7 @@ use cgmath::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{get_current_scene, get_current_scene_read_only};
+use dream_ecs::scene::SCENE;
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::{ResourceHandle, ResourceManager};
@@ -39,8 +39,8 @@ pub struct App {
     pub resource_manager: ResourceManager,
 }
 
-impl App {
-    pub fn new() -> Self {
+impl Default for App {
+    fn default() -> App {
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
             } else {
@@ -51,23 +51,18 @@ impl App {
             should_init: true,
             dt: 0.0,
             component_systems: Vec::new(),
-            resource_manager: ResourceManager::new(),
+            resource_manager: ResourceManager::default(),
         }
     }
+}
 
+impl App {
     fn initialize(&mut self) {
-        // TODO: ensure this does not happen repeatedly
-        self.resource_manager.init();
-
-        // init scene
-        let e1;
+        // populate scene
+        let entity_handle = Some(SCENE.lock().unwrap().create_entity()).unwrap().handle;
         {
-            let mut scene = get_current_scene();
-            e1 = Some(scene.create_entity());
-        }
-        {
-            // e1.unwrap()
-            //     .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+            Entity::from_handle(entity_handle)
+                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
         }
         {
             let resource_handle = self
@@ -75,9 +70,10 @@ impl App {
                 .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
                 .expect("Resource handle cannot be found");
             let resource_handle = resource_handle.clone();
-            e1.unwrap()
+            Entity::from_handle(entity_handle)
                 .add_component(MeshRenderer::new(Some(resource_handle)));
         }
+
         // init component systems
         self.component_systems
             .push(Arc::new(Mutex::new(JavaScriptScriptComponentSystem::new()))
@@ -108,7 +104,7 @@ impl App {
         let mut renderer = renderer.lock().unwrap();
         let transform_entities: Vec<u64>;
         {
-            let scene = get_current_scene_read_only();
+            let scene = SCENE.lock().unwrap();
             transform_entities = scene.transform_entities();
         }
         for entity_id in transform_entities {

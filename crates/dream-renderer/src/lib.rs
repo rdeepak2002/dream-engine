@@ -71,7 +71,7 @@ pub struct RendererWgpu {
 }
 
 impl RendererWgpu {
-    pub async fn new(window: &winit::window::Window) -> Self {
+    pub async fn default(window: &winit::window::Window) -> Self {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU

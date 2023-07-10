@@ -91,9 +91,9 @@ impl Window {
         }
 
         // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
-        let mut app = App::new();
+        let mut app = App::default();
         let renderer = Arc::new(Mutex::new(
-            dream_renderer::RendererWgpu::new(&self.window).await,
+            dream_renderer::RendererWgpu::default(&self.window).await,
         ));
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
@@ -101,25 +101,6 @@ impl Window {
             &self.event_loop,
         )
         .await;
-
-        // let (sx, rx1) = unbounded();
-
-        // get_task_pool().spawn(async move {
-        //     loop {
-        //         if let Some(x) = rx1.clone().try_iter().last() {
-        //             if x {
-        //                 log::warn!("Looping app update");
-        //                 println!("Looping app update");
-        //                 let a0 = APP.as_ref();
-        //                 let mut a = a0.lock().await;
-        //                 a.update();
-        //
-        //                 // TODO: figure out how to call app.draw() here...
-        //                 todo!()
-        //             }
-        //         }
-        //     }
-        // });
 
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -131,14 +112,6 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    // let a0 = APP.as_ref();
-                    // let mut a = a0.try_lock();
-                    // if a.is_some() {
-                    //     log::warn!("Calling app draw");
-                    //     println!("Calling app draw");
-                    //     a.unwrap().draw(&renderer);
-                    //     sx.clone().send(true).expect("Unable to send true");
-                    // }
                     app.update();
                     app.draw(&renderer);
 

@@ -1,7 +1,7 @@
 use rustpython_vm as vm;
 
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::get_current_scene_read_only;
+use dream_ecs::scene::SCENE;
 
 use crate::system::System;
 
@@ -21,7 +21,7 @@ impl System for PythonScriptComponentSystem {
     fn update(&mut self, _dt: f32) {
         let transform_entities: Vec<u64>;
         {
-            let scene = get_current_scene_read_only();
+            let scene = SCENE.lock().unwrap();
             transform_entities = scene.transform_entities();
         }
         for entity_id in transform_entities {
