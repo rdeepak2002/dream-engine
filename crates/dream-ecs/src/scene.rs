@@ -57,7 +57,7 @@ impl Scene {
     pub(crate) fn create_entity(&mut self) -> Entity {
         let handle = self
             .handle
-            .add_entity((Transform::new(), Hierarchy::new()))
+            .add_entity((Transform::default(), Hierarchy::default()))
             .inner();
         let entity = Entity::from_handle(handle);
         entity.attach_to_back_with_scene(self.root_entity_runtime_id, self);
@@ -70,7 +70,7 @@ impl Scene {
     pub fn create_entity_with_parent(&mut self, parent_entity_runtime_id: u64) -> Entity {
         let handle = self
             .handle
-            .add_entity((Transform::new(), Hierarchy::new()))
+            .add_entity((Transform::default(), Hierarchy::default()))
             .inner();
         let entity = Entity::from_handle(handle);
         entity.attach_to_back_with_scene(Some(parent_entity_runtime_id), self);

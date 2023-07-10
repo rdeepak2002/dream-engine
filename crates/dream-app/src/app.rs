@@ -25,8 +25,8 @@ use dream_ecs::entity::Entity;
 use dream_ecs::scene::{create_entity, get_entities_with_component};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
-use dream_resource::resource_manager::{ResourceHandle, ResourceManager};
-use dream_tasks::task_pool::{get_task_pool, start_thread};
+use dream_resource::resource_manager::ResourceManager;
+use dream_tasks::task_pool::start_thread;
 
 use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;

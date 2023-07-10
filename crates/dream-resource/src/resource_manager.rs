@@ -6,17 +6,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ResourceHandle {
-    pub key: String,
-    pub path: PathBuf,
-}
-
-impl ResourceHandle {
-    pub fn new(key: String, path: PathBuf) -> Self {
-        Self { key, path }
-    }
-}
+use crate::resource_handle::ResourceHandle;
 
 pub struct ResourceManager {
     /// Map between guid and file path
