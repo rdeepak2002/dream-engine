@@ -82,7 +82,7 @@ impl Window {
 
         // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
         let mut app = App::default();
-        let mut renderer = dream_renderer::RendererWgpu::default(&self.window).await;
+        let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
             self.window.scale_factor() as f32,

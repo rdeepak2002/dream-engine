@@ -19,7 +19,10 @@
 use std::iter;
 use std::sync::Arc;
 
+use gltf::material::AlphaMode;
 use wgpu::util::DeviceExt;
+use wgpu::{CompositeAlphaMode, PresentMode};
+use winit::dpi::PhysicalSize;
 
 use crate::camera_uniform::CameraUniform;
 use crate::image::Image;
@@ -45,11 +48,11 @@ struct RenderMapKey {
 }
 
 pub struct RendererWgpu {
-    pub surface: wgpu::Surface,
+    pub surface: Option<wgpu::Surface>,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    pub size: winit::dpi::PhysicalSize<u32>,
+    pub size: PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
     depth_texture: texture::Texture,
     frame_texture: texture::Texture,
@@ -62,7 +65,6 @@ pub struct RendererWgpu {
     pub camera_uniform: CameraUniform,
     pub camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    pub surface_format: wgpu::TextureFormat,
     model_guids: std::collections::HashMap<String, Box<Model>>,
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
@@ -71,9 +73,7 @@ pub struct RendererWgpu {
 }
 
 impl RendererWgpu {
-    pub async fn default(window: &winit::window::Window) -> Self {
-        let size = window.inner_size();
-
+    pub async fn default(window: Option<&winit::window::Window>) -> Self {
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -81,31 +81,29 @@ impl RendererWgpu {
             dx12_shader_compiler: Default::default(),
         });
 
-        // # Safety
-        //
-        // The surface needs to live as long as the window that created it.
-        // State owns the window so this should be safe.
-        let surface = unsafe { instance.create_surface(&window) }.unwrap();
+        let size;
+        let surface;
+
+        if window.is_some() {
+            size = window.as_ref().unwrap().inner_size();
+            // # Safety
+            //
+            // The surface needs to live as long as the window that created it.
+            // State owns the window so this should be safe.
+            surface = Some(unsafe { instance.create_surface(window.as_ref().unwrap()) }.unwrap());
+        } else {
+            size = PhysicalSize::new(100, 100);
+            surface = None;
+        }
 
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: Some(&surface),
+                compatible_surface: surface.as_ref(),
                 force_fallback_adapter: false,
             })
             .await
             .unwrap();
-
-        let surface_caps = surface.get_capabilities(&adapter);
-        // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-        // one will result all the colors comming out darker. If you want to support non
-        // Srgb surfaces, you'll need to account for that when drawing to the frame.
-        let surface_format = surface_caps
-            .formats
-            .iter()
-            .copied()
-            .find(|f| f.is_srgb())
-            .unwrap_or(surface_caps.formats[0]);
 
         // let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
         // web_gl_limits.max_texture_dimension_2d = 4096;
@@ -123,16 +121,55 @@ impl RendererWgpu {
             .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
             .unwrap();
 
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface_format,
-            width: size.width,
-            height: size.height,
-            present_mode: surface_caps.present_modes[0],
-            alpha_mode: surface_caps.alpha_modes[0],
-            view_formats: vec![],
-        };
-        surface.configure(&device, &config);
+        let config;
+
+        if surface.is_some() {
+            let surface_caps = surface.as_ref().unwrap().get_capabilities(&adapter);
+
+            // Shader code in this tutorial assumes an Srgb surface texture. Using a different
+            // one will result all the colors comming out darker. If you want to support non
+            // Srgb surfaces, you'll need to account for that when drawing to the frame.
+            let surface_format = surface_caps
+                .formats
+                .iter()
+                .copied()
+                .find(|f| f.is_srgb())
+                .unwrap_or(surface_caps.formats[0]);
+
+            config = wgpu::SurfaceConfiguration {
+                usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                format: surface_format,
+                width: size.width,
+                height: size.height,
+                present_mode: surface_caps.present_modes[0],
+                alpha_mode: surface_caps.alpha_modes[0],
+                view_formats: vec![],
+            };
+        } else {
+            cfg_if::cfg_if! {
+                if #[cfg(target_arch = "wasm32")] {
+                    config = wgpu::SurfaceConfiguration {
+                        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                        format: wgpu::TextureFormat::Bgra8Unorm,
+                        width: size.width,
+                        height: size.height,
+                        present_mode: PresentMode::AutoNoVsync,
+                        alpha_mode: CompositeAlphaMode::Auto,
+                        view_formats: vec![],
+                    };
+                } else {
+                    config = wgpu::SurfaceConfiguration {
+                        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                        format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                        width: size.width,
+                        height: size.height,
+                        present_mode: PresentMode::AutoNoVsync,
+                        alpha_mode: CompositeAlphaMode::Auto,
+                        view_formats: vec![],
+                    };
+                }
+            }
+        }
 
         let pbr_material_factors_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -327,11 +364,19 @@ impl RendererWgpu {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let depth_texture =
-            texture::Texture::create_depth_texture(&device, &config, "depth_texture");
+        let depth_texture = texture::Texture::create_depth_texture(
+            &device,
+            config.width,
+            config.height,
+            "depth_texture",
+        );
 
-        let frame_texture =
-            texture::Texture::create_frame_texture(&device, &config, "frame_texture");
+        let frame_texture = texture::Texture::create_frame_texture(
+            &device,
+            config.width,
+            config.height,
+            "frame_texture",
+        );
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -414,7 +459,6 @@ impl RendererWgpu {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
-            surface_format,
             model_guids: Default::default(),
             render_map: Default::default(),
             instance_buffer_map: Default::default(),
@@ -441,12 +485,25 @@ impl RendererWgpu {
             self.size = new_size;
             self.config.width = new_size.width;
             self.config.height = new_size.height;
-            self.surface.configure(&self.device, &self.config);
+            if self.surface.is_some() {
+                self.surface
+                    .as_mut()
+                    .unwrap()
+                    .configure(&self.device, &self.config);
+            }
             // resize frame textures
-            self.frame_texture =
-                texture::Texture::create_frame_texture(&self.device, &self.config, "frame_texture");
-            self.depth_texture =
-                texture::Texture::create_depth_texture(&self.device, &self.config, "depth_texture");
+            self.frame_texture = texture::Texture::create_frame_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "frame_texture",
+            );
+            self.depth_texture = texture::Texture::create_depth_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "depth_texture",
+            );
         }
     }
 

@@ -15,12 +15,23 @@ pub struct EditorEguiWgpu {
 }
 
 pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
-    egui_wgpu::Renderer::new(
-        &state.device,
-        state.surface_format,
-        Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
-        1,
-    )
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            egui_wgpu::Renderer::new(
+                &state.device,
+                wgpu::TextureFormat::Bgra8Unorm,    // for webgl: Rgba8UnormSrgb
+                Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
+                1,
+            )
+        } else {
+            egui_wgpu::Renderer::new(
+                &state.device,
+                wgpu::TextureFormat::Bgra8UnormSrgb,
+                Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
+                1,
+            )
+        }
+    }
 }
 
 pub fn generate_egui_wgpu_depth_texture(
@@ -28,7 +39,8 @@ pub fn generate_egui_wgpu_depth_texture(
 ) -> dream_renderer::texture::Texture {
     dream_renderer::texture::Texture::create_depth_texture(
         &state.device,
-        &state.config,
+        state.config.width,
+        state.config.height,
         "depth_texture_egui",
     )
 }
@@ -82,7 +94,11 @@ impl EditorEguiWgpu {
         input: RawInput,
         pixels_per_point: f32,
     ) -> Result<(), wgpu::SurfaceError> {
-        let output = state.surface.get_current_texture()?;
+        let output = state
+            .surface
+            .as_ref()
+            .expect("No surface available for editor to draw to")
+            .get_current_texture()?;
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
