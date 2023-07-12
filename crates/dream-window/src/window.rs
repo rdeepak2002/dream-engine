@@ -82,9 +82,7 @@ impl Window {
 
         // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
         let mut app = App::default();
-        let renderer = Arc::new(Mutex::new(
-            dream_renderer::RendererWgpu::default(&self.window).await,
-        ));
+        let mut renderer = dream_renderer::RendererWgpu::default(&self.window).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(
             &renderer,
             self.window.scale_factor() as f32,
@@ -100,7 +98,6 @@ impl Window {
                     if let Some(size) = rx.try_iter().last() {
                         self.window.set_inner_size(size);
                     }
-                    let mut ren = renderer.lock().unwrap();
 
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
@@ -108,18 +105,18 @@ impl Window {
                     let now = Instant::now();
                     if (now - last_update_time).as_millis() > sleep_millis as u128 {
                         app.update();
-                        app.draw(&mut ren);
+                        app.draw(&mut renderer);
                         last_update_time = Instant::now();
                     }
 
                     // draw the scene (to texture)
-                    let size = ren.size;
-                    match ren.render() {
+                    let size = renderer.size;
+                    match renderer.render() {
                         Ok(_) => {}
                         // reconfigure the surface if it's lost or outdated
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            ren.resize(size);
-                            editor.handle_resize(&mut ren);
+                            renderer.resize(size);
+                            editor.handle_resize(&mut renderer);
                         }
                         // quit when system is out of memory
                         Err(wgpu::SurfaceError::OutOfMemory) => {
@@ -131,13 +128,13 @@ impl Window {
                     }
 
                     // draw editor
-                    match editor.render_wgpu(&ren, editor_raw_input, editor_pixels_per_point) {
+                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
                         Ok(_) => {
-                            ren.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            ren.resize(size);
-                            editor.handle_resize(&ren);
+                            renderer.resize(size);
+                            editor.handle_resize(&renderer);
                         }
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                         Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
@@ -145,19 +142,17 @@ impl Window {
                 }
 
                 Event::WindowEvent { event, .. } => {
-                    let mut ren2 = renderer.lock().unwrap();
-
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                ren2.resize(physical_size);
-                                editor.handle_resize(&ren2);
+                                renderer.resize(physical_size);
+                                editor.handle_resize(&renderer);
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                ren2.resize(*new_inner_size);
-                                editor.handle_resize(&ren2);
+                                renderer.resize(*new_inner_size);
+                                editor.handle_resize(&renderer);
                             }
                             _ => (),
                         }

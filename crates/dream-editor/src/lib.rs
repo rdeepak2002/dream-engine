@@ -35,14 +35,10 @@ pub fn generate_egui_wgpu_depth_texture(
 
 impl EditorEguiWgpu {
     pub async fn new(
-        renderer: &Arc<Mutex<dream_renderer::RendererWgpu>>,
+        renderer: &dream_renderer::RendererWgpu,
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
-        let renderer = Arc::clone(renderer);
-        let renderer = renderer
-            .lock()
-            .expect("Unable to lock renderer mutex in editor");
         let depth_texture_egui = generate_egui_wgpu_depth_texture(&renderer);
         let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(&renderer);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
