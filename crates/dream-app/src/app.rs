@@ -102,9 +102,7 @@ impl App {
                         let upgraded_resource_handle = resource_handle
                             .upgrade()
                             .expect("Unable to upgrade resource handle");
-
                         let resource_key = &upgraded_resource_handle.key;
-                        let resource_path = &upgraded_resource_handle.path;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
                             for i in 0..2 {
@@ -128,6 +126,7 @@ impl App {
                                 );
                             }
                         } else {
+                            let resource_path = &upgraded_resource_handle.path;
                             renderer
                                 .store_model(
                                     Some(resource_key.as_str()),
