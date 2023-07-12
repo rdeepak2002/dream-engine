@@ -46,8 +46,8 @@ struct RenderMapKey {
 
 pub struct RendererWgpu {
     pub surface: wgpu::Surface,
-    pub device: Arc<wgpu::Device>,
-    pub queue: Arc<wgpu::Queue>,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
     render_pipeline: wgpu::RenderPipeline,
@@ -399,8 +399,8 @@ impl RendererWgpu {
 
         Self {
             surface,
-            device: Arc::new(device),
-            queue: Arc::new(queue),
+            device,
+            queue,
             size,
             config,
             render_pipeline,

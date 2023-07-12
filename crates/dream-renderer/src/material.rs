@@ -193,8 +193,8 @@ impl Material {
 
     pub fn update_textures(
         &mut self,
-        device: &Arc<wgpu::Device>,
-        queue: &Arc<wgpu::Queue>,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
         pbr_material_textures_bind_group_layout: &wgpu::BindGroupLayout,
     ) {
         if self.pbr_material_textures_bind_group.is_some() {
@@ -224,8 +224,8 @@ impl Material {
         // load base color image
         let rgba_image = self.base_color_image.to_rgba8();
         let base_color_texture = crate::texture::Texture::new(
-            device.clone().as_ref(),
-            queue.clone().as_ref(),
+            device,
+            queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Base color texture"),
@@ -235,8 +235,8 @@ impl Material {
         // load metallic image
         let rgba_image = self.metallic_image.to_rgba8();
         let metallic_texture = crate::texture::Texture::new(
-            device.clone().as_ref(),
-            queue.clone().as_ref(),
+            device,
+            queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Metallic texture"),
@@ -246,8 +246,8 @@ impl Material {
         // load normal map image
         let rgba_image = self.normal_map_image.to_rgba8();
         let normal_map_texture = crate::texture::Texture::new(
-            device.clone().as_ref(),
-            queue.clone().as_ref(),
+            device,
+            queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Normal map texture"),
@@ -257,8 +257,8 @@ impl Material {
         // load emissive image
         let rgba_image = self.emissive_image.to_rgba8();
         let emissive_texture = crate::texture::Texture::new(
-            device.clone().as_ref(),
-            queue.clone().as_ref(),
+            device,
+            queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Emissive texture"),
@@ -268,8 +268,8 @@ impl Material {
         // load occlusion image
         let rgba_image = self.occlusion_image.to_rgba8();
         let occlusion_texture = crate::texture::Texture::new(
-            device.clone().as_ref(),
-            queue.clone().as_ref(),
+            device,
+            queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Occlusion texture"),
