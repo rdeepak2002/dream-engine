@@ -71,8 +71,7 @@ impl Image {
         rayon::spawn(move || {
             let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
             let rgba8 = dynamic_image.to_rgba8();
-            sx.clone()
-                .send((dynamic_image, rgba8))
+            sx.send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
         });
 
