@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use dream_math::Vector3;
 use dream_resource::resource_handle::ResourceHandle;
@@ -50,13 +50,27 @@ impl Default for Hierarchy {
     }
 }
 
-#[derive(shipyard::Component, Debug, Clone, Default, PartialEq)]
+#[derive(shipyard::Component, Debug, Clone, Default)]
 pub struct MeshRenderer {
-    pub resource_handle: Option<Arc<ResourceHandle>>,
+    pub resource_handle: Option<Weak<ResourceHandle>>,
+}
+
+impl PartialEq for MeshRenderer {
+    fn eq(&self, other: &Self) -> bool {
+        if self.resource_handle.is_some() && other.resource_handle.is_some() {
+            let r1 = self.resource_handle.as_ref().unwrap().upgrade();
+            let r2 = other.resource_handle.as_ref().unwrap().upgrade();
+            if r1.is_some() && r2.is_some() {
+                return r1.unwrap().eq(&r2.unwrap());
+            }
+        }
+
+        false
+    }
 }
 
 impl MeshRenderer {
-    pub fn new(resource_handle: Option<Arc<ResourceHandle>>) -> Self {
+    pub fn new(resource_handle: Option<Weak<ResourceHandle>>) -> Self {
         Self { resource_handle }
     }
 }

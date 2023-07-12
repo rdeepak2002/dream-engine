@@ -99,9 +99,12 @@ impl App {
                     Entity::from_handle(entity_id).get_component::<MeshRenderer>()
                 {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {
-                        let resource_handle = resource_handle.as_ref();
-                        let resource_key = resource_handle.key.clone();
-                        let resource_path = resource_handle.path.clone();
+                        let upgraded_resource_handle = resource_handle
+                            .upgrade()
+                            .expect("Unable to upgrade resource handle");
+
+                        let resource_key = &upgraded_resource_handle.key;
+                        let resource_path = &upgraded_resource_handle.path;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
                             for i in 0..2 {

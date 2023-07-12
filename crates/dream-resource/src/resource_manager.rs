@@ -1,7 +1,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::ops::Add;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -104,7 +104,7 @@ impl Default for ResourceManager {
 }
 
 impl ResourceManager {
-    pub fn get_resource(&self, key: String) -> Option<&Arc<ResourceHandle>> {
-        self.guid_to_filepath.get(key.as_str())
+    pub fn get_resource(&self, key: String) -> Option<Weak<ResourceHandle>> {
+        self.guid_to_filepath.get(key.as_str()).map(Arc::downgrade)
     }
 }
