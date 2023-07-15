@@ -1,3 +1,5 @@
+cargo-features = ["per-package-target"]
+
 [workspace]
 members = [
     "crates/*"
@@ -27,7 +29,7 @@ cfg-if = "1"
 cgmath = "0.18"
 
 # immediate gui library
-egui = { version = "0.21.0", git = "https://github.com/emilk/egui.git" }
+egui = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
 
 # easy conversion to plain datatypes
 bytemuck = { version = "1.12", features = ["derive"] }
@@ -63,3 +65,5 @@ dream-fs = { path = "crates/dream-fs" }
 dream-resource = { path = "crates/dream-resource" }
 dream-tasks = { path = "crates/dream-tasks" }
 dream-runner = { path = "crates/dream-runner" }
+
+default-target = "x86_64-unknown-linux-gnu"
