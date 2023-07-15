@@ -123,11 +123,8 @@ impl EntityJS {
         if entity.is_some() {
             let entity = entity.unwrap();
             let transform: Option<Transform> = entity.get_component();
-            return if transform.is_some() {
-                let transform = transform.unwrap().clone();
-                // println!("Entity transform {}", transform.to_string());
-                // log::warn!("Entity transform {}", transform.to_string());
-                let position = transform.position.clone();
+            return if let Some(transform) = transform {
+                let position = transform.position;
                 let position_js = Vector3JS::new(position);
                 let position_js_obj = position_js.js_object(context);
                 Ok(JsValue::Object(position_js_obj))

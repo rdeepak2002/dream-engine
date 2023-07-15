@@ -50,20 +50,16 @@ impl Default for App {
         if let Some(entity_handle) = entity_handle {
             Entity::from_handle(entity_handle)
                 .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
-            // let resource_handle = resource_manager
-            //     .get_resource(String::from("8efa6863-27d2-43ba-b814-ee8b60d12a9b"))
-            //     .expect("Resource handle cannot be found")
-            //     .clone();
+            // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
             let resource_handle = resource_manager
                 .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
-                .expect("Resource handle cannot be found")
-                .clone();
+                .expect("Resource handle cannot be found");
             Entity::from_handle(entity_handle)
                 .add_component(MeshRenderer::new(Some(resource_handle)));
         }
 
         // init component systems
-        let mut component_systems = vec![
+        let component_systems = vec![
             Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
                 as Arc<Mutex<dyn System>>,
             Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
@@ -81,8 +77,7 @@ impl App {
     pub fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         for i in 0..self.component_systems.len() {
-            let cs = &self.component_systems[i].clone();
-            cs.lock().unwrap().update(self.dt);
+            self.component_systems[i].lock().unwrap().update(self.dt);
         }
         self.dt
     }

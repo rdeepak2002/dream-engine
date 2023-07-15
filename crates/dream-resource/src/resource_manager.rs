@@ -31,14 +31,14 @@ pub fn create_meta_file(file_path: PathBuf) {
     let res =
         serde_yaml::to_string(&new_meta_data).expect("Unable to generate json file for new guid");
     let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
-    let meta_file_path = PathBuf::from(meta_file_path.clone());
+    let meta_file_path = PathBuf::from(meta_file_path);
     log::warn!("meta file path {}", meta_file_path.to_str().unwrap());
     dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec());
 }
 
 fn get_meta_data(file_path: PathBuf) -> MetaData {
     let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
-    let meta_file_path = PathBuf::from(meta_file_path.clone());
+    let meta_file_path = PathBuf::from(meta_file_path);
     let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true).unwrap_or_else(|_| {
         panic!(
             "Unable to retrieve bytes for {}",
