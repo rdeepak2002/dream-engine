@@ -3,3 +3,13 @@ Dockerfile
 .dockerignore
 .git
 .gitignore
+.idea
+.fleet
+.github
+.vscode
+web/build
+web/build/**
+web/build/examples
+web/build/examples/**
+web/build/node_modules
+web/build/node_mdules/**

@@ -96,14 +96,26 @@ impl RendererWgpu {
             surface = None;
         }
 
-        let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::default(),
-                compatible_surface: surface.as_ref(),
-                force_fallback_adapter: false,
-            })
-            .await
-            .unwrap();
+        let adapter;
+        if surface.is_some() {
+            adapter = instance
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::default(),
+                    compatible_surface: surface.as_ref(),
+                    force_fallback_adapter: false,
+                })
+                .await
+                .expect("Unable to request for adapter to initialize renderer");
+        } else {
+            adapter = instance
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::default(),
+                    compatible_surface: None,
+                    force_fallback_adapter: true,
+                })
+                .await
+                .expect("Unable to request for adapter to initialize renderer");
+        }
 
         // let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
         // web_gl_limits.max_texture_dimension_2d = 4096;
