@@ -24,7 +24,7 @@ use wasm_bindgen::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{create_entity, get_entities_with_component};
+use dream_ecs::scene::Scene;
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -39,24 +39,24 @@ pub struct App {
     pub dt: f32,
     pub component_systems: Vec<Arc<Mutex<dyn System>>>,
     pub resource_manager: ResourceManager,
+    pub scene: Arc<Mutex<Scene>>,
 }
 
 impl Default for App {
     fn default() -> App {
         let resource_manager = ResourceManager::default();
+        let mut scene = Arc::new(Mutex::new(Scene::default()));
 
         // populate scene
-        let entity_handle = create_entity();
-        if let Some(entity_handle) = entity_handle {
-            Entity::from_handle(entity_handle)
-                .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
-            // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
-            let resource_handle = resource_manager
-                .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
-                .expect("Resource handle cannot be found");
-            Entity::from_handle(entity_handle)
-                .add_component(MeshRenderer::new(Some(resource_handle)));
-        }
+        let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
+        Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
+            .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+        // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
+        let resource_handle = resource_manager
+            .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
+            .expect("Resource handle cannot be found");
+        Entity::from_handle(entity_handle, Arc::downgrade(&scene))
+            .add_component(MeshRenderer::new(Some(resource_handle)));
 
         // init component systems
         let component_systems = vec![
@@ -69,6 +69,7 @@ impl Default for App {
             dt: 0.0,
             component_systems,
             resource_manager,
+            scene,
         }
     }
 }
@@ -77,7 +78,10 @@ impl App {
     pub fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         for i in 0..self.component_systems.len() {
-            self.component_systems[i].lock().unwrap().update(self.dt);
+            self.component_systems[i]
+                .lock()
+                .unwrap()
+                .update(self.dt, Arc::downgrade(&self.scene));
         }
         self.dt
     }
@@ -87,11 +91,18 @@ impl App {
     pub fn draw(&mut self, renderer: &mut RendererWgpu) {
         // TODO: traverse in tree fashion
         renderer.clear();
-        let transform_entities = get_entities_with_component::<Transform>();
+        let transform_entities = self
+            .scene
+            .lock()
+            .expect("Unable to lock scene")
+            .get_entities_with_component::<Transform>();
         for entity_id in transform_entities {
-            if let Some(transform) = Entity::from_handle(entity_id).get_component::<Transform>() {
+            if let Some(transform) = Entity::from_handle(entity_id, Arc::downgrade(&self.scene))
+                .get_component::<Transform>()
+            {
                 if let Some(mesh_renderer) =
-                    Entity::from_handle(entity_id).get_component::<MeshRenderer>()
+                    Entity::from_handle(entity_id, Arc::downgrade(&self.scene))
+                        .get_component::<MeshRenderer>()
                 {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {
                         let upgraded_resource_handle = resource_handle

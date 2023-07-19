@@ -16,86 +16,89 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::sync::{Arc, Mutex, Weak};
+
 use shipyard::{EntityId, Get};
 
 use crate::component::{Hierarchy, Transform};
-use crate::scene::{Scene, SCENE};
+use crate::scene::Scene;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Entity {
     pub handle: u64,
+    pub scene: Weak<Mutex<Scene>>,
 }
 
 impl Entity {
-    pub(crate) fn attach_to_back_with_scene(
-        &self,
-        parent_entity_runtime_id: Option<u64>,
-        scene: &mut Scene,
-    ) {
-        if parent_entity_runtime_id.is_some() {
-            let parent_entity = Entity::from_handle(parent_entity_runtime_id.unwrap());
-            let mut parent_hierarchy: Hierarchy =
-                parent_entity.get_component_with_scene(scene).unwrap();
-            if parent_hierarchy.num_children == 0 {
-                // when this is only child of parent
-                // step 1: update parent
-                {
-                    parent_hierarchy.num_children += 1;
-                    parent_hierarchy.first_child_runtime_id = self.handle;
-                    parent_entity.add_component_with_scene::<Hierarchy>(parent_hierarchy, scene);
-                }
-                // step 2: update this
-                {
-                    let mut hierarchy_component: Hierarchy = self
-                        .get_component_with_scene(scene)
-                        .expect("No hierarchy component");
-                    // update parent pointer of this hierarchy component
-                    hierarchy_component.parent_runtime_id = parent_entity_runtime_id.unwrap();
-                    self.add_component_with_scene(hierarchy_component, scene);
-                }
-            } else {
-                // in case where parent already has children, we need to add this as a
-                // sibling to the end of the linked list
-                let last_sibling_id;
-                // step 1: update last sibling
-                {
-                    let mut sibling_id = parent_hierarchy.first_child_runtime_id;
-                    let mut sibling_entity = Entity::from_handle(sibling_id);
-                    let mut sibling_hierarchy_component: Hierarchy = sibling_entity
-                        .get_component_with_scene(scene)
-                        .expect("Sibling does not have hierarchy component");
-                    while sibling_hierarchy_component.next_sibling_runtime_id != 0 {
-                        sibling_id = sibling_hierarchy_component.next_sibling_runtime_id;
-                        sibling_entity = Entity::from_handle(sibling_id);
-                        sibling_hierarchy_component = sibling_entity
-                            .get_component_with_scene(scene)
-                            .expect("Sibling does not have hierarchy component");
-                    }
-                    last_sibling_id = sibling_id;
-                    // update previous pointer of sibling to this entity
-                    sibling_hierarchy_component.next_sibling_runtime_id = self.handle;
-                    sibling_entity.add_component_with_scene(sibling_hierarchy_component, scene);
-                }
-                // step 2: update parent
-                {
-                    // update count of parent hierarchy component
-                    parent_hierarchy.num_children += 1;
-                    parent_entity.add_component_with_scene::<Hierarchy>(parent_hierarchy, scene);
-                }
-                // step 3: update this
-                {
-                    let mut hierarchy_component: Hierarchy = self
-                        .get_component_with_scene(scene)
-                        .expect("No hierarchy component");
-                    // update next pointer of this hierarchy component
-                    hierarchy_component.prev_sibling_runtime_id = last_sibling_id;
-                    // update parent pointer of this hierarchy component
-                    hierarchy_component.parent_runtime_id = parent_entity_runtime_id.unwrap();
-                    self.add_component_with_scene(hierarchy_component, scene);
-                }
-            }
-        }
-    }
+    // pub(crate) fn attach_to_back_with_scene(
+    //     &self,
+    //     parent_entity_runtime_id: Option<u64>,
+    //     scene: &mut Scene,
+    // ) {
+    //     if parent_entity_runtime_id.is_some() {
+    //         let parent_entity = Entity::from_handle(parent_entity_runtime_id.unwrap());
+    //         let mut parent_hierarchy: Hierarchy =
+    //             parent_entity.get_component_with_scene(scene).unwrap();
+    //         if parent_hierarchy.num_children == 0 {
+    //             // when this is only child of parent
+    //             // step 1: update parent
+    //             {
+    //                 parent_hierarchy.num_children += 1;
+    //                 parent_hierarchy.first_child_runtime_id = self.handle;
+    //                 parent_entity.add_component_with_scene::<Hierarchy>(parent_hierarchy, scene);
+    //             }
+    //             // step 2: update this
+    //             {
+    //                 let mut hierarchy_component: Hierarchy = self
+    //                     .get_component_with_scene(scene)
+    //                     .expect("No hierarchy component");
+    //                 // update parent pointer of this hierarchy component
+    //                 hierarchy_component.parent_runtime_id = parent_entity_runtime_id.unwrap();
+    //                 self.add_component_with_scene(hierarchy_component, scene);
+    //             }
+    //         } else {
+    //             // in case where parent already has children, we need to add this as a
+    //             // sibling to the end of the linked list
+    //             let last_sibling_id;
+    //             // step 1: update last sibling
+    //             {
+    //                 let mut sibling_id = parent_hierarchy.first_child_runtime_id;
+    //                 let mut sibling_entity = Entity::from_handle(sibling_id);
+    //                 let mut sibling_hierarchy_component: Hierarchy = sibling_entity
+    //                     .get_component_with_scene(scene)
+    //                     .expect("Sibling does not have hierarchy component");
+    //                 while sibling_hierarchy_component.next_sibling_runtime_id != 0 {
+    //                     sibling_id = sibling_hierarchy_component.next_sibling_runtime_id;
+    //                     sibling_entity = Entity::from_handle(sibling_id);
+    //                     sibling_hierarchy_component = sibling_entity
+    //                         .get_component_with_scene(scene)
+    //                         .expect("Sibling does not have hierarchy component");
+    //                 }
+    //                 last_sibling_id = sibling_id;
+    //                 // update previous pointer of sibling to this entity
+    //                 sibling_hierarchy_component.next_sibling_runtime_id = self.handle;
+    //                 sibling_entity.add_component_with_scene(sibling_hierarchy_component, scene);
+    //             }
+    //             // step 2: update parent
+    //             {
+    //                 // update count of parent hierarchy component
+    //                 parent_hierarchy.num_children += 1;
+    //                 parent_entity.add_component_with_scene::<Hierarchy>(parent_hierarchy, scene);
+    //             }
+    //             // step 3: update this
+    //             {
+    //                 let mut hierarchy_component: Hierarchy = self
+    //                     .get_component_with_scene(scene)
+    //                     .expect("No hierarchy component");
+    //                 // update next pointer of this hierarchy component
+    //                 hierarchy_component.prev_sibling_runtime_id = last_sibling_id;
+    //                 // update parent pointer of this hierarchy component
+    //                 hierarchy_component.parent_runtime_id = parent_entity_runtime_id.unwrap();
+    //                 self.add_component_with_scene(hierarchy_component, scene);
+    //             }
+    //         }
+    //     }
+    // }
 
     // pub fn attach_to_front_with_scene(
     //     &self,
@@ -160,8 +163,8 @@ impl Entity {
     //     }
     // }
 
-    pub fn from_handle(handle: u64) -> Self {
-        Self { handle }
+    pub fn from_handle(handle: u64, scene: Weak<Mutex<Scene>>) -> Self {
+        Self { handle, scene }
     }
 
     pub fn to_string(&self) -> String {
@@ -178,29 +181,40 @@ impl Entity {
     }
 
     pub fn add_component<T: shipyard::TupleAddComponent>(&self, component: T) {
-        let mut scene = SCENE.lock().unwrap();
+        let mut scene = self.scene.upgrade();
         scene
+            .expect("Unable to upgrade scene smart pointer for getting component")
+            .lock()
+            .expect("Unable to get mutex lock")
             .handle
             .add_component(EntityId::from_inner(self.handle).unwrap(), component);
     }
 
     pub fn remove_component<T: shipyard::TupleRemove>(&self) {
-        let mut scene = SCENE.lock().unwrap();
+        let mut scene = self.scene.upgrade();
         scene
+            .expect("Unable to upgrade scene smart pointer for removing component")
+            .lock()
+            .expect("Unable to get mutex lock")
             .handle
             .remove::<T>(EntityId::from_inner(self.handle).unwrap());
     }
 
     pub fn get_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> Option<T> {
         let mut comp_opt: Option<T> = None;
-        let scene = SCENE.lock().unwrap();
+        let mut scene = self.scene.upgrade();
         let system = |vm_pos: shipyard::ViewMut<T>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())
                 .unwrap();
             comp_opt = Some(comp.clone());
         };
-        scene.handle.run(system);
+        scene
+            .expect("Unable to upgrade scene smart pointer for getting component")
+            .lock()
+            .expect("Unable to get mutex lock")
+            .handle
+            .run(system);
         comp_opt
     }
 

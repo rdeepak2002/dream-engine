@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use once_cell::sync::Lazy;
 use shipyard::{Get, IntoIter, IntoWithId};
@@ -24,7 +24,7 @@ use shipyard::{Get, IntoIter, IntoWithId};
 use crate::component::{Hierarchy, Transform};
 use crate::entity::Entity;
 
-pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
+// pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
 
 pub struct Scene {
     pub name: &'static str,
@@ -42,40 +42,44 @@ impl Default for Scene {
     }
 }
 
-pub fn create_entity() -> Option<u64> {
-    if let Ok(mut scn) = SCENE.lock() {
-        return Some(scn.create_entity().handle);
-    }
-    None
-}
+// pub fn create_entity() -> Option<u64> {
+//     if let Ok(mut scn) = SCENE.lock() {
+//         return Some(scn.create_entity().handle);
+//     }
+//     None
+// }
+//
+// pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>() -> Vec<u64> {
+//     SCENE.lock().unwrap().get_entities_with_component::<T>()
+// }
 
-pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>() -> Vec<u64> {
-    SCENE.lock().unwrap().get_entities_with_component::<T>()
-}
+// pub fn create_entity(mut scene: Arc<Scene>) -> Entity {
+//
+// }
 
 impl Scene {
-    pub(crate) fn create_entity(&mut self) -> Entity {
-        let handle = self
-            .handle
-            .add_entity((Transform::default(), Hierarchy::default()))
-            .inner();
-        let entity = Entity::from_handle(handle);
-        entity.attach_to_back_with_scene(self.root_entity_runtime_id, self);
-        if self.root_entity_runtime_id.is_none() {
-            self.root_entity_runtime_id = Some(entity.get_runtime_id());
-        }
-        return entity;
-    }
+    // pub fn create_entity(&mut self) -> Entity {
+    //     let handle = self
+    //         .handle
+    //         .add_entity((Transform::default(), Hierarchy::default()))
+    //         .inner();
+    //     let entity = Entity::from_handle(handle);
+    //     entity.attach_to_back_with_scene(self.root_entity_runtime_id, self);
+    //     if self.root_entity_runtime_id.is_none() {
+    //         self.root_entity_runtime_id = Some(entity.get_runtime_id());
+    //     }
+    //     return entity;
+    // }
 
-    pub fn create_entity_with_parent(&mut self, parent_entity_runtime_id: u64) -> Entity {
-        let handle = self
-            .handle
-            .add_entity((Transform::default(), Hierarchy::default()))
-            .inner();
-        let entity = Entity::from_handle(handle);
-        entity.attach_to_back_with_scene(Some(parent_entity_runtime_id), self);
-        return entity;
-    }
+    // pub fn create_entity_with_parent(&mut self, parent_entity_runtime_id: u64) -> Entity {
+    //     let handle = self
+    //         .handle
+    //         .add_entity((Transform::default(), Hierarchy::default()))
+    //         .inner();
+    //     let entity = Entity::from_handle(handle);
+    //     entity.attach_to_back_with_scene(Some(parent_entity_runtime_id), self);
+    //     return entity;
+    // }
 
     // TODO: if we use the below method, we first have to call remove
     // pub fn attach_entity_to_parent(&mut self, child_handle: u64, parent_handle: u64) {
@@ -83,7 +87,13 @@ impl Scene {
     //     child_entity.attach_to_back_with_scene(Some(parent_handle), self);
     // }
 
-    pub(crate) fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>(
+    pub fn create_entity(&mut self) -> u64 {
+        self.handle
+            .add_entity((Transform::default(), Hierarchy::default()))
+            .inner()
+    }
+
+    pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>(
         &self,
     ) -> Vec<u64> {
         let mut entity_id_vec = Vec::new();

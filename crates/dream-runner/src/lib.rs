@@ -45,16 +45,17 @@ pub async fn run_main() {
         }
     }
 
-    let window = Window::default();
-    window.run().await;
+    // TODO: uncomment this
+    // let window = Window::default();
+    // window.run().await;
 
     // TODO: hide this behind a flag (cuz it is only for testing memory leaks)
-    // for i in 0..1000 {
-    //     let mut app = App::default();
-    //     let mut renderer = dream_renderer::RendererWgpu::default(None).await;
-    //     app.update();
-    //     app.draw(&mut renderer);
-    //     println!("Completed loop {}", i);
-    //     std::thread::sleep(std::time::Duration::Duration::from_millis(16));
-    // }
+    for i in 0..1 {
+        let mut app = App::default();
+        let mut renderer = dream_renderer::RendererWgpu::default(None).await;
+        app.update();
+        app.draw(&mut renderer);
+        println!("Completed loop {}", i);
+        // std::thread::sleep(std::time::Duration::Duration::from_millis(16));
+    }
 }

@@ -16,6 +16,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::sync::{Mutex, Weak};
+
+use dream_ecs::scene::Scene;
+
 pub trait System {
-    fn update(&mut self, dt: f32);
+    fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>);
 }

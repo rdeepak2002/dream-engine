@@ -85,55 +85,57 @@ pub struct EntityJS {
 
 impl EntityJS {
     fn set_position(this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
-        let this = this
-            .as_object()
-            .and_then(|obj| obj.downcast_ref::<Self>())
-            .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
-
-        let entity_inner_id = this.handle;
-        let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
-
-        if entity.is_some() {
-            let entity = entity.unwrap();
-            let transform: Option<Transform> = entity.get_component();
-            if transform.is_some() {
-                let mut transform = transform.unwrap();
-                let new_position = args
-                    .get(0)
-                    .ok_or_else(|| context.construct_type_error("No first argument provided"))?
-                    .as_object()
-                    .and_then(|obj| obj.downcast_ref::<Vector3JS>())
-                    .ok_or_else(|| context.construct_type_error("Not a `Vector3` object"))?;
-                transform.position = new_position.get_vector3();
-                entity.add_component(transform);
-            }
-        }
+        todo!();
+        // let this = this
+        //     .as_object()
+        //     .and_then(|obj| obj.downcast_ref::<Self>())
+        //     .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
+        //
+        // let entity_inner_id = this.handle;
+        // let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
+        //
+        // if entity.is_some() {
+        //     let entity = entity.unwrap();
+        //     let transform: Option<Transform> = entity.get_component();
+        //     if transform.is_some() {
+        //         let mut transform = transform.unwrap();
+        //         let new_position = args
+        //             .get(0)
+        //             .ok_or_else(|| context.construct_type_error("No first argument provided"))?
+        //             .as_object()
+        //             .and_then(|obj| obj.downcast_ref::<Vector3JS>())
+        //             .ok_or_else(|| context.construct_type_error("Not a `Vector3` object"))?;
+        //         transform.position = new_position.get_vector3();
+        //         entity.add_component(transform);
+        //     }
+        // }
 
         Ok(JsValue::undefined())
     }
 
     fn get_position(this: &JsValue, _args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
-        let this = this
-            .as_object()
-            .and_then(|obj| obj.downcast_ref::<Self>())
-            .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
-
-        let entity_inner_id = this.handle;
-        let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
-        if entity.is_some() {
-            let entity = entity.unwrap();
-            let transform: Option<Transform> = entity.get_component();
-            return if let Some(transform) = transform {
-                let position = transform.position;
-                let position_js = Vector3JS::new(position);
-                let position_js_obj = position_js.js_object(context);
-                Ok(JsValue::Object(position_js_obj))
-            } else {
-                Ok(JsValue::undefined())
-            };
-        }
-
-        Ok(JsValue::undefined())
+        todo!();
+        // let this = this
+        //     .as_object()
+        //     .and_then(|obj| obj.downcast_ref::<Self>())
+        //     .ok_or_else(|| context.construct_type_error("`this` is not a `EntityJS` object"))?;
+        //
+        // let entity_inner_id = this.handle;
+        // let entity: Option<Entity> = Some(Entity::from_handle(entity_inner_id));
+        // if entity.is_some() {
+        //     let entity = entity.unwrap();
+        //     let transform: Option<Transform> = entity.get_component();
+        //     return if let Some(transform) = transform {
+        //         let position = transform.position;
+        //         let position_js = Vector3JS::new(position);
+        //         let position_js_obj = position_js.js_object(context);
+        //         Ok(JsValue::Object(position_js_obj))
+        //     } else {
+        //         Ok(JsValue::undefined())
+        //     };
+        // }
+        //
+        // Ok(JsValue::undefined())
     }
 }
 
