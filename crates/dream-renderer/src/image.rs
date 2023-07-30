@@ -103,14 +103,15 @@ impl Image {
         self.update_rgba();
     }
 
-    pub fn load_from_gltf_texture<'a>(
+    pub async fn load_from_gltf_texture<'a>(
         &mut self,
         texture: gltf::Texture<'a>,
         buffer_data: &[Vec<u8>],
     ) {
         let texture = texture.clone();
         let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
-        self.load_from_bytes(&bytes, label.as_str(), mime_type);
+        self.load_from_bytes(&bytes, label.as_str(), mime_type)
+            .await;
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {

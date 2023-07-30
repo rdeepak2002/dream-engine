@@ -20,7 +20,7 @@ use std::sync::{Arc, Mutex, Weak};
 
 use shipyard::{EntityId, Get};
 
-use crate::component::{Hierarchy, Transform};
+use crate::component::Transform;
 use crate::scene::Scene;
 
 #[derive(Clone)]
