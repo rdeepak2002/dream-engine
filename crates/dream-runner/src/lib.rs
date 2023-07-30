@@ -13,9 +13,6 @@
 ///
 /// You should have received a copy of the GNU Affero General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-use dream_app::app::App;
-use dream_editor::EditorEguiWgpu;
-use dream_renderer::RendererWgpu;
 use dream_window::window::Window;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -49,7 +46,9 @@ pub async fn run_main() {
     let window = Window::default();
     window.run().await;
 
-    // TODO: hide this behind a flag (cuz it is only for testing memory leaks)
+    // TODO: put this in test for memory leaks
+    // use dream_editor::EditorEguiWgpu;
+    // use dream_renderer::RendererWgpu;
     // for i in 0..1 {
     //     let mut app = App::default();
     //     let mut renderer = dream_renderer::RendererWgpu::default(None).await;

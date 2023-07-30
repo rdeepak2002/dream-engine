@@ -17,7 +17,6 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex};
 
-use async_executor::Executor;
 use cgmath::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -45,7 +44,7 @@ pub struct App {
 impl Default for App {
     fn default() -> App {
         let resource_manager = ResourceManager::default();
-        let mut scene = Arc::new(Mutex::new(Scene::default()));
+        let scene = Arc::new(Mutex::new(Scene::default()));
 
         // populate scene
         let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();

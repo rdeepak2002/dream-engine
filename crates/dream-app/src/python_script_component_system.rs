@@ -2,8 +2,8 @@ use std::sync::{Mutex, Weak};
 
 use rustpython_vm as vm;
 
-use dream_ecs::component::Transform;
-use dream_ecs::entity::Entity;
+// use dream_ecs::component::Transform;
+// use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
 use crate::system::System;
@@ -21,13 +21,13 @@ impl Default for PythonScriptComponentSystem {
 }
 
 impl System for PythonScriptComponentSystem {
-    fn update(&mut self, _dt: f32, scene: Weak<Mutex<Scene>>) {
-        let transform_entities = scene
-            .upgrade()
-            .expect("Unable to upgrade")
-            .lock()
-            .expect("Unable to lock")
-            .get_entities_with_component::<Transform>();
+    fn update(&mut self, _dt: f32, _scene: Weak<Mutex<Scene>>) {
+        // let transform_entities = scene
+        //     .upgrade()
+        //     .expect("Unable to upgrade")
+        //     .lock()
+        //     .expect("Unable to lock")
+        //     .get_entities_with_component::<Transform>();
         // for entity_id in transform_entities {
         //     let _entity = Entity::from_handle(entity_id, scene);
         //     #[allow(clippy::needless_late_init)]

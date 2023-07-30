@@ -18,13 +18,13 @@
 
 use std::sync::{Mutex, Weak};
 
-use boa_engine::JsValue;
-
-use dream_ecs::component::Transform;
-use dream_ecs::entity::Entity;
+// use boa_engine::JsValue;
+//
+// use dream_ecs::component::Transform;
+// use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
-use crate::entity_js::{EntityJS, Vector3JS};
+// use crate::entity_js::{EntityJS, Vector3JS};
 use crate::system::System;
 
 pub struct JavaScriptScriptComponentSystem {}
@@ -36,13 +36,13 @@ impl Default for JavaScriptScriptComponentSystem {
 }
 
 impl System for JavaScriptScriptComponentSystem {
-    fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
-        let transform_entities = scene
-            .upgrade()
-            .expect("Unable to upgrade")
-            .lock()
-            .expect("Unable to lock")
-            .get_entities_with_component::<Transform>();
+    fn update(&mut self, _dt: f32, _scene: Weak<Mutex<Scene>>) {
+        // let transform_entities = scene
+        //     .upgrade()
+        //     .expect("Unable to upgrade")
+        //     .lock()
+        //     .expect("Unable to lock")
+        //     .get_entities_with_component::<Transform>();
         // TODO: fix this
         // for entity_id in transform_entities {
         //     let entity = Entity::from_handle(entity_id, scene.clone());

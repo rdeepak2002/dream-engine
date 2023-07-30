@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Mutex, Weak};
 
 use shipyard::{EntityId, Get};
 
@@ -167,21 +167,12 @@ impl Entity {
         Self { handle, scene }
     }
 
-    pub fn to_string(&self) -> String {
-        let trans: Option<Transform> = self.get_component();
-        if trans.is_some() {
-            format!("Entity({})", trans.unwrap().to_string())
-        } else {
-            format!("Entity()")
-        }
-    }
-
     pub fn get_runtime_id(&self) -> u64 {
         return self.handle;
     }
 
     pub fn add_component<T: shipyard::TupleAddComponent>(&self, component: T) {
-        let mut scene = self.scene.upgrade();
+        let scene = self.scene.upgrade();
         scene
             .expect("Unable to upgrade scene smart pointer for getting component")
             .lock()
@@ -191,7 +182,7 @@ impl Entity {
     }
 
     pub fn remove_component<T: shipyard::TupleRemove>(&self) {
-        let mut scene = self.scene.upgrade();
+        let scene = self.scene.upgrade();
         scene
             .expect("Unable to upgrade scene smart pointer for removing component")
             .lock()
@@ -202,7 +193,7 @@ impl Entity {
 
     pub fn get_component<T: shipyard::Component + Send + Sync + Clone>(&self) -> Option<T> {
         let mut comp_opt: Option<T> = None;
-        let mut scene = self.scene.upgrade();
+        let scene = self.scene.upgrade();
         let system = |vm_pos: shipyard::ViewMut<T>| {
             let comp = vm_pos
                 .get(EntityId::from_inner(self.handle).unwrap())
@@ -223,16 +214,16 @@ impl Entity {
         return comp.is_some();
     }
 
-    pub(crate) fn add_component_with_scene<T: shipyard::TupleAddComponent>(
-        &self,
-        component: T,
-        scene: &mut Scene,
-    ) {
-        // let mut scene = get_current_scene();
-        scene
-            .handle
-            .add_component(EntityId::from_inner(self.handle).unwrap(), component);
-    }
+    // pub(crate) fn add_component_with_scene<T: shipyard::TupleAddComponent>(
+    //     &self,
+    //     component: T,
+    //     scene: &mut Scene,
+    // ) {
+    //     // let mut scene = get_current_scene();
+    //     scene
+    //         .handle
+    //         .add_component(EntityId::from_inner(self.handle).unwrap(), component);
+    // }
 
     // pub(crate) fn remove_component_with_scene<T: shipyard::TupleRemove>(&self, scene: &mut Scene) {
     //     // let mut scene = get_current_scene();
@@ -241,20 +232,20 @@ impl Entity {
     //         .remove::<T>(EntityId::from_inner(self.handle).unwrap());
     // }
 
-    pub(crate) fn get_component_with_scene<T: shipyard::Component + Send + Sync + Clone>(
-        &self,
-        scene: &Scene,
-    ) -> Option<T> {
-        let mut comp_opt: Option<T> = None;
-        let system = |vm_pos: shipyard::ViewMut<T>| {
-            let comp = vm_pos
-                .get(EntityId::from_inner(self.handle).unwrap())
-                .unwrap();
-            comp_opt = Some(comp.clone());
-        };
-        scene.handle.run(system);
-        return comp_opt;
-    }
+    // pub(crate) fn get_component_with_scene<T: shipyard::Component + Send + Sync + Clone>(
+    //     &self,
+    //     scene: &Scene,
+    // ) -> Option<T> {
+    //     let mut comp_opt: Option<T> = None;
+    //     let system = |vm_pos: shipyard::ViewMut<T>| {
+    //         let comp = vm_pos
+    //             .get(EntityId::from_inner(self.handle).unwrap())
+    //             .unwrap();
+    //         comp_opt = Some(comp.clone());
+    //     };
+    //     scene.handle.run(system);
+    //     return comp_opt;
+    // }
 
     // pub(crate) fn has_component_with_scene<T: shipyard::Component + Send + Sync + Clone>(
     //     &self,
@@ -263,4 +254,15 @@ impl Entity {
     //     let comp: Option<T> = self.get_component_with_scene(scene);
     //     return comp.is_some();
     // }
+}
+
+impl std::fmt::Display for Entity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let trans: Option<Transform> = self.get_component();
+        if trans.is_some() {
+            write!(f, "Entity(Transform({}))", trans.unwrap())
+        } else {
+            write!(f, "Entity()")
+        }
+    }
 }

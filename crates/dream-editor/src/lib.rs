@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use egui::{RawInput, Widget};
 
 pub struct EditorEguiWgpu {

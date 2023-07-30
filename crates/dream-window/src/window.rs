@@ -1,5 +1,3 @@
-use std::sync::{Arc, Mutex};
-
 use crossbeam_channel::unbounded;
 use instant::Instant;
 use winit::{
@@ -80,7 +78,6 @@ impl Window {
             closure.forget();
         }
 
-        // let mut app = Arc::new(futures::lock::Mutex::new(App::new().await));
         let mut app = App::default();
         let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(

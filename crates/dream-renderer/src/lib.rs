@@ -17,9 +17,7 @@
  **********************************************************************************/
 
 use std::iter;
-use std::sync::Arc;
 
-use gltf::material::AlphaMode;
 use wgpu::util::DeviceExt;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;

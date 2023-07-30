@@ -1,29 +1,23 @@
 use std::fmt::Debug;
-use std::sync::{Arc, Weak};
+use std::sync::Weak;
 
 use dream_math::Vector3;
 use dream_resource::resource_handle::ResourceHandle;
 
-#[derive(shipyard::Component, Debug, Clone, PartialEq)]
+#[derive(shipyard::Component, Debug, Clone, PartialEq, Default)]
 pub struct Transform {
     pub position: Vector3,
-}
-
-impl Default for Transform {
-    fn default() -> Self {
-        Self {
-            position: Vector3::default(),
-        }
-    }
 }
 
 impl Transform {
     pub fn from(position: Vector3) -> Self {
         Self { position }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!("Transform({})", self.position.to_string())
+impl std::fmt::Display for Transform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Transform({})", self.position)
     }
 }
 

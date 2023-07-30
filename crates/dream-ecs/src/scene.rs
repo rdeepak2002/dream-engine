@@ -16,13 +16,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::sync::{Arc, Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
-
-use once_cell::sync::Lazy;
-use shipyard::{Get, IntoIter, IntoWithId};
+use shipyard::{IntoIter, IntoWithId};
 
 use crate::component::Transform;
-use crate::entity::Entity;
 
 // pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
 
@@ -88,7 +84,7 @@ impl Scene {
     // }
 
     pub fn create_entity(&mut self) -> u64 {
-        self.handle.add_entity((Transform::default())).inner()
+        self.handle.add_entity(Transform::default()).inner()
     }
 
     pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>(

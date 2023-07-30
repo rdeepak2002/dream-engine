@@ -25,13 +25,12 @@ impl Vector3 {
 
 impl fmt::Display for Vector3 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let str = format!("Position({}, {}, {})", self.x, self.y, self.z);
-        write!(f, "{}", str)
+        write!(f, "Position({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
 impl From<Vector3> for cgmath::Vector3<f32> {
     fn from(vec: Vector3) -> Self {
-        return cgmath::Vector3::new(vec.x, vec.y, vec.z);
+        cgmath::Vector3::new(vec.x, vec.y, vec.z)
     }
 }
