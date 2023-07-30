@@ -45,7 +45,7 @@ impl System for JavaScriptScriptComponentSystem {
             .get_entities_with_component::<Transform>();
         // TODO: fix this
         // for entity_id in transform_entities {
-        //     let entity = Entity::from_handle(entity_id);
+        //     let entity = Entity::from_handle(entity_id, scene.clone());
         //     // TODO: read this using read bytes method defined in dream-fs
         //     let js_code: String = include_str!("default-files/script.js").into();
         //     let mut context = boa_engine::Context::default();

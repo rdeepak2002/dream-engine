@@ -68,13 +68,19 @@ cargo install cargo-audit
 cargo audit
 ```
 
-## Memory Leak Check
+[//]: # (## Memory Leak Check)
 
-Run the following in a Linux environment where Valgrind is installed
+[//]: # ()
 
-```shell
-cargo valgrind run +nightly --package dream-runner --bin dream-runner --debug
-```
+[//]: # (Run the following in a Linux environment where Valgrind is installed)
+
+[//]: # ()
+
+[//]: # (```shell)
+
+[//]: # (cargo valgrind run +nightly --package dream-runner --bin dream-runner --debug)
+
+[//]: # (```)
 
 ## Troubleshooting
 

@@ -59,12 +59,11 @@ impl Default for App {
             .add_component(MeshRenderer::new(Some(resource_handle)));
 
         // init component systems
-        let component_systems = vec![];
-        // let component_systems = vec![
-        //     Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
-        //         as Arc<Mutex<dyn System>>,
-        //     Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
-        // ];
+        let component_systems = vec![
+            Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
+                as Arc<Mutex<dyn System>>,
+            Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
+        ];
 
         Self {
             dt: 0.0,

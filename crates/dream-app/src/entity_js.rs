@@ -85,7 +85,7 @@ pub struct EntityJS {
 
 impl EntityJS {
     fn set_position(this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
-        todo!();
+        // todo!();
         // let this = this
         //     .as_object()
         //     .and_then(|obj| obj.downcast_ref::<Self>())
@@ -114,7 +114,7 @@ impl EntityJS {
     }
 
     fn get_position(this: &JsValue, _args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
-        todo!();
+        // todo!();
         // let this = this
         //     .as_object()
         //     .and_then(|obj| obj.downcast_ref::<Self>())
@@ -134,8 +134,8 @@ impl EntityJS {
         //         Ok(JsValue::undefined())
         //     };
         // }
-        //
-        // Ok(JsValue::undefined())
+
+        Ok(JsValue::undefined())
     }
 }
 
