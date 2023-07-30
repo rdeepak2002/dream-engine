@@ -112,26 +112,26 @@ impl App {
                         let resource_key = &upgraded_resource_handle.key;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
-                            // for i in 0..2 {
-                            //     renderer.draw_mesh(
-                            //         resource_key.as_str(),
-                            //         i,
-                            //         Instance {
-                            //             position: cgmath::Vector3::from(transform.position),
-                            //             rotation: cgmath::Quaternion::from_axis_angle(
-                            //                 cgmath::Vector3::new(0., 0., 1.),
-                            //                 cgmath::Deg(0.0),
-                            //             ) * cgmath::Quaternion::from_axis_angle(
-                            //                 cgmath::Vector3::new(0., 1., 0.),
-                            //                 cgmath::Deg(-0.0),
-                            //             ) * cgmath::Quaternion::from_axis_angle(
-                            //                 cgmath::Vector3::new(1., 0., 0.),
-                            //                 cgmath::Deg(-90.0),
-                            //             ),
-                            //             scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
-                            //         },
-                            //     );
-                            // }
+                            for i in 0..2 {
+                                renderer.draw_mesh(
+                                    resource_key.as_str(),
+                                    i,
+                                    Instance {
+                                        position: cgmath::Vector3::from(transform.position),
+                                        rotation: cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(0., 0., 1.),
+                                            cgmath::Deg(0.0),
+                                        ) * cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(0., 1., 0.),
+                                            cgmath::Deg(-0.0),
+                                        ) * cgmath::Quaternion::from_axis_angle(
+                                            cgmath::Vector3::new(1., 0., 0.),
+                                            cgmath::Deg(-90.0),
+                                        ),
+                                        scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
+                                    },
+                                );
+                            }
                         } else {
                             let resource_path = &upgraded_resource_handle.path;
                             renderer
