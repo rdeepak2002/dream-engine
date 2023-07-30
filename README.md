@@ -68,6 +68,14 @@ cargo install cargo-audit
 cargo audit
 ```
 
+## Memory Leak Check
+
+Run the following in a Linux environment where Valgrind is installed
+
+```shell
+cargo valgrind run +nightly --package dream-runner --bin dream-runner --debug
+```
+
 ## Troubleshooting
 
 ### ``error[E0554]: #![feature] may not be used on the stable release channel``

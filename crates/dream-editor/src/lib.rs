@@ -107,6 +107,11 @@ impl EditorEguiWgpu {
         self.egui_context.begin_frame(input);
         {
             if state.frame_texture_view.is_some() {
+                if self.render_output_epaint_texture_id.is_some() {
+                    self.egui_wgpu_renderer
+                        .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+                }
+
                 self.render_output_epaint_texture_id =
                     Some(self.egui_wgpu_renderer.register_native_texture(
                         &state.device,
