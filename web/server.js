@@ -9,7 +9,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use(express.static('.', {
+app.use(express.static(__dirname, {
     etag: false,
     maxAge: '1'
 }));
