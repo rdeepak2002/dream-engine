@@ -1,0 +1,26 @@
+[package]
+name = "dream-window"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossbeam-channel = { workspace = true }
+winit = { workspace = true }
+cfg-if = { workspace = true }
+log = { workspace = true }
+egui = { workspace = true }
+dream-app = { workspace = true }
+dream-editor = { workspace = true }
+dream-renderer = { workspace = true }
+dream-fs = { workspace = true }
+dream-tasks = { workspace = true }
+wgpu = { workspace = true }
+once_cell = { workspace = true }
+instant = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = { workspace = true }
+web-sys = { version = "0.3.61", features = [
+    "Window",
+    "OffscreenCanvas"
+] }

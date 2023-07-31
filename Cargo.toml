@@ -1,50 +1,69 @@
-[package]
-name = "dream"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-dream-editor = { path = "./dream-editor", version = "0.1.0" }
-dream-renderer = { path = "./dream-renderer", version = "0.1.0" }
-cfg-if = "1"
-winit = "0.28"
-env_logger = "0.10"
-log = "0.4"
-wgpu = "0.15"
-pollster = "0.3.0"
-epi = "0.17.0"
-anyhow = "1.0"
-bytemuck = { version = "1.12", features = [ "derive" ] }
-boa_engine = { version = "0.16.0", features = ["console"]}
-rapier3d = "0.17.2"
-rapier2d = "0.17.2"
-shipyard = "0.6.2"
-cgmath = "0.18"
-crossbeam-channel = "0.5"
-
-[dependencies.image]
-version = "0.24"
-default-features = false
-features = ["png", "jpeg"]
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.2", features = ["js"] }
-console_error_panic_hook = "0.1.6"
-console_log = "1.0.0"
-wgpu = { version = "0.15", features = ["webgl"]}
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
-web-sys = { version = "0.3", features = [
-    "Document",
-    "Window",
-    "Element",
-]}
+cargo-features = ["per-package-target"]
 
 [workspace]
 members = [
-    "dream-editor",
-    "dream-renderer"
+    "crates/*"
 ]
+
+[workspace.dependencies]
+# serialization and deserialization
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+
+# rendering API
+wgpu = "0.16.0"
+
+# windowing
+winit = "0.28"
+
+# logging
+log = "0.4"
+
+# singleton library
+once_cell = "1.17.1"
+
+# custom code per configuration
+cfg-if = "1"
+
+# linar algebra math
+cgmath = "0.18"
+
+# immediate gui library
+egui = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
+
+# easy conversion to plain datatypes
+bytemuck = { version = "1.12", features = ["derive"] }
+
+# easier error handling
+anyhow = "1.0"
+
+# web assembly functionalities
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.30"
+
+# asynchronous tasks
+async-executor = "1.5.1"
+
+# message passing
+crossbeam-channel = "0.5"
+
+# multi-threading manager
+rayon = "1.5"
+wasm-bindgen-rayon = { git = "https://github.com/rdeepak2002/wasm-bindgen-rayon.git" }
+
+# cross-platform 'now'
+instant = { version = "0.1", features = ["stdweb"] }
+
+# dream sub-dependencies
+dream-editor = { path = "crates/dream-editor" }
+dream-renderer = { path = "crates/dream-renderer" }
+dream-ecs = { path = "crates/dream-ecs" }
+dream-math = { path = "crates/dream-math" }
+dream-app = { path = "crates/dream-app" }
+dream-window = { path = "crates/dream-window" }
+dream-fs = { path = "crates/dream-fs" }
+dream-resource = { path = "crates/dream-resource" }
+dream-tasks = { path = "crates/dream-tasks" }
+dream-runner = { path = "crates/dream-runner" }
+
+default-target = "x86_64-unknown-linux-gnu"

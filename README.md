@@ -10,30 +10,86 @@
 
 ## Author
 
-Deepak Ramalingam
+[Deepak Ramalingam](https://github.com/rdeepak2002)
 
 ## About
 
-Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) in Rust. 
+🚧 Under construction - don't use yet! 🚧
+
+Re-creation of [Dream Engine](https://github.com/rdeepak2002/dream) (real-time 3D engine) in Rust.
+
+DREAM stands for D(eepak's game engine is) REA(lly a) M(azing).
 
 ## Requirements
 
-- [rust](https://www.rust-lang.org/tools/install) (Version 1.68.0)
+- [rust](https://www.rust-lang.org/tools/install) (Version 1.72.0-nightly)
 - [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/) (Version 0.10.3)
 
-## Get Started (Desktop)
+- wasm32-unknown-unknown target for Rust
+  - Installation command:
 
 ```shell
-cargo run
+rustup target add wasm32-unknown-unknown
 ```
 
-## Get Started (Web)
+## Build for Desktop
+
+Run the following command in ``crates/dream-runner``
 
 ```shell
-./tools/build-web.sh
+cargo run +nightly --package dream-runner --bin dream-runner  --release
 ```
 
-Serve ``web/index.html``
+## Build for Web
+
+Run the following command in ``crates/dream-runner``
+
+```shell
+# build project
+rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+
+# serve it on the web
+npm i
+npm run start
+```
+
+Visit [http://localhost:3000](http://localhost:3000) on the latest version of Chrome to view the application
+
+## Run Tests
+
+```shell
+cargo test --workspace
+```
+
+## Run Security Audit
+
+```shell
+cargo install cargo-audit
+cargo audit
+```
+
+[//]: # (## Memory Leak Check)
+
+[//]: # ()
+
+[//]: # (Run the following in a Linux environment where Valgrind is installed)
+
+[//]: # ()
+
+[//]: # (```shell)
+
+[//]: # (cargo valgrind run +nightly --package dream-runner --bin dream-runner --debug)
+
+[//]: # (```)
+
+## Troubleshooting
+
+### ``error[E0554]: #![feature] may not be used on the stable release channel``
+
+Recommended solution: ``cargo clean``
+
+Other
+solutions: [https://stackoverflow.com/questions/53136717/errore0554-feature-may-not-be-used-on-the-stable-release-channel-couldnt](https://stackoverflow.com/questions/53136717/errore0554-feature-may-not-be-used-on-the-stable-release-channel-couldnt)
 
 ## Screenshots
 
@@ -44,3 +100,5 @@ Serve ``web/index.html``
 ### Web Assembly (Browser) Build
 
 ![web](doc/image/screenshot_1.png)
+
+![web](doc/image/screenshot_2.png)

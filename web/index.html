@@ -5,53 +5,211 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn WGPU</title>
+    <title>Dream</title>
+    <!--    favicon-->
+    <link as="script" href="build/dream_runner_bg.wasm" rel="preload">
+    <link as="script" href="build/dream_runner_bg.wasm.d.ts" rel="preload">
+    <link as="script" href="build/dream_runner.d.ts" rel="preload">
+    <link as="script" href="build/dream_runner.js" rel="preload">
+    <link as="script" href="util.js" rel="preload">
+    <link href="favicon/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180">
+    <link href="favicon/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png">
+    <link href="favicon/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png">
+    <link href="favicon/site.webmanifest" rel="manifest">
+    <link color="#5bbad5" href="favicon/safari-pinned-tab.svg" rel="mask-icon">
+    <meta content="#da532c" name="msapplication-TileColor">
+    <meta content="#ffffff" name="theme-color">
+    <!--    stylesheets and fonts-->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Ubuntu:wght@300&display=swap"
+          rel="stylesheet">
     <style>
-        html, body, canvas {
+        html, body, #dream-window-container {
             background-color: #1b1b1b;
+            box-shadow: none;
+            outline: 0;
+        }
+
+        p {
+            font-family: 'Ubuntu', sans-serif;
+        }
+
+        #dream-title {
+            font-family: 'Ubuntu', sans-serif;
+            color: white;
+            font-size: 26px;
+        }
+
+        #logo {
+            width: 200px;
+            height: auto;
+            padding-bottom: 20px;
+        }
+
+        #start-btn {
+            display: none;
+            border: none;
+            text-decoration: none;
+            font-family: 'Ubuntu', sans-serif;
+            background: rgba(0, 0, 0, 0);
+            color: white;
+            outline: white solid 3px;
+            font-size: 20px;
+            padding: 10px;
+            text-align: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        #start-btn:hover {
+            box-shadow: inset 0 0 0 2em rgba(53, 123, 206, 1.0);
+            cursor: pointer;
+        }
+
+        #dream-window-container {
+            z-index: 1;
+            position: fixed;
+            left: 0;
+            top: 0;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #dream-window-overlay {
+            background: rgba(0, 0, 0, 0);
+            z-index: 2;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            -webkit-animation-duration: 1s;
+            animation-duration: 1s;
+            -webkit-animation-fill-mode: both;
+            animation-fill-mode: both;
+        }
+
+        #dream-resource-loader {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #dream-resource-loader-main, #dream-resource-loader-main > .loader-part {
+            width: 200px;
+            height: 10px;
+        }
+
+        #dream-resource-loader-main > .loader-part {
+            position: absolute;
+            border-radius: 10px;
+        }
+
+        #dream-resource-loader-main > #bar {
+            width: 0;
+            background: white;
+        }
+
+        #dream-resource-loader-main > #bg {
+            background: rgba(0, 0, 0, 0);
+            outline: white solid 1px;
+        }
+
+        #dream-resource-loader-text {
+            margin-top: 20px;
+            color: white;
+        }
+
+        @-webkit-keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .fadeIn {
+            -webkit-animation-name: fadeIn;
+            animation-name: fadeIn;
+        }
+
+        @-webkit-keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+
+        .fadeOut {
+            -webkit-animation-name: fadeOut;
+            animation-name: fadeOut;
         }
     </style>
 </head>
 
-<body id="wasm-example" style="margin: 0; width: 100%; height: 100vh;">
+<body id="dream-window-container">
+<div class="fadeIn" id="dream-window-overlay">
+    <h3 id="dream-title">Dream Engine Demo</h3>
+    <img alt="logo" id="logo" src="logo.png"/>
+    <div id="dream-resource-loader">
+        <div id="dream-resource-loader-main">
+            <div class="loader-part" id="bar"></div>
+            <div class="loader-part" id="bg"></div>
+        </div>
+        <p id="dream-resource-loader-text"></p>
+    </div>
+    <button id="start-btn" onclick="start();">Download & Play</button>
+</div>
 <script type="module">
-    import init from './build/dream.js';
-    init().then(() => {
-        const canvasElement = document?.getElementsByTagName('canvas')[0];
-        if (canvasElement) {
-            // remove context menu pop-up when right-clicking on canvas
-            canvasElement.addEventListener('contextmenu', function(e) {
-                if (e.button === 2) {
-                    e.preventDefault();
-                    return false;
-                }
-            }, false);
-            // handle command s
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 's' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command o
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'o' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command r
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'r' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-            // handle command p
-            canvasElement.addEventListener("keydown", function(e) {
-                if (e.key === 'p' && (navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-                    e.preventDefault();
-                }
-            }, false);
-        }
-    });
+    import {startApplication} from "./util.js";
+
+    const autoDownload = true;
+    const showDownloadLogs = false;
+
+    const resourceLoaderContainer = document.getElementById("dream-resource-loader");
+    const startBtn = document.getElementById("start-btn");
+
+    const start = () => {
+        startBtn.style.display = "none";
+        resourceLoaderContainer.style.display = "flex";
+        startApplication(showDownloadLogs);
+    }
+
+    if (autoDownload) {
+        start();
+    } else {
+        startBtn.style.display = "flex";
+        startBtn.onclick = () => {
+            start();
+        };
+    }
 </script>
 </body>
 

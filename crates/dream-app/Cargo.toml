@@ -1,0 +1,32 @@
+[package]
+name = "dream-app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gc = "0.4.1"
+cgmath = { workspace = true }
+cfg-if = { workspace = true }
+winit = { workspace = true }
+log = { workspace = true }
+dream-math = { workspace = true }
+dream-ecs = { workspace = true }
+dream-renderer = { workspace = true }
+dream-resource = { workspace = true }
+dream-tasks = { workspace = true }
+async-executor = { workspace = true }
+rayon = { workspace = true }
+wasm-bindgen = { workspace = true }
+
+# javascript interpreter
+boa_engine = { version = "0.16.0", features = ["console"] }
+boa_gc = "0.16.0"
+
+# python interpreter
+rustpython-common = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0" }
+rustpython-parser = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0" }
+rustpython-pylib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
+rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
+rustpython-vm = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, features = ["compiler"] }
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-rayon = { workspace = true }
