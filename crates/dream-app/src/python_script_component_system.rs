@@ -9,23 +9,23 @@ use rustpython_vm::{
 };
 
 use dream_ecs::component::Transform;
-// use dream_ecs::component::Transform;
-// use dream_ecs::entity::Entity;
+use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
 use crate::system::System;
 
 pub struct PythonScriptComponentSystem {
-    pub interpreter: rustpython_vm::Interpreter,
+    pub interpreter: Interpreter,
 }
 
 impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
-        let interpreter = rustpython_vm::Interpreter::with_init(Default::default(), |vm| {
-            // vm.add_native_modules(rustpython_stdlib::get_module_inits());
-            // vm.add_native_module("rust_py_module".to_owned(), Box::new(make_module));
+        let interpreter = Interpreter::with_init(Default::default(), |vm| {
+            vm.add_native_module(
+                "rust_py_module".to_owned(),
+                Box::new(rust_py_module::make_module),
+            );
         });
-        // let interpreter = Interpreter::without_stdlib(Default::default());
         Self { interpreter }
     }
 }
@@ -57,9 +57,9 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
-                        let func = value.get_attr("func", vm).unwrap();
+                        let get_handle_func = value.get_attr("get_handle", vm).unwrap();
                         let res = vm
-                            .invoke(&func, ())
+                            .invoke(&get_handle_func, ())
                             .unwrap()
                             .try_int(vm)
                             .unwrap()
@@ -73,70 +73,71 @@ impl System for PythonScriptComponentSystem {
     }
 }
 
-// #[pymodule]
-// mod rust_py_module {
-//     use super::*;
-//     use rustpython_vm::{
-//         builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
-//     };
-//
-//     #[pyfunction]
-//     fn rust_function(
-//         num: i32,
-//         s: String,
-//         python_person: PythonEntity,
-//         _vm: &VirtualMachine,
-//     ) -> PyResult<RustStruct> {
-//         println!(
-//             "Calling standalone rust function from python passing args:
-//             num: {},
-//             string: {},
-//             python_person.handle: {}",
-//             num, s, python_person.handle
-//         );
-//         Ok(RustStruct {
-//             numbers: NumVec(vec![1, 2, 3, 4]),
-//         })
-//     }
-//
-//     #[derive(Debug, Clone)]
-//     struct NumVec(Vec<i32>);
-//
-//     impl ToPyObject for NumVec {
-//         fn to_pyobject(self, vm: &VirtualMachine) -> PyObjectRef {
-//             let list = self.0.into_iter().map(|e| vm.new_pyobj(e)).collect();
-//             PyList::new_ref(list, vm.as_ref()).to_pyobject(vm)
-//         }
-//     }
-//
-//     #[pyattr]
-//     #[pyclass(module = "rust_py_module", name = "RustStruct")]
-//     #[derive(Debug, PyPayload)]
-//     struct RustStruct {
-//         numbers: NumVec,
-//     }
-//
-//     #[pyclass]
-//     impl RustStruct {
-//         #[pygetset]
-//         fn numbers(&self) -> NumVec {
-//             self.numbers.clone()
-//         }
-//
-//         #[pymethod]
-//         fn print_in_rust_from_python(&self) {
-//             println!("Calling a rust method from python");
-//         }
-//     }
-//
-//     struct PythonEntity {
-//         handle: u64,
-//     }
-//
-//     impl TryFromBorrowedObject for PythonEntity {
-//         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
-//             let handle = obj.get_attr("handle", vm)?.try_into_value::<u64>(vm)?;
-//             Ok(PythonEntity { handle })
-//         }
-//     }
-// }
+#[pymodule]
+mod rust_py_module {
+    use rustpython_vm::{
+        builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
+    };
+
+    use super::*;
+
+    #[pyfunction]
+    fn rust_function(
+        num: i32,
+        s: String,
+        python_person: PythonEntity,
+        _vm: &VirtualMachine,
+    ) -> PyResult<RustStruct> {
+        println!(
+            "Calling standalone rust function from python passing args:
+            num: {},
+            string: {},
+            python_person.handle: {}",
+            num, s, python_person.handle
+        );
+        Ok(RustStruct {
+            numbers: NumVec(vec![1, 2, 3, 4]),
+        })
+    }
+
+    #[derive(Debug, Clone)]
+    struct NumVec(Vec<i32>);
+
+    impl ToPyObject for NumVec {
+        fn to_pyobject(self, vm: &VirtualMachine) -> PyObjectRef {
+            let list = self.0.into_iter().map(|e| vm.new_pyobj(e)).collect();
+            PyList::new_ref(list, vm.as_ref()).to_pyobject(vm)
+        }
+    }
+
+    #[pyattr]
+    #[pyclass(module = "rust_py_module", name = "RustStruct")]
+    #[derive(Debug, PyPayload)]
+    struct RustStruct {
+        numbers: NumVec,
+    }
+
+    #[pyclass]
+    impl RustStruct {
+        #[pygetset]
+        fn numbers(&self) -> NumVec {
+            self.numbers.clone()
+        }
+
+        #[pymethod]
+        fn print_in_rust_from_python(&self) {
+            println!("Calling a rust method from python");
+        }
+    }
+
+    struct PythonEntity {
+        handle: u64,
+    }
+
+    impl TryFromBorrowedObject for PythonEntity {
+        fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
+            let handle = obj.get_attr("handle", vm)?.try_into_value::<u64>(vm)?;
+            Ok(PythonEntity { handle })
+        }
+    }
+}

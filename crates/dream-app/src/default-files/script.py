@@ -1,9 +1,9 @@
-class Foo:
-    def __init__(self):
-        pass
+class PythonEntity:
+    def __init__(self, handle):
+        self.handle = handle
 
-    def func(self):
-        return 5
+    def get_handle(self):
+        return self.handle
 
 
-Foo()
+PythonEntity(6)
