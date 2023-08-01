@@ -117,7 +117,7 @@ mod dream {
     }
 
     #[pyattr]
-    #[pyclass(module = "rust_py_module", name = "RustStruct")]
+    #[pyclass(module = "dream", name = "RustStruct")]
     #[derive(Debug, PyPayload)]
     struct RustStruct {
         numbers: NumVec,

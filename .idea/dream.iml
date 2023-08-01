@@ -21,7 +21,7 @@
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-resource/target" />
       <excludeFolder url="file://$MODULE_DIR$/web/build/snippets" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
