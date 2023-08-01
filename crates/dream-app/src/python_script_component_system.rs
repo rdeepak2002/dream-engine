@@ -21,10 +21,7 @@ pub struct PythonScriptComponentSystem {
 impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
-            vm.add_native_module(
-                "rust_py_module".to_owned(),
-                Box::new(rust_py_module::make_module),
-            );
+            vm.add_native_module("dream".to_owned(), Box::new(dream::make_module));
         });
         Self { interpreter }
     }
@@ -74,7 +71,7 @@ impl System for PythonScriptComponentSystem {
 }
 
 #[pymodule]
-mod rust_py_module {
+mod dream {
     use rustpython_vm::{
         builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
     };
@@ -94,6 +91,15 @@ mod rust_py_module {
             string: {},
             python_person.handle: {}",
             num, s, python_person.handle
+        );
+        log::warn!(
+            "Calling standalone rust function from python passing args:
+            num: {},
+            string: {},
+            python_person.handle: {}",
+            num,
+            s,
+            python_person.handle
         );
         Ok(RustStruct {
             numbers: NumVec(vec![1, 2, 3, 4]),
