@@ -1,13 +1,10 @@
-from dream import rust_function
+from dream import get_entity
 
 
-class PythonEntity:
-    def __init__(self, handle):
-        self.handle = handle
-
-    def get_handle(self):
-        rust_object = rust_function(42, "This is a python string", self)
-        return self.handle
+class PythonScript:
+    def update(self):
+        entity = get_entity(1)
+        return entity.get_transform()
 
 
-PythonEntity(6)
+PythonScript()

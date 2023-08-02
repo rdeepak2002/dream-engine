@@ -14,6 +14,8 @@ use dream_ecs::scene::Scene;
 
 use crate::system::System;
 
+static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
+
 pub struct PythonScriptComponentSystem {
     pub interpreter: Interpreter,
 }
@@ -29,6 +31,10 @@ impl Default for PythonScriptComponentSystem {
 
 impl System for PythonScriptComponentSystem {
     fn update(&mut self, _dt: f32, scene: Weak<Mutex<Scene>>) {
+        if SCENE.lock().unwrap().is_none() {
+            *SCENE.lock().unwrap() = Some(scene.clone());
+        }
+
         let transform_entities = scene
             .upgrade()
             .expect("Unable to upgrade")
@@ -54,9 +60,9 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
-                        let get_handle_func = value.get_attr("get_handle", vm).unwrap();
+                        let update = value.get_attr("update", vm).unwrap();
                         let res = vm
-                            .invoke(&get_handle_func, ())
+                            .invoke(&update, ())
                             .unwrap()
                             .try_int(vm)
                             .unwrap()
@@ -79,65 +85,36 @@ mod dream {
     use super::*;
 
     #[pyfunction]
-    fn rust_function(
-        num: i32,
-        s: String,
-        python_person: PythonEntity,
-        _vm: &VirtualMachine,
-    ) -> PyResult<RustStruct> {
-        println!(
-            "Calling standalone rust function from python passing args:
-            num: {},
-            string: {},
-            python_person.handle: {}",
-            num, s, python_person.handle
-        );
-        log::warn!(
-            "Calling standalone rust function from python passing args:
-            num: {},
-            string: {},
-            python_person.handle: {}",
-            num,
-            s,
-            python_person.handle
-        );
-        Ok(RustStruct {
-            numbers: NumVec(vec![1, 2, 3, 4]),
-        })
-    }
-
-    #[derive(Debug, Clone)]
-    struct NumVec(Vec<i32>);
-
-    impl ToPyObject for NumVec {
-        fn to_pyobject(self, vm: &VirtualMachine) -> PyObjectRef {
-            let list = self.0.into_iter().map(|e| vm.new_pyobj(e)).collect();
-            PyList::new_ref(list, vm.as_ref()).to_pyobject(vm)
-        }
+    fn get_entity(handle: u64, _vm: &VirtualMachine) -> PyResult<PythonEntity> {
+        Ok(PythonEntity { handle })
     }
 
     #[pyattr]
-    #[pyclass(module = "dream", name = "RustStruct")]
+    #[pyclass(module = "dream", name = "PythonEntity")]
     #[derive(Debug, PyPayload)]
-    struct RustStruct {
-        numbers: NumVec,
+    struct PythonEntity {
+        handle: u64,
     }
 
     #[pyclass]
-    impl RustStruct {
+    impl PythonEntity {
         #[pygetset]
-        fn numbers(&self) -> NumVec {
-            self.numbers.clone()
+        fn handle(&self) -> u64 {
+            self.handle
         }
 
         #[pymethod]
         fn print_in_rust_from_python(&self) {
             println!("Calling a rust method from python");
         }
-    }
 
-    struct PythonEntity {
-        handle: u64,
+        #[pymethod]
+        fn get_transform(&self) -> f32 {
+            let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
+            let entity = Entity::from_handle(self.handle, scene);
+            let transform: Option<Transform> = entity.get_component();
+            transform.expect("No transform component").position.x
+        }
     }
 
     impl TryFromBorrowedObject for PythonEntity {
