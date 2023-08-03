@@ -1,8 +1,10 @@
 use std::sync::{Mutex, Weak};
 
 use gc::{Finalize, Trace};
+use rustpython_vm::builtins::PyIntRef;
 use rustpython_vm::convert::{ToPyObject, ToPyResult};
-use rustpython_vm::function::{FuncArgs, IntoPyNativeFunc};
+use rustpython_vm::function::{FuncArgs, IntoPyNativeFunc, OptionalArg};
+use rustpython_vm::protocol::PyNumber;
 use rustpython_vm::{
     compiler, pyclass, pymodule, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult,
     TryFromBorrowedObject, VirtualMachine,
@@ -61,8 +63,10 @@ impl System for PythonScriptComponentSystem {
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
                         let update = value.get_attr("update", vm).unwrap();
+                        let handle = vm.ctx.new_int(entity_id as i32).into();
+                        let args = vec![handle];
                         let res = vm
-                            .invoke(&update, ())
+                            .invoke(&update, args)
                             .unwrap()
                             .try_int(vm)
                             .unwrap()
