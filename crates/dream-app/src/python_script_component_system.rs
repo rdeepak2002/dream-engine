@@ -21,8 +21,6 @@ static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 pub struct PythonScriptComponentSystem {
     // TODO: not necessary to make these public?
     pub interpreter: Interpreter,
-    pub locals: Option<ArgMapping>,
-    pub globals: Option<PyDictRef>,
     pub entity_script: Option<PyObjectRef>, // TODO: store these per entity
 }
 
@@ -33,8 +31,6 @@ impl Default for PythonScriptComponentSystem {
         });
         Self {
             interpreter,
-            locals: None,
-            globals: None,
             entity_script: None,
         }
     }
@@ -53,20 +49,8 @@ impl System for PythonScriptComponentSystem {
             .get_entities_with_component::<dream_ecs::component::Transform>();
         for entity_id in transform_entities {
             let script = include_str!("default-files/script.py");
-            let mut scope: Option<Scope> = None;
-            if self.locals.is_some() && self.globals.is_some() {
-                // TODO: how efficient + necessary is it to store local and global scopes?
-                scope = Some(Scope::new(
-                    self.locals.clone(),
-                    self.globals.clone().unwrap(),
-                ));
-            }
             self.interpreter.enter(|vm| {
-                if scope.is_none() {
-                    scope = Some(vm.new_scope_with_builtins());
-                    self.locals = Some(scope.as_ref().unwrap().locals.clone());
-                    self.globals = Some(scope.as_ref().unwrap().globals.clone());
-                }
+                let scope = vm.new_scope_with_builtins();
                 let source_path;
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
@@ -79,7 +63,7 @@ impl System for PythonScriptComponentSystem {
                     .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
                     .map_err(|err| vm.new_syntax_error(&err))
                     .unwrap();
-                vm.run_code_obj(code_obj, scope.unwrap())
+                vm.run_code_obj(code_obj, scope)
                     .map(|value| {
                         if self.entity_script.is_none() {
                             self.entity_script = Some(value);
