@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::{Mutex, Weak};
 
 use gc::{Finalize, Trace};
@@ -21,7 +22,7 @@ static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 pub struct PythonScriptComponentSystem {
     // TODO: not necessary to make these public?
     pub interpreter: Interpreter,
-    pub entity_script: Option<PyObjectRef>, // TODO: store these per entity
+    pub entity_script: HashMap<u64, Option<PyObjectRef>>, // TODO: store these per entity
 }
 
 impl Default for PythonScriptComponentSystem {
@@ -31,7 +32,7 @@ impl Default for PythonScriptComponentSystem {
         });
         Self {
             interpreter,
-            entity_script: None,
+            entity_script: Default::default(),
         }
     }
 }
@@ -59,20 +60,20 @@ impl System for PythonScriptComponentSystem {
                         source_path = "<embedded>"
                     }
                 }
+                // TODO: only create code object on file saved or changed (get last updated property of meta data or something)
                 let code_obj = vm
                     .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
                     .map_err(|err| vm.new_syntax_error(&err))
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
-                        if self.entity_script.is_none() {
-                            self.entity_script = Some(value);
-                        }
+                        self.entity_script.entry(entity_id).or_insert(Some(value));
                     })
                     .expect("Error running python code");
-                // TODO: instead of self.entity_script, we should get the entity script referring to a specific entity (from a map or something)
                 let update = self
                     .entity_script
+                    .get(&entity_id)
+                    .unwrap()
                     .as_ref()
                     .unwrap()
                     .get_attr("update", vm)
