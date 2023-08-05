@@ -49,7 +49,7 @@ impl Default for App {
         // populate scene
         let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
         Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
-            .add_component(Transform::from(dream_math::Vector3::from(1.0, -4.8, -6.0)));
+            .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
         // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
         let resource_handle = resource_manager
             .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))

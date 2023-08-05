@@ -6,11 +6,11 @@ use rustpython_vm::convert::{ToPyObject, ToPyResult};
 use rustpython_vm::function::{FuncArgs, IntoPyNativeFunc, OptionalArg};
 use rustpython_vm::protocol::PyNumber;
 use rustpython_vm::{
-    compiler, pyclass, pymodule, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult,
-    TryFromBorrowedObject, VirtualMachine,
+    compiler, pyclass, pymodule,
+    types::{Constructor, GetDescriptor, Unconstructible},
+    Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject, VirtualMachine,
 };
 
-use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
 use crate::system::System;
@@ -31,7 +31,7 @@ impl Default for PythonScriptComponentSystem {
 }
 
 impl System for PythonScriptComponentSystem {
-    fn update(&mut self, _dt: f32, scene: Weak<Mutex<Scene>>) {
+    fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
@@ -63,7 +63,7 @@ impl System for PythonScriptComponentSystem {
                     .map(|value| {
                         let update = value.get_attr("update", vm).unwrap();
                         let handle = vm.ctx.new_int(entity_id).into();
-                        let args = vec![handle];
+                        let args = vec![vm.ctx.new_float(dt as f64).into(), handle];
                         let res = vm
                             .invoke(&update, args)
                             .unwrap()
@@ -88,19 +88,19 @@ mod dream {
     use super::*;
 
     #[pyfunction]
-    fn get_entity(handle: u64, _vm: &VirtualMachine) -> PyResult<PythonEntity> {
-        Ok(PythonEntity { handle })
+    fn get_entity(handle: u64, _vm: &VirtualMachine) -> PyResult<Entity> {
+        Ok(Entity { handle })
     }
 
     #[pyattr]
-    #[pyclass(module = "dream", name = "PythonEntity")]
+    #[pyclass(module = "dream", name = "Entity")]
     #[derive(Debug, PyPayload)]
-    struct PythonEntity {
+    struct Entity {
         handle: u64,
     }
 
     #[pyclass]
-    impl PythonEntity {
+    impl Entity {
         #[pygetset]
         fn handle(&self) -> u64 {
             self.handle
@@ -109,27 +109,27 @@ mod dream {
         #[pymethod]
         fn get_transform(&self) -> Transform {
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
-            let entity = Entity::from_handle(self.handle, scene);
+            let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
             let transform: Option<dream_ecs::component::Transform> = entity.get_component();
-            transform.expect("No transform component").into()
+            Transform::from(transform.expect("No transform component"))
         }
 
         #[pymethod]
         fn set_position(&self, x: f32, y: f32, z: f32) {
             let position = Vector3 { x, y, z };
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
-            let entity = Entity::from_handle(self.handle, scene);
+            let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
             let transform: Option<dream_ecs::component::Transform> = entity.get_component();
             let mut transform = transform.unwrap();
-            transform.position = position.into();
+            transform.position = dream_math::Vector3::from(position);
             entity.add_component(transform);
         }
     }
 
-    impl TryFromBorrowedObject for PythonEntity {
+    impl TryFromBorrowedObject for Entity {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
             let handle = obj.get_attr("handle", vm)?.try_into_value::<u64>(vm)?;
-            Ok(PythonEntity { handle })
+            Ok(Entity { handle })
         }
     }
 
@@ -148,10 +148,10 @@ mod dream {
         }
     }
 
-    impl Into<Transform> for dream_ecs::component::Transform {
-        fn into(self) -> Transform {
+    impl From<dream_ecs::component::Transform> for Transform {
+        fn from(transform: dream_ecs::component::Transform) -> Self {
             Transform {
-                position: self.position.into(),
+                position: Vector3::from(transform.position),
             }
         }
     }
@@ -192,22 +192,22 @@ mod dream {
         }
     }
 
-    impl Into<Vector3> for dream_math::Vector3 {
-        fn into(self) -> Vector3 {
-            Vector3 {
-                x: self.x,
-                y: self.y,
-                z: self.z,
+    impl From<Vector3> for dream_math::Vector3 {
+        fn from(vec3: Vector3) -> Self {
+            dream_math::Vector3 {
+                x: vec3.x,
+                y: vec3.y,
+                z: vec3.z,
             }
         }
     }
 
-    impl Into<dream_math::Vector3> for Vector3 {
-        fn into(self) -> dream_math::Vector3 {
-            dream_math::Vector3 {
-                x: self.x,
-                y: self.y,
-                z: self.z,
+    impl From<dream_math::Vector3> for Vector3 {
+        fn from(vec3: dream_math::Vector3) -> Self {
+            Vector3 {
+                x: vec3.x,
+                y: vec3.y,
+                z: vec3.z,
             }
         }
     }

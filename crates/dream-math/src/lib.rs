@@ -18,7 +18,7 @@ impl Default for Vector3 {
 }
 
 impl Vector3 {
-    pub fn from(x: f32, y: f32, z: f32) -> Self {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
 }
