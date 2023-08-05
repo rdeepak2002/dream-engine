@@ -19,9 +19,11 @@ use crate::system::System;
 static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 
 pub struct PythonScriptComponentSystem {
+    // TODO: not necessary to make these public?
     pub interpreter: Interpreter,
     pub locals: Option<ArgMapping>,
     pub globals: Option<PyDictRef>,
+    pub entity_script: Option<PyObjectRef>, // TODO: store these per entity
 }
 
 impl Default for PythonScriptComponentSystem {
@@ -33,6 +35,7 @@ impl Default for PythonScriptComponentSystem {
             interpreter,
             locals: None,
             globals: None,
+            entity_script: None,
         }
     }
 }
@@ -42,13 +45,6 @@ impl System for PythonScriptComponentSystem {
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
-
-        // if (self.scope.is_none()) {
-        //     self.interpreter.enter(|vm| {
-        //         self.scope = Some(Box::new(vm.new_scope_with_builtins()));
-        //     });
-        // }
-
         let transform_entities = scene
             .upgrade()
             .expect("Unable to upgrade")
@@ -85,19 +81,26 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
                 vm.run_code_obj(code_obj, scope.unwrap())
                     .map(|value| {
-                        let update = value.get_attr("update", vm).unwrap();
-                        let handle = vm.ctx.new_int(entity_id).into();
-                        let args = vec![vm.ctx.new_float(dt as f64).into(), handle];
-                        let res = vm
-                            .invoke(&update, args)
-                            .unwrap()
-                            .try_int(vm)
-                            .unwrap()
-                            .to_string();
-                        println!("{res}");
-                        log::warn!("{res}");
+                        if self.entity_script.is_none() {
+                            self.entity_script = Some(value);
+                        }
                     })
                     .expect("Error running python code");
+                // TODO: instead of self.entity_script, we should get the entity script referring to a specific entity (from a map or something)
+                let update = self
+                    .entity_script
+                    .as_ref()
+                    .unwrap()
+                    .get_attr("update", vm)
+                    .unwrap();
+                let handle = vm.ctx.new_int(entity_id).into();
+                let args = vec![vm.ctx.new_float(dt as f64).into(), handle];
+                let res = vm
+                    .invoke(&update, args)
+                    .unwrap()
+                    .try_int(vm)
+                    .unwrap()
+                    .to_string();
             })
         }
     }
