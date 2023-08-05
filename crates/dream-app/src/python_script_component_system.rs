@@ -1,10 +1,11 @@
 use std::sync::{Mutex, Weak};
 
 use gc::{Finalize, Trace};
-use rustpython_vm::builtins::PyIntRef;
+use rustpython_vm::builtins::{PyDictRef, PyIntRef};
 use rustpython_vm::convert::{ToPyObject, ToPyResult};
-use rustpython_vm::function::{FuncArgs, IntoPyNativeFunc, OptionalArg};
+use rustpython_vm::function::{ArgMapping, FuncArgs, IntoPyNativeFunc, OptionalArg};
 use rustpython_vm::protocol::PyNumber;
+use rustpython_vm::scope::Scope;
 use rustpython_vm::{
     compiler, pyclass, pymodule,
     types::{Constructor, GetDescriptor, Unconstructible},
@@ -19,6 +20,8 @@ static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 
 pub struct PythonScriptComponentSystem {
     pub interpreter: Interpreter,
+    pub locals: Option<ArgMapping>,
+    pub globals: Option<PyDictRef>,
 }
 
 impl Default for PythonScriptComponentSystem {
@@ -26,7 +29,11 @@ impl Default for PythonScriptComponentSystem {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
             vm.add_native_module("dream".to_owned(), Box::new(dream::make_module));
         });
-        Self { interpreter }
+        Self {
+            interpreter,
+            locals: None,
+            globals: None,
+        }
     }
 }
 
@@ -36,6 +43,12 @@ impl System for PythonScriptComponentSystem {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
 
+        // if (self.scope.is_none()) {
+        //     self.interpreter.enter(|vm| {
+        //         self.scope = Some(Box::new(vm.new_scope_with_builtins()));
+        //     });
+        // }
+
         let transform_entities = scene
             .upgrade()
             .expect("Unable to upgrade")
@@ -44,9 +57,20 @@ impl System for PythonScriptComponentSystem {
             .get_entities_with_component::<dream_ecs::component::Transform>();
         for entity_id in transform_entities {
             let script = include_str!("default-files/script.py");
-            // let _entity = Entity::from_handle(entity_id, scene);
+            let mut scope: Option<Scope> = None;
+            if self.locals.is_some() && self.globals.is_some() {
+                // TODO: how efficient + necessary is it to store local and global scopes?
+                scope = Some(Scope::new(
+                    self.locals.clone(),
+                    self.globals.clone().unwrap(),
+                ));
+            }
             self.interpreter.enter(|vm| {
-                let scope = vm.new_scope_with_builtins();
+                if scope.is_none() {
+                    scope = Some(vm.new_scope_with_builtins());
+                    self.locals = Some(scope.as_ref().unwrap().locals.clone());
+                    self.globals = Some(scope.as_ref().unwrap().globals.clone());
+                }
                 let source_path;
                 cfg_if::cfg_if! {
                     if #[cfg(target_arch = "wasm32")] {
@@ -59,7 +83,7 @@ impl System for PythonScriptComponentSystem {
                     .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
                     .map_err(|err| vm.new_syntax_error(&err))
                     .unwrap();
-                vm.run_code_obj(code_obj, scope)
+                vm.run_code_obj(code_obj, scope.unwrap())
                     .map(|value| {
                         let update = value.get_attr("update", vm).unwrap();
                         let handle = vm.ctx.new_int(entity_id).into();
