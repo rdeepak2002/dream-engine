@@ -10,7 +10,8 @@ use rustpython_vm::scope::Scope;
 use rustpython_vm::{
     compiler, pyclass, pymodule,
     types::{Constructor, GetDescriptor, Unconstructible},
-    Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject, VirtualMachine,
+    AsObject, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject,
+    VirtualMachine,
 };
 
 use dream_ecs::scene::Scene;
@@ -20,15 +21,14 @@ use crate::system::System;
 static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 
 pub struct PythonScriptComponentSystem {
-    // TODO: not necessary to make these public?
     pub interpreter: Interpreter,
-    pub entity_script: HashMap<u64, Option<PyObjectRef>>, // TODO: store these per entity
+    pub entity_script: HashMap<u64, Option<PyObjectRef>>,
 }
 
 impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
-            vm.add_native_module("dream".to_owned(), Box::new(dream::make_module));
+            vm.add_native_module("dream_py".to_owned(), Box::new(dream_py::make_module));
         });
         Self {
             interpreter,
@@ -70,29 +70,49 @@ impl System for PythonScriptComponentSystem {
                         self.entity_script.entry(entity_id).or_insert(Some(value));
                     })
                     .expect("Error running python code");
-                let update = self
+                let entity_script = self
                     .entity_script
                     .get(&entity_id)
                     .unwrap()
                     .as_ref()
-                    .unwrap()
-                    .get_attr("update", vm)
                     .unwrap();
-                let handle = vm.ctx.new_int(entity_id).into();
-                let args = vec![vm.ctx.new_float(dt as f64).into(), handle];
-                let res = vm
-                    .invoke(&update, args)
-                    .unwrap()
-                    .try_int(vm)
-                    .unwrap()
-                    .to_string();
+
+                if let Ok(update) = entity_script.get_attr("update", vm) {
+                    let entity = dream_py::Entity { handle: entity_id }.to_pyobject(vm);
+                    let args = vec![vm.ctx.new_float(dt as f64).into(), entity];
+                    let res = vm.invoke(&update, args);
+                    if res.is_err() {
+                        log::error!("No python class exported");
+                    }
+                }
+
+                // TODO: allow other python scripts to get variables that are defined
+                // TODO: allow inspector to view attributes (have attributes map in script component)
+                // for attribute in attributes {
+                //     let attribute_name = attribute.0.to_string();
+                //     // let attribute_value = attribute.1.to_pyresult(vm);
+                //     println!("name: {attribute_name}");
+                //     // let attribute_name = "x";
+                //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                //     // let x: f64 = attribute_value.unwrap().try_float(vm).unwrap().to_f64();
+                //     // println!("Got variable from other object {}", x);
+                // }
+
+                // TODO: this attributes map exposes methods (such as update)
+                // TODO: this can be useful for having one script call a method for another script?
+                // let attributes = entity_script.class().get_attributes();
+                // for attribute in attributes {
+                //     let attribute_name = attribute.0.to_string();
+                //     println!("name: {attribute_name}");
+                //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                // }
             })
         }
     }
 }
 
 #[pymodule]
-mod dream {
+pub(crate) mod dream_py {
     use rustpython_vm::{
         builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
     };
@@ -105,10 +125,10 @@ mod dream {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream", name = "Entity")]
+    #[pyclass(module = "dream_py", name = "Entity")]
     #[derive(Debug, PyPayload)]
-    struct Entity {
-        handle: u64,
+    pub(crate) struct Entity {
+        pub(crate) handle: u64,
     }
 
     #[pyclass]
@@ -146,7 +166,7 @@ mod dream {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream", name = "Transform")]
+    #[pyclass(module = "dream_py", name = "Transform")]
     #[derive(Debug, PyPayload)]
     struct Transform {
         position: Vector3,
@@ -178,7 +198,7 @@ mod dream {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream", name = "Vector3")]
+    #[pyclass(module = "dream_py", name = "Vector3")]
     #[derive(Debug, Clone, Copy, PyPayload)]
     struct Vector3 {
         x: f32,
