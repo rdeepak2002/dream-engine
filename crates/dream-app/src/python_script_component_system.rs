@@ -4,7 +4,7 @@ use std::sync::{Mutex, Weak};
 use gc::{Finalize, Trace};
 use rustpython_vm::builtins::{PyDictRef, PyIntRef};
 use rustpython_vm::convert::{ToPyObject, ToPyResult};
-use rustpython_vm::function::{ArgMapping, FuncArgs, IntoPyNativeFunc, OptionalArg};
+use rustpython_vm::function::{ArgMapping, FuncArgs, OptionalArg};
 use rustpython_vm::protocol::PyNumber;
 use rustpython_vm::scope::Scope;
 use rustpython_vm::{
@@ -63,7 +63,7 @@ impl System for PythonScriptComponentSystem {
                 // TODO: only create code object on file saved or changed (get last updated property of meta data or something)
                 let code_obj = vm
                     .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
-                    .map_err(|err| vm.new_syntax_error(&err))
+                    .map_err(|err| vm.new_syntax_error(&err, None))
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
@@ -158,7 +158,7 @@ pub(crate) mod dream_py {
         }
     }
 
-    impl TryFromBorrowedObject for Entity {
+    impl TryFromBorrowedObject<'_> for Entity {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
             let handle = obj.get_attr("handle", vm)?.try_into_value::<u64>(vm)?;
             Ok(Entity { handle })
@@ -188,7 +188,7 @@ pub(crate) mod dream_py {
         }
     }
 
-    impl TryFromBorrowedObject for Transform {
+    impl TryFromBorrowedObject<'_> for Transform {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
             let position = obj
                 .get_attr("position", vm)?
@@ -244,7 +244,7 @@ pub(crate) mod dream_py {
         }
     }
 
-    impl TryFromBorrowedObject for Vector3 {
+    impl TryFromBorrowedObject<'_> for Vector3 {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
             let x = obj.get_attr("x", vm)?.try_into_value::<f32>(vm)?;
             let y = obj.get_attr("y", vm)?.try_into_value::<f32>(vm)?;

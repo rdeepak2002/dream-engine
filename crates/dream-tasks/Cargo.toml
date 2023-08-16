@@ -13,7 +13,7 @@ crossbeam-channel = { workspace = true }
 once_cell = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
-instant = { workspace = true }
+dream-time = { workspace = true }
 wasm-bindgen = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

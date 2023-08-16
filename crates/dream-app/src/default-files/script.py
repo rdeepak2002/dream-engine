@@ -1,3 +1,6 @@
+from dream_py import *
+
+
 class SampleScript:
     def __init__(self):
         self.x: float = -2.5

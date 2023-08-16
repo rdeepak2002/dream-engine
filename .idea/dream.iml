@@ -16,6 +16,7 @@
       <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-tasks/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-runner/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/dream-time/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-editor/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-resource/target" />

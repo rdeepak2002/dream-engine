@@ -11,7 +11,7 @@ serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
 
 # rendering API
-wgpu = "0.16.0"
+wgpu = "0.17.0"
 
 # windowing
 winit = "0.28"
@@ -51,9 +51,6 @@ crossbeam-channel = "0.5"
 rayon = "1.5"
 wasm-bindgen-rayon = { git = "https://github.com/rdeepak2002/wasm-bindgen-rayon.git" }
 
-# cross-platform 'now'
-instant = { version = "0.1", features = ["stdweb"] }
-
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }
 dream-renderer = { path = "crates/dream-renderer" }
@@ -65,5 +62,6 @@ dream-fs = { path = "crates/dream-fs" }
 dream-resource = { path = "crates/dream-resource" }
 dream-tasks = { path = "crates/dream-tasks" }
 dream-runner = { path = "crates/dream-runner" }
+dream-time = { path = "crates/dream-time" }
 
 default-target = "x86_64-unknown-linux-gnu"

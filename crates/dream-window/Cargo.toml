@@ -14,9 +14,9 @@ dream-editor = { workspace = true }
 dream-renderer = { workspace = true }
 dream-fs = { workspace = true }
 dream-tasks = { workspace = true }
+dream-time = { workspace = true }
 wgpu = { workspace = true }
 once_cell = { workspace = true }
-instant = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }
