@@ -78,9 +78,10 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
 
                 if let Ok(update) = entity_script.get_attr("update", vm) {
+                    // let entity = dream_py::Entity { handle: entity_id }.to_pyobject(vm);
                     let entity = dream_py::Entity { handle: entity_id }.to_pyobject(vm);
                     let args = vec![vm.ctx.new_float(dt as f64).into(), entity];
-                    let res = vm.invoke(&update, args);
+                    let res = update.call(args, vm);
                     if let Err(..) = res {
                         let e = res.unwrap_err();
                         let line_number = e.traceback().unwrap().lineno;
@@ -119,6 +120,7 @@ impl System for PythonScriptComponentSystem {
 pub(crate) mod dream_py {
     use std::any::Any;
 
+    use rustpython_vm::builtins::{PyStr, PyStrInterned, PyTypeRef};
     use rustpython_vm::protocol::PyNumberMethods;
     use rustpython_vm::types::AsNumber;
     use rustpython_vm::{
@@ -132,6 +134,11 @@ pub(crate) mod dream_py {
         Ok(Entity { handle })
     }
 
+    #[pyfunction]
+    fn fix_vec_3(obj: PyObjectRef, vm: &VirtualMachine) -> PyResult<Vector3> {
+        Vector3::try_from_borrowed_object(vm, &obj.to_pyobject(vm))
+    }
+
     #[pyattr]
     #[pyclass(module = "dream_py", name = "Entity")]
     #[derive(Debug, PyPayload)]
@@ -141,21 +148,27 @@ pub(crate) mod dream_py {
 
     #[pyclass]
     impl Entity {
-        #[pygetset]
-        fn handle(&self) -> u64 {
-            self.handle
+        // #[pygetset]
+        // fn handle(&self) -> u64 {
+        //     self.handle
+        // }
+
+        #[pymethod]
+        fn get_handle(&self) -> PyResult<u64> {
+            Ok(self.handle)
         }
 
         #[pymethod]
-        fn get_transform(&self) -> Transform {
+        fn get_transform(&self) -> PyResult<Transform> {
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
             let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
             let transform: Option<dream_ecs::component::Transform> = entity.get_component();
-            Transform::from(transform.expect("No transform component"))
+            Ok(Transform::from(transform.expect("No transform component")))
         }
 
         #[pymethod]
         fn set_position(&self, x: f64, y: f64, z: f64) {
+            // println!("Setting position to ({x}, {y}, {z})");
             let position = Vector3 { x, y, z };
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
             let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
@@ -182,9 +195,14 @@ pub(crate) mod dream_py {
 
     #[pyclass]
     impl Transform {
-        #[pygetset]
-        fn position(&self) -> Vector3 {
-            self.position
+        // #[pygetset]
+        // fn position(&self) -> PyResult<Vector3> {
+        //     Ok(self.position)
+        // }
+
+        #[pymethod]
+        fn get_position(&self) -> PyResult<Vector3> {
+            Ok(self.position)
         }
     }
 
@@ -216,18 +234,33 @@ pub(crate) mod dream_py {
 
     #[pyclass]
     impl Vector3 {
-        #[pygetset]
-        fn x(&self) -> f64 {
+        // #[pygetset]
+        // fn x(&self) -> f64 {
+        //     self.x
+        // }
+        //
+        // #[pygetset]
+        // fn y(&self) -> f64 {
+        //     self.y
+        // }
+        //
+        // #[pygetset]
+        // fn z(&self) -> f64 {
+        //     self.z
+        // }
+
+        #[pymethod]
+        fn get_x(&self) -> f64 {
             self.x
         }
 
-        #[pygetset]
-        fn y(&self) -> f64 {
+        #[pymethod]
+        fn get_y(&self) -> f64 {
             self.y
         }
 
-        #[pygetset]
-        fn z(&self) -> f64 {
+        #[pymethod]
+        fn get_z(&self) -> f64 {
             self.z
         }
 
@@ -296,6 +329,19 @@ pub(crate) mod dream_py {
         };
     }
 
+    impl Constructor for Vector3 {
+        type Args = (f64, f64, f64);
+
+        fn py_new(_cls: PyTypeRef, args: Self::Args, vm: &VirtualMachine) -> PyResult {
+            Self {
+                x: args.0,
+                y: args.1,
+                z: args.2,
+            }
+            .to_pyresult(vm)
+        }
+    }
+
     // impl AsNumber for Vector3 {
     //     fn as_number() -> &'static PyNumberMethods {
     //         todo!()
@@ -324,9 +370,30 @@ pub(crate) mod dream_py {
 
     impl TryFromBorrowedObject<'_> for Vector3 {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
-            let x = obj.get_attr("x", vm)?.try_into_value::<f32>(vm)? as f64;
-            let y = obj.get_attr("y", vm)?.try_into_value::<f32>(vm)? as f64;
-            let z = obj.get_attr("z", vm)?.try_into_value::<f32>(vm)? as f64;
+            // TODO: get from object
+            // let x = 1.0;
+            // let y = 1.0;
+            // let z = 1.0;
+            // Ok(Vector3 { x, y, z })
+
+            let x = obj
+                .get_attr("x", vm)
+                .expect("Unable to find x attribute")
+                .try_float(vm)
+                .expect("Unable to convert x to float")
+                .to_f64();
+            let y = obj
+                .get_attr("y", vm)
+                .expect("Unable to find y attribute")
+                .try_float(vm)
+                .expect("Unable to convert y to float")
+                .to_f64();
+            let z = obj
+                .get_attr("z", vm)
+                .expect("Unable to find z attribute")
+                .try_float(vm)
+                .expect("Unable to convert z to float")
+                .to_f64();
             Ok(Vector3 { x, y, z })
         }
     }
