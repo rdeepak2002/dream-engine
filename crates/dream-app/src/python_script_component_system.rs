@@ -81,8 +81,12 @@ impl System for PythonScriptComponentSystem {
                     let entity = dream_py::Entity { handle: entity_id }.to_pyobject(vm);
                     let args = vec![vm.ctx.new_float(dt as f64).into(), entity];
                     let res = vm.invoke(&update, args);
-                    if res.is_err() {
-                        log::error!("No python class exported");
+                    if let Err(..) = res {
+                        let e = res.unwrap_err();
+                        let line_number = e.traceback().unwrap().lineno;
+                        let py_err = e.get_arg(0).unwrap();
+                        log::error!("line {}", line_number);
+                        log::error!("{}", py_err.str(vm).unwrap());
                     }
                 }
 
@@ -113,6 +117,10 @@ impl System for PythonScriptComponentSystem {
 
 #[pymodule]
 pub(crate) mod dream_py {
+    use std::any::Any;
+
+    use rustpython_vm::protocol::PyNumberMethods;
+    use rustpython_vm::types::AsNumber;
     use rustpython_vm::{
         builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
     };
@@ -147,7 +155,7 @@ pub(crate) mod dream_py {
         }
 
         #[pymethod]
-        fn set_position(&self, x: f32, y: f32, z: f32) {
+        fn set_position(&self, x: f64, y: f64, z: f64) {
             let position = Vector3 { x, y, z };
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
             let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
@@ -201,35 +209,105 @@ pub(crate) mod dream_py {
     #[pyclass(module = "dream_py", name = "Vector3")]
     #[derive(Debug, Clone, Copy, PyPayload)]
     struct Vector3 {
-        x: f32,
-        y: f32,
-        z: f32,
+        x: f64,
+        y: f64,
+        z: f64,
     }
 
     #[pyclass]
     impl Vector3 {
         #[pygetset]
-        fn x(&self) -> f32 {
+        fn x(&self) -> f64 {
             self.x
         }
 
         #[pygetset]
-        fn y(&self) -> f32 {
+        fn y(&self) -> f64 {
             self.y
         }
 
         #[pygetset]
-        fn z(&self) -> f32 {
+        fn z(&self) -> f64 {
             self.z
         }
+
+        // #[pymethod]
+        // fn set_x(&mut self, x: f64) {
+        //     self.x = x;
+        // }
+        //
+        // #[pymethod]
+        // fn set_y(&mut self, y: f64) {
+        //     self.y = y;
+        // }
+        //
+        // #[pymethod]
+        // fn set_z(&mut self, z: f64) {
+        //     self.z = z;
+        // }
+
+        pub(super) const AS_NUMBER: PyNumberMethods = PyNumberMethods {
+            add: Some(|a, b, vm| {
+                let a = Vector3::try_from_borrowed_object(vm, a).unwrap();
+                let b = Vector3::try_from_borrowed_object(vm, b).unwrap();
+                let res: Self =
+                    (dream_math::Vector3::from(a) + dream_math::Vector3::from(b)).into();
+                res.to_pyresult(vm)
+            }),
+            subtract: Some(|a, b, vm| {
+                let a = Vector3::try_from_borrowed_object(vm, a).unwrap();
+                let b = Vector3::try_from_borrowed_object(vm, b).unwrap();
+                let res: Self =
+                    (dream_math::Vector3::from(a) - dream_math::Vector3::from(b)).into();
+                res.to_pyresult(vm)
+            }),
+            multiply: Some(|a, b, vm| {
+                // scenario where a is a scalar
+                if let a = a.try_float(vm) {
+                    let a = a.unwrap().to_f64() as f32;
+                    let b = Vector3::try_from_borrowed_object(vm, b).unwrap();
+                    let res: Self = (a * dream_math::Vector3::from(b)).into();
+                    return res.to_pyresult(vm);
+                }
+
+                // scenario where b is a scalar
+                if let b = b.try_float(vm) {
+                    let a = Vector3::try_from_borrowed_object(vm, a).unwrap();
+                    let b = b.unwrap().to_f64() as f32;
+                    let res: Self = (dream_math::Vector3::from(a) * b).into();
+                    return res.to_pyresult(vm);
+                }
+
+                // scenario where both a and b are vectors
+                let a = Vector3::try_from_borrowed_object(vm, a).unwrap();
+                let b = Vector3::try_from_borrowed_object(vm, b).unwrap();
+                let res: Self =
+                    (dream_math::Vector3::from(a) * dream_math::Vector3::from(b)).into();
+                res.to_pyresult(vm)
+            }),
+            // power: Some(|a, b, c, vm| {...}),
+            // negative: Some(|num, vm| (&PyInt::number_downcast(num).value).neg().to_pyresult(vm)),
+            // positive: Some(|num, vm| Ok(PyInt::number_downcast_exact(num, vm).into())),
+            // absolute: Some(|num, vm| PyInt::number_downcast(num).value.abs().to_pyresult(vm)),
+            // invert: Some(|num, vm| (&PyInt::number_downcast(num).value).not().to_pyresult(vm)),
+            // floor_divide: Some(|a, b, vm| PyInt::number_op(a, b, inner_floordiv, vm)),
+            // true_divide: Some(|a, b, vm| PyInt::number_op(a, b, inner_truediv, vm)),
+            ..PyNumberMethods::NOT_IMPLEMENTED
+        };
     }
+
+    // impl AsNumber for Vector3 {
+    //     fn as_number() -> &'static PyNumberMethods {
+    //         todo!()
+    //     }
+    // }
 
     impl From<Vector3> for dream_math::Vector3 {
         fn from(vec3: Vector3) -> Self {
             dream_math::Vector3 {
-                x: vec3.x,
-                y: vec3.y,
-                z: vec3.z,
+                x: vec3.x as f32,
+                y: vec3.y as f32,
+                z: vec3.z as f32,
             }
         }
     }
@@ -237,18 +315,18 @@ pub(crate) mod dream_py {
     impl From<dream_math::Vector3> for Vector3 {
         fn from(vec3: dream_math::Vector3) -> Self {
             Vector3 {
-                x: vec3.x,
-                y: vec3.y,
-                z: vec3.z,
+                x: vec3.x as f64,
+                y: vec3.y as f64,
+                z: vec3.z as f64,
             }
         }
     }
 
     impl TryFromBorrowedObject<'_> for Vector3 {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
-            let x = obj.get_attr("x", vm)?.try_into_value::<f32>(vm)?;
-            let y = obj.get_attr("y", vm)?.try_into_value::<f32>(vm)?;
-            let z = obj.get_attr("z", vm)?.try_into_value::<f32>(vm)?;
+            let x = obj.get_attr("x", vm)?.try_into_value::<f32>(vm)? as f64;
+            let y = obj.get_attr("y", vm)?.try_into_value::<f32>(vm)? as f64;
+            let z = obj.get_attr("z", vm)?.try_into_value::<f32>(vm)? as f64;
             Ok(Vector3 { x, y, z })
         }
     }
