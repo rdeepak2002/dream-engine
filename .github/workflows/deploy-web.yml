@@ -18,8 +18,7 @@ jobs:
       #          command: build
       #          args: --release --all-features
       - name: Build web
-        with:
-          command: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
       - name: Deploy
         uses: crazy-max/ghaction-github-pages@v1
         with:
