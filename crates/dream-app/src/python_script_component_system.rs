@@ -28,7 +28,9 @@ pub struct PythonScriptComponentSystem {
 impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
-            vm.add_native_module("dream_py".to_owned(), Box::new(dream_py::make_module));
+            vm.add_native_module("dream".to_owned(), Box::new(dream_py::make_module));
+            // TODO: add frozen module
+            // vm.add_frozen();
         });
         Self {
             interpreter,
@@ -78,9 +80,10 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
 
                 if let Ok(update) = entity_script.get_attr("update", vm) {
-                    // let entity = dream_py::Entity { handle: entity_id }.to_pyobject(vm);
-                    let entity = dream_py::EntityInternal { handle: entity_id }.to_pyobject(vm);
-                    let args = vec![vm.ctx.new_float(dt as f64).into(), entity];
+                    let args = vec![
+                        vm.ctx.new_float(dt as f64).into(),
+                        vm.ctx.new_int(entity_id).into(),
+                    ];
                     let res = update.call(args, vm);
                     if let Err(..) = res {
                         let e = res.unwrap_err();
@@ -130,7 +133,7 @@ pub(crate) mod dream_py {
     use super::*;
 
     #[pyfunction]
-    fn get_entity(handle: u64, _vm: &VirtualMachine) -> PyResult<EntityInternal> {
+    fn dream_entity(handle: u64, _vm: &VirtualMachine) -> PyResult<EntityInternal> {
         Ok(EntityInternal { handle })
     }
 
@@ -138,11 +141,6 @@ pub(crate) mod dream_py {
     fn dream_vec3(x: f64, y: f64, z: f64, _vm: &VirtualMachine) -> PyResult<Vector3Internal> {
         Ok(Vector3Internal { x, y, z })
     }
-
-    // #[pyfunction]
-    // fn fix_vec_3(obj: PyObjectRef, vm: &VirtualMachine) -> PyResult<Vector3> {
-    //     Vector3::try_from_borrowed_object(vm, &obj.to_pyobject(vm))
-    // }
 
     #[pyattr]
     #[pyclass(module = "dream_py", name = "EntityInternal")]
@@ -153,11 +151,6 @@ pub(crate) mod dream_py {
 
     #[pyclass]
     impl EntityInternal {
-        // #[pygetset]
-        // fn handle(&self) -> u64 {
-        //     self.handle
-        // }
-
         #[pymethod]
         fn get_handle(&self) -> PyResult<u64> {
             Ok(self.handle)
@@ -181,23 +174,9 @@ pub(crate) mod dream_py {
             Ok(Vector3Internal::from(transform.position))
         }
 
-        // #[pymethod]
-        // fn set_position(&self, x: f64, y: f64, z: f64) {
-        //     // println!("Setting position to ({x}, {y}, {z})");
-        //     let position = Vector3 { x, y, z };
-        //     let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
-        //     let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
-        //     let transform: Option<dream_ecs::component::Transform> = entity.get_component();
-        //     let mut transform = transform.unwrap();
-        //     transform.position = dream_math::Vector3::from(position);
-        //     entity.add_component(transform);
-        // }
-
         #[inline]
         #[pymethod]
         fn set_position(&self, position: Vector3Internal) {
-            // println!("Setting position to ({x}, {y}, {z})");
-            // let position = Vector3 { x, y, z };
             let scene = SCENE.lock().unwrap().as_ref().unwrap().clone();
             let entity = dream_ecs::entity::Entity::from_handle(self.handle, scene);
             let transform: Option<dream_ecs::component::Transform> = entity.get_component();
@@ -215,7 +194,7 @@ pub(crate) mod dream_py {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream_py", name = "Transform")]
+    #[pyclass(module = "dream", name = "Transform")]
     #[derive(Debug, PyPayload)]
     struct Transform {
         position: Vector3Internal,
@@ -223,15 +202,10 @@ pub(crate) mod dream_py {
 
     #[pyclass]
     impl Transform {
-        // #[pygetset]
-        // fn position(&self) -> PyResult<Vector3> {
-        //     Ok(self.position)
-        // }
-
-        // #[pymethod]
-        // fn get_position(&self) -> PyResult<Vector3> {
-        //     Ok(self.position)
-        // }
+        #[pygetset]
+        fn position(&self) -> PyResult<Vector3Internal> {
+            Ok(self.position)
+        }
     }
 
     impl From<dream_ecs::component::Transform> for Transform {
@@ -252,8 +226,8 @@ pub(crate) mod dream_py {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream_py", name = "Vector3Internal")]
-    #[derive(Debug, PyPayload)]
+    #[pyclass(module = "dream", name = "Vector3Internal")]
+    #[derive(Debug, Clone, Copy, PyPayload)]
     struct Vector3Internal {
         x: f64,
         y: f64,
@@ -276,41 +250,6 @@ pub(crate) mod dream_py {
         fn z(&self) -> f64 {
             self.z.clone()
         }
-
-        // #[pymethod]
-        // fn get_x(&self) -> f64 {
-        //     self.x
-        // }
-        //
-        // #[pymethod]
-        // fn get_y(&self) -> f64 {
-        //     self.y
-        // }
-        //
-        // #[pymethod]
-        // fn get_z(&self) -> f64 {
-        //     self.z
-        // }
-
-        #[pymethod]
-        fn print_in_rust_from_python(&self) {
-            println!("Calling a rust method from python");
-        }
-
-        // #[pymethod]
-        // fn set_x(&mut self, x: f64) {
-        //     self.x = x;
-        // }
-        //
-        // #[pymethod]
-        // fn set_y(&mut self, y: f64) {
-        //     self.y = y;
-        // }
-        //
-        // #[pymethod]
-        // fn set_z(&mut self, z: f64) {
-        //     self.z = z;
-        // }
     }
 
     impl AsNumber for Vector3Internal {
@@ -401,12 +340,6 @@ pub(crate) mod dream_py {
 
     impl TryFromBorrowedObject<'_> for Vector3Internal {
         fn try_from_borrowed_object(vm: &VirtualMachine, obj: &PyObject) -> PyResult<Self> {
-            // TODO: get from object
-            // let x = 1.0;
-            // let y = 1.0;
-            // let z = 1.0;
-            // Ok(Vector3 { x, y, z })
-
             let x = obj
                 .get_attr("x", vm)
                 .expect("Unable to find x attribute")
