@@ -10,7 +10,7 @@ use rustpython_vm::scope::Scope;
 use rustpython_vm::{
     compiler, pyclass, pymodule,
     types::{Constructor, GetDescriptor, Unconstructible},
-    AsObject, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject,
+    vm, AsObject, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject,
     VirtualMachine,
 };
 
@@ -29,8 +29,7 @@ impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
             vm.add_native_module("dream".to_owned(), Box::new(dream_py::make_module));
-            // TODO: add frozen module
-            // vm.add_frozen();
+            vm.add_frozen(rustpython_vm::py_freeze!(dir = "src/default-files"));
         });
         Self {
             interpreter,
