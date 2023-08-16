@@ -135,7 +135,7 @@ pub(crate) mod dream_py {
     }
 
     #[pyfunction]
-    fn vec3(x: f64, y: f64, z: f64, _vm: &VirtualMachine) -> PyResult<Vector3Internal> {
+    fn dream_vec3(x: f64, y: f64, z: f64, _vm: &VirtualMachine) -> PyResult<Vector3Internal> {
         Ok(Vector3Internal { x, y, z })
     }
 
