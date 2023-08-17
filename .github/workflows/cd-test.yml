@@ -35,6 +35,6 @@ jobs:
         uses: akhileshns/heroku-deploy@v3.12.14
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "dream-engine-test"
+          heroku_app_name: "dream-editor-test"
           heroku_email: "rdeepak2002@gmail.com"
           appdir: "web"
