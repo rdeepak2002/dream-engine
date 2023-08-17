@@ -4,7 +4,7 @@ name: CI
 
 jobs:
   build_ubuntu:
-    name: CI Ubuntu
+    name: Build Ubuntu
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
           command: build
           args: --release
   build_web:
-    name: CI Web
+    name: Build Web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -35,6 +35,7 @@ jobs:
         working-directory: crates/dream-runner
         run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
   deploy_web:
+    name: Deploy Web
     runs-on: ubuntu-latest
     needs: build_web
     steps:
