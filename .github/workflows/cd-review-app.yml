@@ -43,6 +43,7 @@ jobs:
         uses: pmbanugo/heroku-review-app-actions@v2.0.0 # Uses the action
         id: deploy
         with:
+          working-directory: web
           api-key: ${{ secrets.HEROKU_API_KEY }}
           pipeline-id: ${{ secrets.HEROKU_PIPELINE_ID }}
           base-name: getting-started
