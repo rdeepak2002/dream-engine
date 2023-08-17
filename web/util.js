@@ -178,7 +178,6 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     if (showDownloadLogs) {
         updateLoaderBarText("Done downloading resources");
     }
-    hideWindowOverlay();
 
     // TODO: when deciding which things to fetch and which things to use from index db:
     // TODO STEP 1: check local storage 'lastSynced' variable indicating when we pulled down data
@@ -204,8 +203,9 @@ const startApplication = (showDownloadLogs = false) => {
                 })
             );
             await workerInstance.initSharedMem(mem);
-            await run_main();
+            hideWindowOverlay();
             disableWebKeyboardEvents();
+            await run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);
