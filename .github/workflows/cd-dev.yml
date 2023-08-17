@@ -1,0 +1,40 @@
+on:
+  push:
+    branches:
+      - main
+
+name: CD Dev
+
+jobs:
+  deploy_web:
+    name: Deploy Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: jetli/wasm-pack-action@v0.4.0
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: Add Toolchain
+        working-directory: crates/dream-runner
+        run: rustup component add rust-src --toolchain nightly-2022-12-12-x86_64-unknown-linux-gnu
+      - name: Build web
+        working-directory: crates/dream-runner
+        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+      - name: Delete web git ignore
+        working-directory: web
+        run: rm -rf .gitignore
+      - name: Delete web/build git ignore
+        working-directory: web/build
+        run: rm -rf .gitignore
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.12.14
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "dream-rs-dev"
+          heroku_email: "rdeepak2002@gmail.com"
+          appdir: "web"
