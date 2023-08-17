@@ -1,12 +1,7 @@
 on:
   push:
     branches:
-      - '**'
-# TODO: only allow for main on push
-# TODO: create separate pipeline for pull request to create review app (https://github.com/marketplace/actions/manage-heroku-review-apps)
-#  pull_request:
-#    branches:
-#      - '**'
+      - main
 
 name: Deploy
 
