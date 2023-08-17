@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Web
 on:
   push:
     branches:
@@ -18,6 +18,9 @@ jobs:
       #        with:
       #          command: build
       #          args: --release --all-features
+      - name: Add Toolchain
+        working-directory: crates/dream-runner
+        run: rustup component add rust-src --toolchain nightly-2022-12-12-x86_64-unknown-linux-gnu
       - name: Build web
         working-directory: crates/dream-runner
         run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
