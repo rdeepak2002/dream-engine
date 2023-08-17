@@ -4,6 +4,7 @@ on:
       - main
       - staging
       - development
+      - 5-python-script-component-system
   pull_request:
     branches:
       - '**'
