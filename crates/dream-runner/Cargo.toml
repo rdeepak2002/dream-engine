@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 readme = "README.md"
 keywords = ["game", "engine", "gamedev", "graphics", "dream"]
-repository = "https://github.com/rdeepak2002/dream-rs"
-homepage = "https://github.com/rdeepak2002/dream-rs"
+repository = "https://github.com/rdeepak2002/dream-engine"
+homepage = "https://github.com/rdeepak2002/dream-engine"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

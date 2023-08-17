@@ -1,9 +1,9 @@
 # Dream Engine [WIP]
 
-![CI Status](https://github.com/rdeepak2002/dream-rs/actions/workflows/ci.yml/badge.svg?branch=main) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![CI Status](https://github.com/rdeepak2002/dream-engine/actions/workflows/ci.yml/badge.svg?branch=main) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 <p align="center">
-  <a href="https://github.com/rdeepak2002/dream-rs">
+  <a href="https://github.com/rdeepak2002/dream-engine">
     <img src="doc/image/logo.png" height="162" alt="Dream Engine Logo">
   </a>
 </p>
