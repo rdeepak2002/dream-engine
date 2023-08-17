@@ -1,11 +1,11 @@
 on:
-  push:
+  - push:
     branches:
       - main
       - staging
       - development
-  pull_request:
-    - '**'
+  - pull_request:
+      - '**'
 
 name: CI
 
