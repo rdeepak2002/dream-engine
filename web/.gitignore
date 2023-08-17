@@ -1,4 +1,4 @@
-web/build/*
+build/*
 examples/*
 examples
 node_modules/*
