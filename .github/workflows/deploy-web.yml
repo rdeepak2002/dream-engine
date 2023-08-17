@@ -10,6 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: jetli/wasm-pack-action@v0.4.0
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -28,7 +32,7 @@ jobs:
       - name: Deploy
         uses: crazy-max/ghaction-github-pages@v1
         with:
-          target_branch: web-demo
+          target_branch: ${{ steps.extract_branch.outputs.branch }}-web-demo
           build_dir: web
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
