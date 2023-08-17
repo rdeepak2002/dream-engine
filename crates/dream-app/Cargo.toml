@@ -19,8 +19,8 @@ rayon = { workspace = true }
 wasm-bindgen = { workspace = true }
 
 # javascript interpreter
-boa_engine = { version = "0.16.0", features = ["console"] }
-boa_gc = "0.16.0"
+#boa_engine = { version = "0.16.0", features = ["console"] }
+#boa_gc = "0.16.0"
 
 # python interpreter
 rustpython-common = { git = "https://github.com/RustPython/RustPython" }
