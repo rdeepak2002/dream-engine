@@ -11,7 +11,7 @@ on:
 #    branches:
 #      - '**'
 
-name: Deploy
+name: CD Review App
 
 jobs:
   deploy_web:
@@ -40,7 +40,6 @@ jobs:
         working-directory: web/build
         run: rm -rf .gitignore
       - name: Deploy Heroku app
-        working-directory: web
         uses: pmbanugo/heroku-review-app-actions@v2.0.0 # Uses the action
         id: deploy
         with:
