@@ -44,7 +44,7 @@ cargo test --workspace
 
 ## Deployment
 
-Please refer to [DEPLOYMENT.md](DEPLOYMENT.md)
+Please refer to [DEPLOYMENT.md](deployment.md)
 
 ## Troubleshooting
 

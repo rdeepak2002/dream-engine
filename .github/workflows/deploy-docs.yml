@@ -1,0 +1,30 @@
+name: Deploy to GH Pages
+on:
+  push:
+    branches:
+      - '**'
+
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install and build Vuepress
+        run: |
+          export NODE_OPTIONS=--openssl-legacy-provider
+          yarn install
+          yarn build
+      #      - name: Deploy
+      #        uses: JamesIves/github-pages-deploy-action@4.1.5
+      #        with:
+      #          branch: gh-pages
+      #          folder: docs/website/.vuepress/dist
+      - name: Deploy
+        uses: jsmrcaga/action-netlify-deploy@v2.0.0
+        with:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DOCS }}
+          NETLIFY_DEPLOY_TO_PROD: true
+          build_directory: docs/website/.vuepress/dist

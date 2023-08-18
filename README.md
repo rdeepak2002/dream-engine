@@ -23,7 +23,7 @@ cutting-edge game engine with the collaborative prowess of Google Docs
 
 ## Development
 
-Please refer to [DEVELOPMENT.md](docs/DEVELOPMENT.md)
+Please refer to [DEVELOPMENT.md](docs/development.md)
 
 ## Contributing
 

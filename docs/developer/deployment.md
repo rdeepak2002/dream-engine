@@ -20,7 +20,8 @@ For deploying please follow this pipeline:
 
 ## Docs Deployment Pipeline
 
-The latest code in the ``docs`` folder on the ``main`` branch is deployed to GitHub pages.
+Latest commit in ``docs`` folder on ``main`` branch automatically triggers ``deploy-docs.yml`` GitHub action to deploy
+to GitHub pages.
 
 ## Domain Management
 
