@@ -24,10 +24,11 @@ jobs:
       #          folder: docs/website/.vuepress/dist
       - name: Deploy
         uses: jsmrcaga/action-netlify-deploy@v2.0.0
+        working-directory: docs/website
         with:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DOCS }}
           NETLIFY_DEPLOY_TO_PROD: true
-          build_directory: docs/website/.vuepress/dist
+          build_directory: .vuepress/dist
           install_command: ''
           build_command: ''
