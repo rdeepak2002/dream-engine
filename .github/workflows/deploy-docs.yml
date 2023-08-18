@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - working-directory: docs/website
       - name: Install and build Vuepress
+        working-directory: docs/website
         run: |
           export NODE_OPTIONS=--openssl-legacy-provider
           yarn install
