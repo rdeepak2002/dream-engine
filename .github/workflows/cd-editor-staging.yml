@@ -1,9 +1,14 @@
+#on:
+#  push:
+#    branches:
+#      - main
+
 on:
   push:
-    tags:
+    branches:
       - '**'
 
-name: CD Test
+name: CD Staging
 
 jobs:
   deploy_web:
@@ -31,10 +36,17 @@ jobs:
       - name: Delete web/build git ignore
         working-directory: web/build
         run: rm -rf .gitignore
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.14
+      #      - name: Deploy to Heroku
+      #        uses: akhileshns/heroku-deploy@v3.12.14
+      #        with:
+      #          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+      #          heroku_app_name: "dream-editor-dev"
+      #          heroku_email: "rdeepak2002@gmail.com"
+      #          appdir: "web"
+      - name: Deploy to netlify
+        uses: netlify/actions/cli@master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_EDITOR_STAGING }}
         with:
-          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
-          heroku_app_name: "dream-editor-test"
-          heroku_email: "rdeepak2002@gmail.com"
-          appdir: "web"
+          args: deploy --dir=docs/website/src/.vuepress/dist --prod
