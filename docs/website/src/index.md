@@ -5,7 +5,7 @@ tagline:
 actionText: Quick Start →
 actionLink: /guide/
 features:
-  - title: Feature 1 Title
+  - title: Feature 1 Title (Updated)
     details: Feature 1 Description
   - title: Feature 2 Title
     details: Feature 2 Description
