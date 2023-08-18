@@ -42,10 +42,6 @@ Visit [http://localhost:3000](http://localhost:3000) on the latest version of Ch
 cargo test --workspace
 ```
 
-## Deployment
-
-Please refer to [DEPLOYMENT.md](deployment.md)
-
 ## Troubleshooting
 
 ### ``error[E0554]: #![feature] may not be used on the stable release channel``

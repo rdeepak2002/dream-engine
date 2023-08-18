@@ -4,7 +4,7 @@ module.exports = {
     /**
      * Ref：https://v1.vuepress.vuejs.org/config/#title
      */
-    title: 'Vuepress Docs Boilerplate',
+    title: 'Dream Engine Docs',
     /**
      * Ref：https://v1.vuepress.vuejs.org/config/#description
      */
@@ -38,12 +38,8 @@ module.exports = {
                 link: '/guide/',
             },
             {
-                text: 'Config',
-                link: '/config/'
-            },
-            {
-                text: 'VuePress',
-                link: 'https://v1.vuepress.vuejs.org'
+                text: 'Developer',
+                link: '/developer/',
             }
         ],
         sidebar: {
@@ -53,7 +49,17 @@ module.exports = {
                     collapsable: false,
                     children: [
                         '',
-                        'using-vue',
+                    ]
+                }
+            ],
+            '/developer/': [
+                {
+                    title: 'Developer',
+                    collapsable: false,
+                    children: [
+                        '',
+                        'development',
+                        'deployment',
                     ]
                 }
             ],

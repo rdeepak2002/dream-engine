@@ -29,4 +29,4 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DOCS }}
         with:
-          args: deploy --dir=docs/website/src/.vuepress/dist --prod
+          args: deploy --dir=docs/src/.vuepress/dist --prod
