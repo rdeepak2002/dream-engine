@@ -14,6 +14,9 @@ class Entity:
     def position(self, value):
         self.internal.set_position(value)
 
+    def update(self, dt: float):
+        pass
+
 
 class Vector3:
     def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, obj=None):

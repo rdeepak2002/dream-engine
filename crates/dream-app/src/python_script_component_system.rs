@@ -40,6 +40,11 @@ impl Default for PythonScriptComponentSystem {
 
 impl System for PythonScriptComponentSystem {
     fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
+        // TODO: this method requires significant clean-up
+        // general idea:
+        // 1. compile code and get name of class
+        // 2. compile modified version of code where a new line is added which instantiates the class
+
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
@@ -68,6 +73,8 @@ impl System for PythonScriptComponentSystem {
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
                     .map(|value| {
+                        // TODO: no reason to store this in the map... instead store the actual object generate by the next run_code_object
+                        // cuz this run code object only returns the class definition which we extract the class name from
                         self.entity_script.entry(entity_id).or_insert(Some(value));
                     })
                     .expect("Error running python code");
@@ -77,21 +84,45 @@ impl System for PythonScriptComponentSystem {
                     .unwrap()
                     .as_ref()
                     .unwrap();
+                let class_name_raw = entity_script.get_attr("__name__", vm);
+                let x = class_name_raw.expect("No class name").str(vm);
+                let class_name =
+                    String::from(x.expect("Unable to convert class name to string").as_str());
 
-                if let Ok(update) = entity_script.get_attr("update", vm) {
-                    let args = vec![
-                        vm.ctx.new_float(dt as f64).into(),
-                        vm.ctx.new_int(entity_id).into(),
-                    ];
-                    let res = update.call(args, vm);
-                    if let Err(..) = res {
-                        let e = res.unwrap_err();
-                        let line_number = e.traceback().unwrap().lineno;
-                        let py_err = e.get_arg(0).unwrap();
-                        log::error!("line {}", line_number);
-                        log::error!("{}", py_err.str(vm).unwrap());
+                let scope = vm.new_scope_with_builtins();
+                let source_path;
+                cfg_if::cfg_if! {
+                    if #[cfg(target_arch = "wasm32")] {
+                        source_path = "<wasm>"
+                    } else {
+                        source_path = "<embedded>"
                     }
                 }
+
+                let code_obj = vm
+                    .compile(
+                        &format!("{script}\n{class_name}({entity_id})"),
+                        compiler::Mode::BlockExpr,
+                        source_path.to_owned(),
+                    )
+                    .map_err(|err| vm.new_syntax_error(&err, None))
+                    .unwrap();
+
+                vm.run_code_obj(code_obj, scope)
+                    .map(|entity_script| {
+                        if let Ok(update) = entity_script.get_attr("update", vm) {
+                            let args = vec![vm.ctx.new_float(dt as f64).into()];
+                            let res = update.call(args, vm);
+                            if let Err(..) = res {
+                                let e = res.unwrap_err();
+                                let py_err = e.get_arg(0).unwrap();
+                                log::error!("{}", py_err.str(vm).unwrap());
+                                let line_number = e.traceback().unwrap().lineno;
+                                log::error!("line {}", line_number);
+                            }
+                        }
+                    })
+                    .expect("Error running python code");
 
                 // TODO: allow other python scripts to get variables that are defined
                 // TODO: allow inspector to view attributes (have attributes map in script component)
@@ -122,12 +153,15 @@ impl System for PythonScriptComponentSystem {
 pub(crate) mod dream_py {
     use std::any::Any;
 
-    use rustpython_vm::builtins::{PyStr, PyStrInterned, PyTypeRef};
+    use cgmath::num_traits::ToPrimitive;
+    use rustpython_vm::builtins::{PyGenericAlias, PyStr, PyStrInterned, PyTypeRef};
     use rustpython_vm::protocol::PyNumberMethods;
     use rustpython_vm::types::AsNumber;
     use rustpython_vm::{
-        builtins::PyList, convert::ToPyObject, PyObjectRef, TryFromBorrowedObject,
+        builtins::PyList, convert::ToPyObject, Py, PyObjectRef, TryFromBorrowedObject,
     };
+
+    use dream_math::Vector3;
 
     use super::*;
 
@@ -142,14 +176,45 @@ pub(crate) mod dream_py {
     }
 
     #[pyattr]
-    #[pyclass(module = "dream_py", name = "EntityInternal")]
+    #[pyclass(module = "dream", name = "EntityInternal")]
     #[derive(Debug, PyPayload)]
     pub(crate) struct EntityInternal {
         pub(crate) handle: u64,
     }
 
+    // impl Constructor for EntityInternal {
+    //     type Args = FuncArgs;
+    //
+    //     fn py_new(cls: PyTypeRef, args: Self::Args, vm: &VirtualMachine) -> PyResult {
+    //         let handle_arg = args.args.get(0);
+    //         Ok(EntityInternal {
+    //             handle: handle_arg
+    //                 .unwrap()
+    //                 .try_int(vm)
+    //                 .unwrap()
+    //                 .as_bigint()
+    //                 .to_u64()
+    //                 .unwrap(),
+    //         }
+    //         .to_pyobject(vm))
+    //     }
+    // }
+
     #[pyclass]
     impl EntityInternal {
+        // TODO: this works... let's use this instead of the weird thing we are doing right now in dream_py.py
+        // #[pyslot]
+        // pub(crate) fn getattro(obj: &PyObject, name: &Py<PyStr>, vm: &VirtualMachine) -> PyResult {
+        //     println!("object.__getattribute__({:?}, {:?})", obj, name);
+        //     // obj.as_object().generic_getattr(name, vm)
+        //     Ok(Vector3Internal {
+        //         x: 0.,
+        //         y: 0.,
+        //         z: 0.,
+        //     }
+        //     .into_pyobject(vm))
+        // }
+
         #[pymethod]
         fn get_handle(&self) -> PyResult<u64> {
             Ok(self.handle)
