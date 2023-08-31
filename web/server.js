@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+const port = process?.env?.PORT || 3000;
 
 app.use(function (req, res, next) {
     console.log(req.url);
@@ -9,7 +9,7 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.use(express.static('.', {
+app.use(express.static(__dirname, {
     etag: false,
     maxAge: '1'
 }));

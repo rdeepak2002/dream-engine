@@ -1,0 +1,32 @@
+name: Deploy docs
+
+on:
+  push:
+    branches:
+      - main
+
+#on:
+#  push:
+#    branches:
+#      - '**'
+
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install and build Vuepress
+        working-directory: docs
+        run: |
+          export NODE_OPTIONS=--openssl-legacy-provider
+          yarn install
+          yarn build
+      - name: Deploy to netlify
+        uses: netlify/actions/cli@master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DOCS }}
+        with:
+          args: deploy --dir=docs/src/.vuepress/dist --prod

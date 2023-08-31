@@ -1,0 +1,14 @@
+[package]
+name = "dream-time"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cfg-if = { workspace = true }
+wasm-bindgen = { workspace = true }
+web-sys = { version = "0.3.61", features = [
+    "Window",
+    "OffscreenCanvas",
+    "Performance",
+    "PerformanceTiming"
+] }

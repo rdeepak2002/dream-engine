@@ -16,12 +16,13 @@
       <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-tasks/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/dream-runner/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/dream-time/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-editor/target" />
       <excludeFolder url="file://$MODULE_DIR$/crates/dream-resource/target" />
       <excludeFolder url="file://$MODULE_DIR$/web/build/snippets" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

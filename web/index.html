@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="require-corp" http-equiv="Cross-Origin-Embedder-Policy"/>
+    <meta content="same-origin" http-equiv="Cross-Origin-Opener-Policy"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dream</title>
     <!--    favicon-->
@@ -19,6 +21,8 @@
     <link color="#5bbad5" href="favicon/safari-pinned-tab.svg" rel="mask-icon">
     <meta content="#da532c" name="msapplication-TileColor">
     <meta content="#ffffff" name="theme-color">
+    <!--    hacky solution to enable threads on Chrome when not served from server.js-->
+    <script src="enable-threads.js"></script>
     <!--    stylesheets and fonts-->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Ubuntu:wght@300&display=swap"
           rel="stylesheet">
@@ -176,7 +180,7 @@
 
 <body id="dream-window-container">
 <div class="fadeIn" id="dream-window-overlay">
-    <h3 id="dream-title">Dream Engine Demo</h3>
+    <h3 id="dream-title">Dream Engine</h3>
     <img alt="logo" id="logo" src="logo.png"/>
     <div id="dream-resource-loader">
         <div id="dream-resource-loader-main">

@@ -723,7 +723,5 @@ impl RendererWgpu {
     pub fn clear(&mut self) {
         self.render_map.clear();
         self.instance_buffer_map.clear();
-        self.render_map.shrink_to_fit();
-        self.instance_buffer_map.shrink_to_fit();
     }
 }

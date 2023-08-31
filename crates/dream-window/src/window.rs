@@ -1,5 +1,4 @@
 use crossbeam_channel::unbounded;
-use instant::Instant;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -88,7 +87,7 @@ impl Window {
         .await;
 
         let sleep_millis: u64 = 16;
-        let mut last_update_time = Instant::now();
+        let mut last_update_time = dream_time::time::now();
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 Event::RedrawRequested(window_id) if window_id == self.window.id() => {
@@ -99,11 +98,11 @@ impl Window {
                     let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
-                    let now = Instant::now();
-                    if (now - last_update_time).as_millis() > sleep_millis as u128 {
+                    let now = dream_time::time::now();
+                    if now - last_update_time > sleep_millis as u128 {
                         app.update();
                         app.draw(&mut renderer);
-                        last_update_time = Instant::now();
+                        last_update_time = dream_time::time::now();
                     }
 
                     // draw the scene (to texture)
