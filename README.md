@@ -19,7 +19,10 @@
 Introducing Dream Engine: A groundbreaking real-time 3D engine that seamlessly integrates the capabilities of a
 cutting-edge game engine with the collaborative prowess of Google Docs
 
-[Link to deployed application](https://editor.dream-engine.app/)
+<p align="center">
+<a href="https://staging.editor.dream-engine.app/"><strong>Check out the deployed site »</strong></a>
+<br />
+</p>
 
 ![desktop](docs/src/.vuepress/public/image/screenshot_0.png)
 
