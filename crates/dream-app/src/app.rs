@@ -30,7 +30,6 @@ use dream_resource::resource_manager::ResourceManager;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
-use crate::javascript_script_component_system::JavaScriptScriptComponentSystem;
 use crate::python_script_component_system::PythonScriptComponentSystem;
 use crate::system::System;
 
@@ -58,11 +57,9 @@ impl Default for App {
             .add_component(MeshRenderer::new(Some(resource_handle)));
 
         // init component systems
-        let component_systems = vec![
-            Arc::new(Mutex::new(JavaScriptScriptComponentSystem::default()))
-                as Arc<Mutex<dyn System>>,
-            Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
-        ];
+        let component_systems =
+            vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
+                as Arc<Mutex<dyn System>>];
 
         Self {
             dt: 0.0,

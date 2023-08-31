@@ -47,7 +47,10 @@ pub fn get_texture_bytes_info_from_gltf<'a>(
                 mime_type.clone(),
             )
         }
-        gltf::image::Source::Uri { uri, mime_type } => {
+        gltf::image::Source::Uri {
+            uri,
+            mime_type: _mime_type,
+        } => {
             let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
                 .expect("unable to load binary");
             let buf_dat: &[u8] = &bin;

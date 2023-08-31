@@ -3,23 +3,23 @@
 ## Editor Deployment Pipeline
 
 - Latest commit on the ``main`` branch automatically
-  triggers [``cd-editor-staging.yml``](https://github.com/rdeepak2002/dream-engine/blob/5-python-script-component-system/.github/workflows/cd-editor-staging.yml)
+  triggers [``cd-editor-staging.yml``](https://github.com/rdeepak2002/dream-engine/blob/main/.github/workflows/cd-editor-staging.yml)
   GitHub action to deploy to
   Netlify.
 
 - Latest tagged release automatically
-  triggers [``cd-editor-prod.yml``](https://github.com/rdeepak2002/dream-engine/blob/5-python-script-component-system/.github/workflows/cd-editor-prod.yml)
+  triggers [``cd-editor-prod.yml``](https://github.com/rdeepak2002/dream-engine/blob/main/.github/workflows/cd-editor-prod.yml)
   GitHub action to deploy to Netlify.
 
 - Latest commit on the ``main`` branch automatically
-  triggers [``ci.yml``](https://github.com/rdeepak2002/dream-engine/blob/5-python-script-component-system/.github/workflows/ci.yml)
+  triggers [``ci.yml``](https://github.com/rdeepak2002/dream-engine/blob/main/.github/workflows/ci.yml)
   GitHub action to verify Dream can be
   built on different systems.
 
 ## Docs Deployment Pipeline
 
 Latest commit in ``docs`` folder on ``main`` branch automatically
-triggers [``deploy-docs.yml``](https://github.com/rdeepak2002/dream-engine/blob/5-python-script-component-system/.github/workflows/cd-docs.yml)
+triggers [``deploy-docs.yml``](https://github.com/rdeepak2002/dream-engine/blob/main/.github/workflows/cd-docs.yml)
 GitHub action to deploy
 to Netlify.
 

@@ -18,21 +18,11 @@ async-executor = { workspace = true }
 rayon = { workspace = true }
 wasm-bindgen = { workspace = true }
 
-# javascript interpreter
-#boa_engine = { version = "0.16.0", features = ["console"] }
-#boa_gc = "0.16.0"
-
 # python interpreter
 rustpython-common = { git = "https://github.com/RustPython/RustPython" }
-#rustpython-parser = { git = "https://github.com/RustPython/RustPython" }
 rustpython-derive = { git = "https://github.com/RustPython/RustPython" }
 rustpython-pylib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true }
 rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true }
 rustpython-vm = { git = "https://github.com/RustPython/RustPython", default-features = false, features = ["compiler"] }
-#rustpython-common = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0" }
-#rustpython-parser = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0" }
-#rustpython-default-files = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
-#rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, optional = true }
-#rustpython-vm = { git = "https://github.com/RustPython/RustPython", tag = "v0.2.0", default-features = false, features = ["compiler"] }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { workspace = true }

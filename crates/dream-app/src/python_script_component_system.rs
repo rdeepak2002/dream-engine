@@ -1,17 +1,10 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, Weak};
 
-use gc::{Finalize, Trace};
-use rustpython_vm::builtins::{PyDictRef, PyIntRef};
-use rustpython_vm::convert::{ToPyObject, ToPyResult};
-use rustpython_vm::function::{ArgMapping, FuncArgs, OptionalArg};
-use rustpython_vm::protocol::PyNumber;
-use rustpython_vm::scope::Scope;
+use rustpython_vm::convert::ToPyResult;
 use rustpython_vm::{
-    compiler, pyclass, pymodule,
-    types::{Constructor, GetDescriptor, Unconstructible},
-    vm, AsObject, Interpreter, PyObject, PyObjectRef, PyPayload, PyResult, TryFromBorrowedObject,
-    VirtualMachine,
+    compiler, pyclass, pymodule, types::Constructor, Interpreter, PyObject, PyObjectRef, PyPayload,
+    PyResult, VirtualMachine,
 };
 
 use dream_ecs::scene::Scene;
@@ -29,7 +22,7 @@ impl Default for PythonScriptComponentSystem {
     fn default() -> Self {
         let interpreter = Interpreter::with_init(Default::default(), |vm| {
             vm.add_native_module("dream".to_owned(), Box::new(dream_py::make_module));
-            vm.add_frozen(rustpython_vm::py_freeze!(dir = "src/default-files"));
+            vm.add_frozen(rustpython_vm::py_freeze!(dir = "src/pylib"));
         });
         Self {
             interpreter,
@@ -40,11 +33,6 @@ impl Default for PythonScriptComponentSystem {
 
 impl System for PythonScriptComponentSystem {
     fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
-        // TODO: this method requires significant clean-up
-        // general idea:
-        // 1. compile code and get name of class
-        // 2. compile modified version of code where a new line is added which instantiates the class
-
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
@@ -66,51 +54,55 @@ impl System for PythonScriptComponentSystem {
                         source_path = "<embedded>"
                     }
                 }
-                // TODO: only create code object on file saved or changed (get last updated property of meta data or something)
+                // TODO: only run all this if source code changed
+                // step 1: compile python code and get name of class that is defined
                 let code_obj = vm
                     .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
                     .map_err(|err| vm.new_syntax_error(&err, None))
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)
-                    .map(|value| {
-                        // TODO: no reason to store this in the map... instead store the actual object generate by the next run_code_object
-                        // cuz this run code object only returns the class definition which we extract the class name from
-                        self.entity_script.entry(entity_id).or_insert(Some(value));
-                    })
-                    .expect("Error running python code");
-                let entity_script = self
-                    .entity_script
-                    .get(&entity_id)
-                    .unwrap()
-                    .as_ref()
-                    .unwrap();
-                let class_name_raw = entity_script.get_attr("__name__", vm);
-                let x = class_name_raw.expect("No class name").str(vm);
-                let class_name =
-                    String::from(x.expect("Unable to convert class name to string").as_str());
-
-                let scope = vm.new_scope_with_builtins();
-                let source_path;
-                cfg_if::cfg_if! {
-                    if #[cfg(target_arch = "wasm32")] {
-                        source_path = "<wasm>"
-                    } else {
-                        source_path = "<embedded>"
-                    }
-                }
-
-                let code_obj = vm
-                    .compile(
-                        &format!("{script}\n{class_name}({entity_id})"),
-                        compiler::Mode::BlockExpr,
-                        source_path.to_owned(),
-                    )
-                    .map_err(|err| vm.new_syntax_error(&err, None))
-                    .unwrap();
-
-                vm.run_code_obj(code_obj, scope)
-                    .map(|entity_script| {
-                        if let Ok(update) = entity_script.get_attr("update", vm) {
+                    .map(|entity_class_obj| {
+                        let class_name_raw = entity_class_obj.get_attr("__name__", vm);
+                        let class_name_py_str = class_name_raw.expect("No class name").str(vm);
+                        let class_name = String::from(
+                            class_name_py_str
+                                .expect("Unable to convert class name to string")
+                                .as_str(),
+                        );
+                        let scope = vm.new_scope_with_builtins();
+                        let source_path;
+                        cfg_if::cfg_if! {
+                            if #[cfg(target_arch = "wasm32")] {
+                                source_path = "<wasm>"
+                            } else {
+                                source_path = "<embedded>"
+                            }
+                        }
+                        // step 2: run code that creates instance of class
+                        let code_obj = vm
+                            .compile(
+                                &format!("{script}\n{class_name}({entity_id})"),
+                                compiler::Mode::BlockExpr,
+                                source_path.to_owned(),
+                            )
+                            .map_err(|err| vm.new_syntax_error(&err, None))
+                            .unwrap();
+                        vm.run_code_obj(code_obj, scope)
+                            .map(|entity_script| {
+                                // cuz this run code object only returns the class definition which we extract the class name from
+                                self.entity_script
+                                    .entry(entity_id)
+                                    .or_insert(Some(entity_script));
+                            })
+                            .expect("Error running python code");
+                        if let Ok(update) = self
+                            .entity_script
+                            .get(&entity_id)
+                            .unwrap()
+                            .as_ref()
+                            .unwrap()
+                            .get_attr("update", vm)
+                        {
                             let args = vec![vm.ctx.new_float(dt as f64).into()];
                             let res = update.call(args, vm);
                             if let Err(..) = res {
@@ -121,29 +113,29 @@ impl System for PythonScriptComponentSystem {
                                 log::error!("line {}", line_number);
                             }
                         }
+
+                        // TODO: allow other python scripts to get variables that are defined
+                        // TODO: allow inspector to view attributes (have attributes map in script component)
+                        // for attribute in attributes {
+                        //     let attribute_name = attribute.0.to_string();
+                        //     // let attribute_value = attribute.1.to_pyresult(vm);
+                        //     println!("name: {attribute_name}");
+                        //     // let attribute_name = "x";
+                        //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                        //     // let x: f64 = attribute_value.unwrap().try_float(vm).unwrap().to_f64();
+                        //     // println!("Got variable from other object {}", x);
+                        // }
+
+                        // TODO: this attributes map exposes methods (such as update)
+                        // TODO: this can be useful for having one script call a method for another script?
+                        // let attributes = entity_script.class().get_attributes();
+                        // for attribute in attributes {
+                        //     let attribute_name = attribute.0.to_string();
+                        //     println!("name: {attribute_name}");
+                        //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                        // }
                     })
                     .expect("Error running python code");
-
-                // TODO: allow other python scripts to get variables that are defined
-                // TODO: allow inspector to view attributes (have attributes map in script component)
-                // for attribute in attributes {
-                //     let attribute_name = attribute.0.to_string();
-                //     // let attribute_value = attribute.1.to_pyresult(vm);
-                //     println!("name: {attribute_name}");
-                //     // let attribute_name = "x";
-                //     let attribute_value = entity_script.get_attr(attribute_name, vm);
-                //     // let x: f64 = attribute_value.unwrap().try_float(vm).unwrap().to_f64();
-                //     // println!("Got variable from other object {}", x);
-                // }
-
-                // TODO: this attributes map exposes methods (such as update)
-                // TODO: this can be useful for having one script call a method for another script?
-                // let attributes = entity_script.class().get_attributes();
-                // for attribute in attributes {
-                //     let attribute_name = attribute.0.to_string();
-                //     println!("name: {attribute_name}");
-                //     let attribute_value = entity_script.get_attr(attribute_name, vm);
-                // }
             })
         }
     }
@@ -151,17 +143,8 @@ impl System for PythonScriptComponentSystem {
 
 #[pymodule]
 pub(crate) mod dream_py {
-    use std::any::Any;
-
-    use cgmath::num_traits::ToPrimitive;
-    use rustpython_vm::builtins::{PyGenericAlias, PyStr, PyStrInterned, PyTypeRef};
-    use rustpython_vm::protocol::PyNumberMethods;
-    use rustpython_vm::types::AsNumber;
-    use rustpython_vm::{
-        builtins::PyList, convert::ToPyObject, Py, PyObjectRef, TryFromBorrowedObject,
-    };
-
-    use dream_math::Vector3;
+    use rustpython_vm::builtins::PyTypeRef;
+    use rustpython_vm::TryFromBorrowedObject;
 
     use super::*;
 
@@ -313,59 +296,6 @@ pub(crate) mod dream_py {
         #[pygetset]
         fn z(&self) -> f64 {
             self.z.clone()
-        }
-    }
-
-    impl AsNumber for Vector3Internal {
-        fn as_number() -> &'static PyNumberMethods {
-            &PyNumberMethods {
-                add: Some(|a, b, vm| {
-                    let a = Vector3Internal::try_from_borrowed_object(vm, a).unwrap();
-                    let b = Vector3Internal::try_from_borrowed_object(vm, b).unwrap();
-                    let res: Self =
-                        (dream_math::Vector3::from(a) + dream_math::Vector3::from(b)).into();
-                    res.to_pyresult(vm)
-                }),
-                subtract: Some(|a, b, vm| {
-                    let a = Vector3Internal::try_from_borrowed_object(vm, a).unwrap();
-                    let b = Vector3Internal::try_from_borrowed_object(vm, b).unwrap();
-                    let res: Self =
-                        (dream_math::Vector3::from(a) - dream_math::Vector3::from(b)).into();
-                    res.to_pyresult(vm)
-                }),
-                multiply: Some(|a, b, vm| {
-                    // scenario where a is a scalar
-                    if let a = a.try_float(vm) {
-                        let a = a.unwrap().to_f64() as f32;
-                        let b = Vector3Internal::try_from_borrowed_object(vm, b).unwrap();
-                        let res: Self = (a * dream_math::Vector3::from(b)).into();
-                        return res.to_pyresult(vm);
-                    }
-
-                    // scenario where b is a scalar
-                    if let b = b.try_float(vm) {
-                        let a = Vector3Internal::try_from_borrowed_object(vm, a).unwrap();
-                        let b = b.unwrap().to_f64() as f32;
-                        let res: Self = (dream_math::Vector3::from(a) * b).into();
-                        return res.to_pyresult(vm);
-                    }
-
-                    // scenario where both a and b are vectors
-                    let a = Vector3Internal::try_from_borrowed_object(vm, a).unwrap();
-                    let b = Vector3Internal::try_from_borrowed_object(vm, b).unwrap();
-                    let res: Self =
-                        (dream_math::Vector3::from(a) * dream_math::Vector3::from(b)).into();
-                    res.to_pyresult(vm)
-                }),
-                // power: Some(|a, b, c, vm| {...}),
-                // negative: Some(|num, vm| (&PyInt::number_downcast(num).value).neg().to_pyresult(vm)),
-                // positive: Some(|num, vm| Ok(PyInt::number_downcast_exact(num, vm).into())),
-                // absolute: Some(|num, vm| PyInt::number_downcast(num).value.abs().to_pyresult(vm)),
-                // invert: Some(|num, vm| (&PyInt::number_downcast(num).value).not().to_pyresult(vm)),
-                // floor_divide: Some(|a, b, vm| PyInt::number_op(a, b, inner_floordiv, vm)),
-                // true_divide: Some(|a, b, vm| PyInt::number_op(a, b, inner_truediv, vm)),
-                ..PyNumberMethods::NOT_IMPLEMENTED
-            }
         }
     }
 
