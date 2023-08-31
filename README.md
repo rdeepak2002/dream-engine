@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="https://github.com/rdeepak2002/dream-engine">
-    <img src="docs/src/image/logo.png" height="162" alt="Dream Engine Logo">
+    <img src="docs/src/.vuepress/public/image/logo.png" height="162" alt="Dream Engine Logo">
   </a>
 </p>
 
@@ -21,6 +21,8 @@ cutting-edge game engine with the collaborative prowess of Google Docs
 
 [Link to deployed application](https://editor.dream-engine.app/)
 
+![desktop](docs/src/.vuepress/public/image/screenshot_0.png)
+
 ## Get Started
 
 Please refer to the [user-facing docs](https://docs.dream-engine.app/guide/).
@@ -32,15 +34,3 @@ Please refer to the [development docs](https://docs.dream-engine.app/developer/)
 ## Contributing
 
 This repository is closed to public contributions at the moment
-
-## Screenshots
-
-### MacOS Desktop Build
-
-![desktop](docs/src/image/screenshot_0.png)
-
-### Web Assembly (Browser) Build
-
-![web](docs/src/image/screenshot_1.png)
-
-![web](docs/src/image/screenshot_2.png)
