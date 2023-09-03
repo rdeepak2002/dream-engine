@@ -17,3 +17,5 @@ egui = { workspace = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
 dream-renderer = { workspace = true }
+dream-ecs = { workspace = true }
+dream-app = { workspace = true }

@@ -16,16 +16,20 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::sync::{Mutex, Weak};
+
+use anyhow::{anyhow, Result};
 use shipyard::{IntoIter, IntoWithId};
 
-use crate::component::Transform;
+use crate::component::{Hierarchy, Transform};
+use crate::entity::Entity;
 
 // pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
 
 pub struct Scene {
     pub name: &'static str,
-    pub handle: shipyard::World,
     pub root_entity_runtime_id: Option<u64>,
+    pub handle: shipyard::World,
 }
 
 impl Default for Scene {
@@ -38,55 +42,99 @@ impl Default for Scene {
     }
 }
 
-// pub fn create_entity() -> Option<u64> {
-//     if let Ok(mut scn) = SCENE.lock() {
-//         return Some(scn.create_entity().handle);
-//     }
-//     None
-// }
-//
-// pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>() -> Vec<u64> {
-//     SCENE.lock().unwrap().get_entities_with_component::<T>()
-// }
+pub fn get_children_for_entity(scene: Weak<Mutex<Scene>>, entity_id: u64) -> Vec<u64> {
+    let entity = Entity::from_handle(entity_id, scene.clone());
+    let hierarchy_component: Option<Hierarchy> = entity.get_component();
+    let mut result = Vec::new();
+    if let Some(hierarchy_component) = hierarchy_component {
+        let mut cur_entity_id = hierarchy_component.first_child_runtime_id;
+        while let Some(cur_entity_id_unwrapped) = cur_entity_id {
+            result.push(cur_entity_id_unwrapped);
+            let entity = Entity::from_handle(cur_entity_id_unwrapped, scene.clone());
+            let hierarchy_component: Option<Hierarchy> = entity.get_component();
+            if let Some(hierarchy_component) = hierarchy_component {
+                cur_entity_id = hierarchy_component.next_sibling_runtime_id;
+            } else {
+                cur_entity_id = None;
+            }
+        }
+    }
+    result
+}
 
-// pub fn create_entity(mut scene: Arc<Scene>) -> Entity {
-//
-// }
+pub fn add_child_to_entity(scene: Weak<Mutex<Scene>>, child_entity_id: u64, parent_entity_id: u64) {
+    let child_entity = Entity::from_handle(child_entity_id, scene.clone());
+    let parent_entity = Entity::from_handle(parent_entity_id, scene.clone());
+
+    if child_entity.has_component::<Hierarchy>() && parent_entity.has_component::<Hierarchy>() {
+        let mut parent_hierarchy_component: Hierarchy = parent_entity.get_component().unwrap();
+        let mut child_hierarchy_component: Hierarchy = child_entity.get_component().unwrap();
+
+        if child_hierarchy_component.parent_runtime_id.is_some() {
+            // TODO: if child already has parent, remove it from that parent (not a full remove cuz children need to move with it)
+            // ^ might be best to create a general 'move' method where you move a child from one parent to a different parent
+            todo!();
+        }
+
+        parent_hierarchy_component.num_children += 1;
+        if parent_hierarchy_component.first_child_runtime_id.is_none() {
+            // set child as first child of parent
+            parent_hierarchy_component.first_child_runtime_id = Some(child_entity_id);
+        } else {
+            // insert entity to front of children list
+            // set first child of parent to new child
+            let former_first_child = parent_hierarchy_component.first_child_runtime_id;
+            parent_hierarchy_component.first_child_runtime_id = Some(child_entity_id);
+            // set child hierarchy component next to former first child
+            child_hierarchy_component.next_sibling_runtime_id = former_first_child;
+            // set former first child's previous to this child
+            if let Some(former_first_child_entity_id) = former_first_child {
+                let former_first_child_entity =
+                    Entity::from_handle(former_first_child_entity_id, scene);
+                if former_first_child_entity.has_component::<Hierarchy>() {
+                    let mut former_first_child_hierarchy_component: Hierarchy =
+                        former_first_child_entity.get_component().unwrap();
+                    former_first_child_hierarchy_component.prev_sibling_runtime_id =
+                        Some(child_entity_id);
+                    former_first_child_entity.add_component(former_first_child_hierarchy_component);
+                }
+            }
+        }
+        child_hierarchy_component.parent_runtime_id = Some(parent_entity_id);
+        parent_entity.add_component(parent_hierarchy_component);
+        child_entity.add_component(child_hierarchy_component);
+    }
+}
+
+pub fn create_entity(scene: Weak<Mutex<Scene>>, parent_id: Option<u64>) -> Result<u64> {
+    let scene_mutex = scene
+        .upgrade()
+        .ok_or_else(|| anyhow!("Unable to upgrade scene weak reference when creating entity"))?;
+    let mut scene_mutex_lock = scene_mutex
+        .lock()
+        .map_err(|_| anyhow!("Unable to acquire scene mutex when creating entity"))
+        .unwrap();
+    // add root entity if it does not exist
+    if scene_mutex_lock.root_entity_runtime_id.is_none() {
+        let new_root_entity = scene_mutex_lock
+            .handle
+            .add_entity((Transform::default(), Hierarchy::default()))
+            .inner();
+        scene_mutex_lock.root_entity_runtime_id = Some(new_root_entity);
+    }
+    // create new entity and make it child of the root
+    let new_entity_id = scene_mutex_lock
+        .handle
+        .add_entity((Transform::default(), Hierarchy::default()))
+        .inner();
+    let root_id = scene_mutex_lock.root_entity_runtime_id.unwrap();
+    // drop mutex lock to allow other threads to modify scene
+    drop(scene_mutex_lock);
+    add_child_to_entity(scene, new_entity_id, parent_id.unwrap_or(root_id));
+    Ok(new_entity_id)
+}
 
 impl Scene {
-    // pub fn create_entity(&mut self) -> Entity {
-    //     let handle = self
-    //         .handle
-    //         .add_entity((Transform::default(), Hierarchy::default()))
-    //         .inner();
-    //     let entity = Entity::from_handle(handle);
-    //     entity.attach_to_back_with_scene(self.root_entity_runtime_id, self);
-    //     if self.root_entity_runtime_id.is_none() {
-    //         self.root_entity_runtime_id = Some(entity.get_runtime_id());
-    //     }
-    //     return entity;
-    // }
-
-    // pub fn create_entity_with_parent(&mut self, parent_entity_runtime_id: u64) -> Entity {
-    //     let handle = self
-    //         .handle
-    //         .add_entity((Transform::default(), Hierarchy::default()))
-    //         .inner();
-    //     let entity = Entity::from_handle(handle);
-    //     entity.attach_to_back_with_scene(Some(parent_entity_runtime_id), self);
-    //     return entity;
-    // }
-
-    // TODO: if we use the below method, we first have to call remove
-    // pub fn attach_entity_to_parent(&mut self, child_handle: u64, parent_handle: u64) {
-    //     let child_entity = Entity::from_handle(child_handle);
-    //     child_entity.attach_to_back_with_scene(Some(parent_handle), self);
-    // }
-
-    pub fn create_entity(&mut self) -> u64 {
-        self.handle.add_entity(Transform::default()).inner()
-    }
-
     pub fn get_entities_with_component<T: shipyard::Component + Send + Sync + Clone>(
         &self,
     ) -> Vec<u64> {
@@ -104,18 +152,6 @@ impl Scene {
         entity_vec
     }
 }
-
-// impl Drop for Scene {
-//     /// Remove all entities from scene when scene is deleted (this catches possible memory issues too since Entity struct has unsafe pointer reference)
-//     fn drop(&mut self) {
-//         self.handle
-//             .run(|mut all_storages: shipyard::AllStoragesViewMut| {
-//                 let id = all_storages.add_entity(Transform::new());
-//                 println!("Deleting entity with runtime ID {}", id.inner());
-//                 all_storages.delete_entity(id);
-//             });
-//     }
-// }
 
 // #[cfg(test)]
 // mod tests {

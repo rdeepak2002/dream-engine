@@ -17,6 +17,7 @@ dream-tasks = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
 wasm-bindgen = { workspace = true }
+anyhow = { workspace = true }
 
 # python interpreter
 rustpython-common = { git = "https://github.com/RustPython/RustPython" }

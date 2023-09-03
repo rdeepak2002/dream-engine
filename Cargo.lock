@@ -748,6 +748,7 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 name = "dream-app"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-executor",
  "cfg-if",
  "cgmath",
@@ -773,6 +774,7 @@ dependencies = [
 name = "dream-ecs"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cgmath",
  "dream-math",
  "dream-resource",
@@ -787,6 +789,8 @@ dependencies = [
  "bytemuck",
  "cfg-if",
  "cgmath",
+ "dream-app",
+ "dream-ecs",
  "dream-renderer",
  "egui",
  "egui-wgpu",

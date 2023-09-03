@@ -80,6 +80,7 @@ impl Window {
         let mut app = App::default();
         let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
         let mut editor = dream_editor::EditorEguiWgpu::new(
+            &app,
             &renderer,
             self.window.scale_factor() as f32,
             &self.event_loop,

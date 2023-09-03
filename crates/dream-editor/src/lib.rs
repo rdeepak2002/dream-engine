@@ -1,15 +1,20 @@
-use egui::{RawInput, Widget};
+use std::sync::{Arc, Mutex, Weak};
+
+use egui::{RawInput, Ui, Widget};
+
+use dream_ecs::scene::{get_children_for_entity, Scene};
 
 pub struct EditorEguiWgpu {
+    pub scene: Weak<Mutex<Scene>>,
     pub depth_texture_egui: dream_renderer::texture::Texture,
     pub renderer_aspect_ratio: f32,
-    egui_wgpu_renderer: egui_wgpu::Renderer,
-    egui_context: egui::Context,
     pub egui_winit_state: egui_winit::State,
     file_epaint_texture_id: egui::epaint::TextureId,
     play_icon_epaint_texture_id: egui::epaint::TextureId,
     directory_epaint_texture_id: egui::epaint::TextureId,
     render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
+    egui_wgpu_renderer: egui_wgpu::Renderer,
+    egui_context: egui::Context,
 }
 
 pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
@@ -45,6 +50,7 @@ pub fn generate_egui_wgpu_depth_texture(
 
 impl EditorEguiWgpu {
     pub async fn new(
+        app: &dream_app::app::App,
         renderer: &dream_renderer::RendererWgpu,
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
@@ -74,6 +80,7 @@ impl EditorEguiWgpu {
         );
 
         Self {
+            scene: Arc::downgrade(&app.scene),
             renderer_aspect_ratio: 1.0,
             egui_wgpu_renderer,
             egui_context: egui_winit_context,
@@ -328,84 +335,13 @@ impl EditorEguiWgpu {
             .min_width(200.0)
             .show(&self.egui_context, |ui| {
                 egui::trace!(ui);
-
-                // sample list entity 1
-                egui::collapsing_header::CollapsingState::load_with_default_open(
-                    ui.ctx(),
-                    ui.make_persistent_id("Entity 1"),
-                    false,
-                )
-                .show_header(ui, |ui| {
-                    // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                    ui.strong("Entity 1");
-                })
-                .body(|ui| {
-                    // TODO: recursively call this
-                    {
-                        egui::collapsing_header::CollapsingState::load_with_default_open(
-                            ui.ctx(),
-                            ui.make_persistent_id("Entity 1 child"),
-                            false,
-                        )
-                        .show_header(ui, |ui| {
-                            // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                            ui.strong("Entity 1 child");
-                        })
-                        .body(|_ui| {});
-                    }
-                });
-
-                // sample list entity 2
-                egui::collapsing_header::CollapsingState::load_with_default_open(
-                    ui.ctx(),
-                    ui.make_persistent_id("Entity 2"),
-                    false,
-                )
-                .show_header(ui, |ui| {
-                    // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                    ui.strong("Entity 2");
-                })
-                .body(|ui| {
-                    // TODO: recursively call this
-                    {
-                        egui::collapsing_header::CollapsingState::load_with_default_open(
-                            ui.ctx(),
-                            ui.make_persistent_id("Entity 2 child"),
-                            false,
-                        )
-                        .show_header(ui, |ui| {
-                            // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                            ui.strong("Entity 2 child");
-                        })
-                        .body(|_ui| {});
-                    }
-                });
-
-                // sample list entity 3
-                egui::collapsing_header::CollapsingState::load_with_default_open(
-                    ui.ctx(),
-                    ui.make_persistent_id("Entity 3"),
-                    false,
-                )
-                .show_header(ui, |ui| {
-                    // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                    ui.strong("Entity 3");
-                })
-                .body(|ui| {
-                    // TODO: recursively call this
-                    {
-                        egui::collapsing_header::CollapsingState::load_with_default_open(
-                            ui.ctx(),
-                            ui.make_persistent_id("Entity 3 child"),
-                            false,
-                        )
-                        .show_header(ui, |ui| {
-                            // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-                            ui.strong("Entity 3 child");
-                        })
-                        .body(|_ui| {});
-                    }
-                });
+                let scene = self.scene.upgrade().unwrap();
+                let scene = scene.lock().unwrap();
+                let root_entity_id = scene.root_entity_runtime_id;
+                drop(scene);
+                if let Some(root_entity_id) = root_entity_id {
+                    self.draw_scene_hierarchy_entity(root_entity_id, ui);
+                }
             });
 
         egui::TopBottomPanel::top("render-controls")
@@ -429,15 +365,62 @@ impl EditorEguiWgpu {
         egui::CentralPanel::default().show(&self.egui_context, |ui| {
             if self.render_output_epaint_texture_id.is_some() {
                 let panel_size = ui.available_size();
-                let new_aspect_ratio = panel_size.x / panel_size.y;
-                if new_aspect_ratio > 0.0 {
-                    aspect_ratio = new_aspect_ratio;
+                if panel_size.y != 0.0 {
+                    let new_aspect_ratio = panel_size.x / panel_size.y;
+                    if new_aspect_ratio > 0.0 {
+                        aspect_ratio = new_aspect_ratio;
+                    }
+                    ui.image(self.render_output_epaint_texture_id.unwrap(), panel_size);
                 }
-                ui.image(self.render_output_epaint_texture_id.unwrap(), panel_size);
             }
         });
 
-        return aspect_ratio;
+        aspect_ratio
+    }
+
+    fn draw_scene_hierarchy_entity(&self, entity_id: u64, ui: &mut Ui) {
+        // TODO: get name from tag component
+        let id_str = format!("scene_panel_entity_{entity_id}");
+        egui::collapsing_header::CollapsingState::load_with_default_open(
+            ui.ctx(),
+            ui.make_persistent_id(id_str.clone()),
+            false,
+        )
+        .show_header(ui, |ui| {
+            // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+            ui.strong(id_str);
+        })
+        .body(|ui| {
+            let children = get_children_for_entity(self.scene.clone(), entity_id);
+            for child in children {
+                self.draw_scene_hierarchy_entity(child, ui);
+            }
+            // let hierarchy_component: Option<Hierarchy> = entity.get_component().clone();
+            // drop(entity);
+            // if let Some(hierarchy_component) = hierarchy_component {
+            //     let first_child_id = hierarchy_component.first_child_runtime_id;;
+            //
+            //
+            //     let mut num_children = hierarchy_component.num_children;
+            //     while num_children > 0 {
+            //         hierarchy_component.first_child_runtime_id;
+            //         num_children -= 1;
+            //     }
+            // }
+            // TODO: recursively call this
+            // {
+            //     egui::collapsing_header::CollapsingState::load_with_default_open(
+            //         ui.ctx(),
+            //         ui.make_persistent_id("Entity 1 child"),
+            //         false,
+            //     )
+            //     .show_header(ui, |ui| {
+            //         // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+            //         ui.strong("Entity 1 child");
+            //     })
+            //     .body(|_ui| {});
+            // }
+        });
     }
 
     pub fn handle_resize(&mut self, state: &dream_renderer::RendererWgpu) {

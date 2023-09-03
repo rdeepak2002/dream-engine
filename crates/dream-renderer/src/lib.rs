@@ -621,6 +621,7 @@ impl RendererWgpu {
                                 contents: bytemuck::cast_slice(&instance_data),
                                 usage: wgpu::BufferUsages::VERTEX,
                             });
+                    // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
                     self.instance_buffer_map
                         .insert(render_map_key.clone(), instance_buffer);
                 }
@@ -630,6 +631,7 @@ impl RendererWgpu {
             // update materials
             for (render_map_key, _transforms) in &self.render_map {
                 let model_map = &mut self.model_guids;
+                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
                 let model_guid = render_map_key.model_guid.clone();
                 let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
                     panic!("no model loaded in renderer with guid {}", model_guid)

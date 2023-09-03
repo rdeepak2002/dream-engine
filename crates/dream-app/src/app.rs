@@ -23,7 +23,7 @@ use wasm_bindgen::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::Scene;
+use dream_ecs::scene::{create_entity, Scene};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -46,7 +46,13 @@ impl Default for App {
         let scene = Arc::new(Mutex::new(Scene::default()));
 
         // populate scene
-        let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
+        // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
+        let dummy_entity = create_entity(Arc::downgrade(&scene), Default::default())
+            .expect("Unable to create dummy entity");
+        let _dummy_entity_child = create_entity(Arc::downgrade(&scene), Some(dummy_entity))
+            .expect("Unable to create dummy entity");
+        let entity_handle = create_entity(Arc::downgrade(&scene), Default::default())
+            .expect("Unable to create entity");
         Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
             .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
         // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
