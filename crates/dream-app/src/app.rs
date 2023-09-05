@@ -23,7 +23,7 @@ use wasm_bindgen::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{create_entity, Scene};
+use dream_ecs::scene::{add_gltf_scene, create_entity, Scene};
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -55,12 +55,21 @@ impl Default for App {
             .expect("Unable to create entity");
         Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
             .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
-        // "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
-        let resource_handle = resource_manager
-            .get_resource(String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13"))
-            .expect("Resource handle cannot be found");
-        Entity::from_handle(entity_handle, Arc::downgrade(&scene))
-            .add_component(MeshRenderer::new(Some(resource_handle)));
+        {
+            let guid = String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13");
+            let resource_handle = resource_manager
+                .get_resource(guid.clone())
+                .expect("Resource handle cannot be found");
+            Entity::from_handle(entity_handle, Arc::downgrade(&scene))
+                .add_component(MeshRenderer::new(Some(resource_handle)));
+            // TODO: this should only be called if mesh component is newly added - i.e. scene is not loaded from file (cuz this would already have mesh stuff associated)
+            add_gltf_scene(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                guid,
+            );
+        }
 
         // init component systems
         let component_systems =
@@ -113,6 +122,7 @@ impl App {
                         let resource_key = &upgraded_resource_handle.key;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
+                            // TODO: instead of fixed indices, the sub entities should contain the index
                             for i in 0..2 {
                                 renderer.draw_mesh(
                                     resource_key.as_str(),

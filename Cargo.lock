@@ -776,8 +776,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "cgmath",
+ "dream-fs",
  "dream-math",
  "dream-resource",
+ "gltf",
  "once_cell",
  "shipyard",
 ]

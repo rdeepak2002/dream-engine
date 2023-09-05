@@ -5,8 +5,10 @@ edition = "2021"
 
 [dependencies]
 shipyard = "0.6.2"
+gltf = { workspace = true }
 cgmath = { workspace = true }
 once_cell = { workspace = true }
+dream-fs = { workspace = true }
 dream-math = { workspace = true }
 dream-resource = { workspace = true }
 anyhow = { workspace = true }

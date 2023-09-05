@@ -21,6 +21,9 @@ use std::sync::{Mutex, Weak};
 use anyhow::{anyhow, Result};
 use shipyard::{IntoIter, IntoWithId};
 
+use dream_fs::fs::read_binary;
+use dream_resource::resource_manager::ResourceManager;
+
 use crate::component::{Hierarchy, Transform};
 use crate::entity::Entity;
 
@@ -132,6 +135,49 @@ pub fn create_entity(scene: Weak<Mutex<Scene>>, parent_id: Option<u64>) -> Resul
     drop(scene_mutex_lock);
     add_child_to_entity(scene, new_entity_id, parent_id.unwrap_or(root_id));
     Ok(new_entity_id)
+}
+
+pub fn add_gltf_scene(
+    scene: Weak<Mutex<Scene>>,
+    entity_id: u64,
+    resource_manager: &ResourceManager,
+    guid: String,
+) {
+    let resource_handle = resource_manager
+        .get_resource(guid.clone())
+        .expect("Resource handle cannot be found");
+    let upgraded_resource_handle = resource_handle
+        .upgrade()
+        .expect("Unable to upgrade resource handle");
+    let path = &upgraded_resource_handle
+        .path
+        .to_str()
+        .expect("Unable to get resource path");
+    let gltf = gltf::Gltf::from_slice(
+        &read_binary(std::path::PathBuf::from(path), true)
+            .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
+    )
+    .expect("Error loading from slice for glb");
+    for gltf_scene in gltf.scenes() {
+        for node in gltf_scene.nodes() {
+            process_gltf_child_node(node, scene.clone(), entity_id);
+        }
+    }
+    fn process_gltf_child_node(child_node: gltf::Node, scene: Weak<Mutex<Scene>>, entity_id: u64) {
+        match child_node.mesh() {
+            None => {
+                for child in child_node.children() {
+                    let new_entity_id = create_entity(scene.clone(), Some(entity_id))
+                        .expect("Unable to create entity while traversing GLTF nodes");
+                    process_gltf_child_node(child, scene.clone(), new_entity_id);
+                }
+            }
+            Some(_mesh) => {
+                create_entity(scene.clone(), Some(entity_id))
+                    .expect("Unable to create entity while traversing GLTF mesh nodes");
+            }
+        }
+    }
 }
 
 impl Scene {

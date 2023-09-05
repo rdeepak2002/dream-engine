@@ -14,6 +14,9 @@ serde_yaml = "0.9.21"
 # rendering API
 wgpu = "0.17.0"
 
+# 3D model parsing
+gltf = "1.1.0"
+
 # windowing
 winit = "0.28"
 
