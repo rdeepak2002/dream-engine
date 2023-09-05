@@ -2,6 +2,8 @@ use std::sync::{Arc, Mutex, Weak};
 
 use egui::{RawInput, Ui, Widget};
 
+use dream_ecs::component::Tag;
+use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_children_for_entity, Scene};
 
 pub struct EditorEguiWgpu {
@@ -387,39 +389,21 @@ impl EditorEguiWgpu {
             false,
         )
         .show_header(ui, |ui| {
-            // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-            ui.strong(id_str);
+            // TODO: use this to add custom things like icons
+            // ui.toggle_value(&mut true, "Click to select/unselect");
+            let entity = Entity::from_handle(entity_id, self.scene.clone());
+            if entity.has_component::<Tag>() {
+                let name = entity.get_component::<Tag>().unwrap().name;
+                ui.strong(name);
+            } else {
+                ui.strong("Entity");
+            }
         })
         .body(|ui| {
             let children = get_children_for_entity(self.scene.clone(), entity_id);
             for child in children {
                 self.draw_scene_hierarchy_entity(child, ui);
             }
-            // let hierarchy_component: Option<Hierarchy> = entity.get_component().clone();
-            // drop(entity);
-            // if let Some(hierarchy_component) = hierarchy_component {
-            //     let first_child_id = hierarchy_component.first_child_runtime_id;;
-            //
-            //
-            //     let mut num_children = hierarchy_component.num_children;
-            //     while num_children > 0 {
-            //         hierarchy_component.first_child_runtime_id;
-            //         num_children -= 1;
-            //     }
-            // }
-            // TODO: recursively call this
-            // {
-            //     egui::collapsing_header::CollapsingState::load_with_default_open(
-            //         ui.ctx(),
-            //         ui.make_persistent_id("Entity 1 child"),
-            //         false,
-            //     )
-            //     .show_header(ui, |ui| {
-            //         // ui.toggle_value(&mut self.selected, "Click to select/unselect");
-            //         ui.strong("Entity 1 child");
-            //     })
-            //     .body(|_ui| {});
-            // }
         });
     }
 

@@ -21,6 +21,23 @@ impl std::fmt::Display for Transform {
     }
 }
 
+#[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
+pub struct Tag {
+    pub name: String,
+}
+
+impl Tag {
+    pub fn new(name: String) -> Self {
+        Self { name }
+    }
+}
+
+impl std::fmt::Display for Tag {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Tag({})", self.name)
+    }
+}
+
 // TODO: when serializing this, we don't need to create a guid field cuz
 // when deserializing we can create a temporary map that maps <old runtime id: new runtime id>
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]

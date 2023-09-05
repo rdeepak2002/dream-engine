@@ -47,12 +47,24 @@ impl Default for App {
 
         // populate scene
         // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
-        let dummy_entity = create_entity(Arc::downgrade(&scene), Default::default())
-            .expect("Unable to create dummy entity");
-        let _dummy_entity_child = create_entity(Arc::downgrade(&scene), Some(dummy_entity))
-            .expect("Unable to create dummy entity");
-        let entity_handle = create_entity(Arc::downgrade(&scene), Default::default())
-            .expect("Unable to create entity");
+        let dummy_entity = create_entity(
+            Arc::downgrade(&scene),
+            Default::default(),
+            Default::default(),
+        )
+        .expect("Unable to create dummy entity");
+        let _dummy_entity_child = create_entity(
+            Arc::downgrade(&scene),
+            Default::default(),
+            Some(dummy_entity),
+        )
+        .expect("Unable to create dummy entity");
+        let entity_handle = create_entity(
+            Arc::downgrade(&scene),
+            Default::default(),
+            Default::default(),
+        )
+        .expect("Unable to create entity");
         Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
             .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
         {

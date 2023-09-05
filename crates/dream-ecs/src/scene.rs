@@ -24,7 +24,7 @@ use shipyard::{IntoIter, IntoWithId};
 use dream_fs::fs::read_binary;
 use dream_resource::resource_manager::ResourceManager;
 
-use crate::component::{Hierarchy, Transform};
+use crate::component::{Hierarchy, Tag, Transform};
 use crate::entity::Entity;
 
 // pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
@@ -109,7 +109,11 @@ pub fn add_child_to_entity(scene: Weak<Mutex<Scene>>, child_entity_id: u64, pare
     }
 }
 
-pub fn create_entity(scene: Weak<Mutex<Scene>>, parent_id: Option<u64>) -> Result<u64> {
+pub fn create_entity(
+    scene: Weak<Mutex<Scene>>,
+    name: Option<String>,
+    parent_id: Option<u64>,
+) -> Result<u64> {
     let scene_mutex = scene
         .upgrade()
         .ok_or_else(|| anyhow!("Unable to upgrade scene weak reference when creating entity"))?;
@@ -121,14 +125,22 @@ pub fn create_entity(scene: Weak<Mutex<Scene>>, parent_id: Option<u64>) -> Resul
     if scene_mutex_lock.root_entity_runtime_id.is_none() {
         let new_root_entity = scene_mutex_lock
             .handle
-            .add_entity((Transform::default(), Hierarchy::default()))
+            .add_entity((
+                Transform::default(),
+                Hierarchy::default(),
+                Tag::new("Root".into()),
+            ))
             .inner();
         scene_mutex_lock.root_entity_runtime_id = Some(new_root_entity);
     }
     // create new entity and make it child of the root
     let new_entity_id = scene_mutex_lock
         .handle
-        .add_entity((Transform::default(), Hierarchy::default()))
+        .add_entity((
+            Transform::default(),
+            Hierarchy::default(),
+            Tag::new(name.unwrap_or(String::from("Entity"))),
+        ))
         .inner();
     let root_id = scene_mutex_lock.root_entity_runtime_id.unwrap();
     // drop mutex lock to allow other threads to modify scene
@@ -158,23 +170,35 @@ pub fn add_gltf_scene(
             .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
     )
     .expect("Error loading from slice for glb");
+
+    // TODO: apply transformations of gltf_scene to this current entity (with id entity_id)
     for gltf_scene in gltf.scenes() {
+        // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
         for node in gltf_scene.nodes() {
             process_gltf_child_node(node, scene.clone(), entity_id);
         }
     }
+
     fn process_gltf_child_node(child_node: gltf::Node, scene: Weak<Mutex<Scene>>, entity_id: u64) {
         match child_node.mesh() {
             None => {
                 for child in child_node.children() {
-                    let new_entity_id = create_entity(scene.clone(), Some(entity_id))
-                        .expect("Unable to create entity while traversing GLTF nodes");
+                    let new_entity_id = create_entity(
+                        scene.clone(),
+                        Some(child.name().unwrap_or("Node").into()),
+                        Some(entity_id),
+                    )
+                    .expect("Unable to create entity while traversing GLTF nodes");
                     process_gltf_child_node(child, scene.clone(), new_entity_id);
                 }
             }
-            Some(_mesh) => {
-                create_entity(scene.clone(), Some(entity_id))
-                    .expect("Unable to create entity while traversing GLTF mesh nodes");
+            Some(mesh) => {
+                create_entity(
+                    scene.clone(),
+                    Some(mesh.name().unwrap_or("Mesh").into()),
+                    Some(entity_id),
+                )
+                .expect("Unable to create entity while traversing GLTF mesh nodes");
             }
         }
     }
