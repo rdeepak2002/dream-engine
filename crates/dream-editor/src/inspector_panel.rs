@@ -28,9 +28,9 @@ impl Panel for InspectorPanel {
     fn draw(&mut self, egui_context: &egui::Context) {
         egui::SidePanel::right("inspector_panel")
             .resizable(false)
-            .default_width(200.0)
-            .max_width(400.0)
-            .min_width(200.0)
+            .default_width(250.0)
+            .max_width(250.0)
+            .min_width(250.0)
             .show(egui_context, |ui| {
                 if let Some(editor_event) = self.rx.try_iter().last() {
                     match editor_event.event_type {
@@ -58,7 +58,7 @@ impl Panel for InspectorPanel {
                         ui.strong(tag_component.name);
                     }
 
-                    if let Some(transform_component) = transform_component {
+                    if let Some(mut transform_component) = transform_component {
                         // sample transform component
                         egui::collapsing_header::CollapsingState::load_with_default_open(
                             ui.ctx(),
@@ -73,31 +73,26 @@ impl Panel for InspectorPanel {
                             ui.strong("Position");
                             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                                 ui.strong("x");
-                                ui.label(transform_component.position.x.to_string());
+                                ui.add(
+                                    egui::DragValue::new(&mut transform_component.position.x)
+                                        .speed(0.1)
+                                        .max_decimals(3),
+                                );
                                 ui.strong("y");
-                                ui.label(transform_component.position.y.to_string());
+                                ui.add(
+                                    egui::DragValue::new(&mut transform_component.position.y)
+                                        .speed(0.1)
+                                        .max_decimals(3),
+                                );
                                 ui.strong("z");
-                                ui.label(transform_component.position.z.to_string());
-                            });
-                            ui.strong("Rotation");
-                            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                                ui.strong("x");
-                                ui.label("0.000");
-                                ui.strong("y");
-                                ui.label("0.000");
-                                ui.strong("z");
-                                ui.label("0.000");
-                            });
-                            ui.strong("Scale");
-                            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                                ui.strong("x");
-                                ui.label("1.000");
-                                ui.strong("y");
-                                ui.label("1.000");
-                                ui.strong("z");
-                                ui.label("1.000");
+                                ui.add(
+                                    egui::DragValue::new(&mut transform_component.position.z)
+                                        .speed(0.1)
+                                        .max_decimals(3),
+                                );
                             });
                         });
+                        entity.add_component(transform_component);
                     }
                 }
             });
