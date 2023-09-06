@@ -2,7 +2,7 @@ use std::sync::{Mutex, Weak};
 
 use crossbeam_channel::Receiver;
 
-use dream_ecs::component::{Tag, Transform};
+use dream_ecs::component::{MeshRenderer, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
@@ -52,17 +52,16 @@ impl Panel for InspectorPanel {
 
                     let tag_component: Option<Tag> = entity.get_component();
                     let transform_component: Option<Transform> = entity.get_component();
+                    let mesh_renderer_component: Option<MeshRenderer> = entity.get_component();
 
                     if let Some(tag_component) = tag_component {
-                        // name entity name
                         ui.strong(tag_component.name);
                     }
 
                     if let Some(mut transform_component) = transform_component {
-                        // sample transform component
                         egui::collapsing_header::CollapsingState::load_with_default_open(
                             ui.ctx(),
-                            ui.make_persistent_id("Transform"),
+                            ui.make_persistent_id("TransformComponent"),
                             true,
                         )
                         .show_header(ui, |ui| {
@@ -90,9 +89,31 @@ impl Panel for InspectorPanel {
                                         .speed(0.1)
                                         .max_decimals(3),
                                 );
+                                entity.add_component(transform_component);
                             });
                         });
-                        entity.add_component(transform_component);
+                    }
+
+                    if let Some(mut mesh_renderer_component) = mesh_renderer_component {
+                        egui::collapsing_header::CollapsingState::load_with_default_open(
+                            ui.ctx(),
+                            ui.make_persistent_id("MeshRendererComponent"),
+                            true,
+                        )
+                            .show_header(ui, |ui| {
+                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
+                                ui.strong("Mesh Renderer");
+                            })
+                            .body(|ui| {
+                                ui.strong("Path");
+                                if let Some(mut resource_handle) = mesh_renderer_component.resource_handle {
+                                    let path = resource_handle.upgrade().expect("Unable to upgrade resource handle for inspector for mesh renderer").path.clone();
+                                    ui.label(path.to_str().expect("Unable to convert path to string"));
+                                } else {
+                                    ui.label("None");
+                                }
+                                // entity.add_component(mesh_renderer_component.clone());
+                            });
                     }
                 }
             });
