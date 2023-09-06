@@ -127,7 +127,7 @@ impl Window {
                     // draw editor
                     match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
                         Ok(_) => {
-                            renderer.set_camera_aspect_ratio(editor.renderer_aspect_ratio);
+                            renderer.set_camera_aspect_ratio(editor.get_renderer_aspect_ratio());
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
                             renderer.resize(size);
