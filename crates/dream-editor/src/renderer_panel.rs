@@ -1,6 +1,6 @@
 use egui_wgpu::Renderer;
 
-use crate::Panel;
+use crate::editor::Panel;
 
 pub struct RendererPanel {
     render_output_epaint_texture_id: Option<egui::epaint::TextureId>,

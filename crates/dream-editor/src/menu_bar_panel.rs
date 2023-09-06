@@ -1,4 +1,4 @@
-use crate::Panel;
+use crate::editor::Panel;
 
 #[derive(Default)]
 pub struct MenuBarPanel {}

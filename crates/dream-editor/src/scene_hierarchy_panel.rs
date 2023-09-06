@@ -1,20 +1,22 @@
 use std::sync::{Mutex, Weak};
 
+use crossbeam_channel::Sender;
 use egui::Ui;
 
 use dream_ecs::component::Tag;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::{get_children_for_entity, Scene};
 
-use crate::Panel;
+use crate::editor::{EditorEvent, EditorEventType, Panel};
 
 pub struct SceneHierarchyPanel {
-    pub scene: Weak<Mutex<Scene>>,
+    sx: Sender<EditorEvent>,
+    scene: Weak<Mutex<Scene>>,
 }
 
 impl SceneHierarchyPanel {
-    pub fn new(scene: Weak<Mutex<Scene>>) -> Self {
-        Self { scene }
+    pub fn new(sx: Sender<EditorEvent>, scene: Weak<Mutex<Scene>>) -> Self {
+        Self { sx, scene }
     }
 }
 
@@ -54,18 +56,12 @@ impl SceneHierarchyPanel {
             .show_header(ui, |ui| {
                 let toggle_button = ui.toggle_value(&mut true, "Edit");
                 if toggle_button.clicked() {
-                    todo!();
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
-                    // TODO: set a variable indicating that this entity is now selected and must be shown in inspector
+                    self.sx
+                        .send(EditorEvent {
+                            event_type: EditorEventType::ShowEntityInInspector,
+                            event_data: format!("{}", entity_id),
+                        })
+                        .expect("Unable to transmit show entity event");
                 }
                 let entity = Entity::from_handle(entity_id, self.scene.clone());
                 if entity.has_component::<Tag>() {

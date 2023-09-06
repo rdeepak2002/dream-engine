@@ -791,6 +791,7 @@ dependencies = [
  "bytemuck",
  "cfg-if",
  "cgmath",
+ "crossbeam-channel",
  "dream-app",
  "dream-ecs",
  "dream-renderer",

@@ -1,6 +1,6 @@
 use egui_wgpu::Renderer;
 
-use crate::Panel;
+use crate::editor::Panel;
 
 pub struct AssetsPanel {
     file_epaint_texture_id: egui::epaint::TextureId,
@@ -9,21 +9,17 @@ pub struct AssetsPanel {
 
 impl AssetsPanel {
     pub fn new(renderer: &dream_renderer::RendererWgpu, egui_wgpu_renderer: &mut Renderer) -> Self {
-        let file_epaint_texture_id = egui_wgpu_renderer
-            .register_native_texture(
-                &renderer.device,
-                &renderer.file_icon_texture.view,
-                wgpu::FilterMode::Linear,
-            )
-            .clone();
+        let file_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
+            &renderer.device,
+            &renderer.file_icon_texture.view,
+            wgpu::FilterMode::Linear,
+        );
 
-        let directory_epaint_texture_id = egui_wgpu_renderer
-            .register_native_texture(
-                &renderer.device,
-                &renderer.directory_icon_texture.view,
-                wgpu::FilterMode::Linear,
-            )
-            .clone();
+        let directory_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
+            &renderer.device,
+            &renderer.directory_icon_texture.view,
+            wgpu::FilterMode::Linear,
+        );
 
         Self {
             file_epaint_texture_id,

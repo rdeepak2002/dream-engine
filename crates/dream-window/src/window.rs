@@ -6,6 +6,7 @@ use winit::{
 };
 
 use dream_app::app::App;
+use dream_editor::editor::EditorEguiWgpu;
 
 pub struct Window {
     pub window: winit::window::Window,
@@ -79,7 +80,7 @@ impl Window {
 
         let mut app = App::default();
         let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
-        let mut editor = dream_editor::EditorEguiWgpu::new(
+        let mut editor = EditorEguiWgpu::new(
             &app,
             &renderer,
             self.window.scale_factor() as f32,

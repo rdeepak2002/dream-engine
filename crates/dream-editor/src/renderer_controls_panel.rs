@@ -1,7 +1,7 @@
 use egui::Widget;
 use egui_wgpu::Renderer;
 
-use crate::Panel;
+use crate::editor::Panel;
 
 pub struct RendererControlsPanel {
     play_icon_epaint_texture_id: egui::epaint::TextureId,
