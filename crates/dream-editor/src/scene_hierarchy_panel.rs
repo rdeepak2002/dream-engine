@@ -5,7 +5,7 @@ use egui::Ui;
 
 use dream_ecs::component::Tag;
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{get_children_for_entity, Scene};
+use dream_ecs::scene::Scene;
 
 use crate::editor::{EditorEvent, EditorEventType, Panel};
 
@@ -34,7 +34,8 @@ impl Panel for SceneHierarchyPanel {
                 let root_entity_id = scene.root_entity_runtime_id;
                 drop(scene);
                 if let Some(root_entity_id) = root_entity_id {
-                    let children = get_children_for_entity(self.scene.clone(), root_entity_id);
+                    let children =
+                        Scene::get_children_for_entity(self.scene.clone(), root_entity_id);
                     for child in children {
                         self.draw_scene_hierarchy_entity(child, ui);
                     }
@@ -72,7 +73,7 @@ impl SceneHierarchyPanel {
                 }
             })
             .body(|ui| {
-                let children = get_children_for_entity(self.scene.clone(), entity_id);
+                let children = Scene::get_children_for_entity(self.scene.clone(), entity_id);
                 for child in children {
                     self.draw_scene_hierarchy_entity(child, ui);
                 }

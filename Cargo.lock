@@ -753,6 +753,7 @@ dependencies = [
  "cfg-if",
  "cgmath",
  "dream-ecs",
+ "dream-fs",
  "dream-math",
  "dream-renderer",
  "dream-resource",

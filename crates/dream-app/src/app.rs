@@ -21,9 +21,9 @@ use cgmath::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use dream_ecs::component::{MeshRenderer, Transform};
+use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
-use dream_ecs::scene::{add_gltf_scene, create_entity, Scene};
+use dream_ecs::scene::Scene;
 use dream_renderer::instance::Instance;
 use dream_renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -43,45 +43,45 @@ pub struct App {
 impl Default for App {
     fn default() -> App {
         let resource_manager = ResourceManager::default();
-        let scene = Arc::new(Mutex::new(Scene::default()));
+        let scene = Scene::create();
 
         // populate scene
         // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
-        let dummy_entity = create_entity(
+        let dummy_entity = Scene::create_entity(
             Arc::downgrade(&scene),
             Default::default(),
             Default::default(),
         )
         .expect("Unable to create dummy entity");
-        let _dummy_entity_child = create_entity(
+        let _dummy_entity_child = Scene::create_entity(
             Arc::downgrade(&scene),
             Default::default(),
             Some(dummy_entity),
         )
         .expect("Unable to create dummy entity");
-        let entity_handle = create_entity(
+        let entity_handle = Scene::create_entity(
             Arc::downgrade(&scene),
             Default::default(),
             Default::default(),
         )
         .expect("Unable to create entity");
-        Entity::from_handle(entity_handle, Arc::downgrade(&scene)) // TODO: how many weak refs will live...?
+        Entity::from_handle(entity_handle, Arc::downgrade(&scene))
             .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
-        {
-            let guid = String::from("bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13");
-            let resource_handle = resource_manager
-                .get_resource(guid.clone())
-                .expect("Resource handle cannot be found");
-            Entity::from_handle(entity_handle, Arc::downgrade(&scene))
-                .add_component(MeshRenderer::new(Some(resource_handle)));
-            // TODO: this should only be called if mesh component is newly added - i.e. scene is not loaded from file (cuz this would already have mesh stuff associated)
-            add_gltf_scene(
-                Arc::downgrade(&scene),
-                entity_handle,
-                &resource_manager,
-                guid,
-            );
-        }
+        // add mesh renderer component
+        MeshRenderer::add_to_entity(
+            Arc::downgrade(&scene),
+            entity_handle,
+            &resource_manager,
+            "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(),
+            true,
+        );
+        // add python script component
+        PythonScript::add_to_entity(
+            Arc::downgrade(&scene),
+            entity_handle,
+            &resource_manager,
+            "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
+        );
 
         // init component systems
         let component_systems =

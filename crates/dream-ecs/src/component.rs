@@ -1,8 +1,12 @@
 use std::fmt::Debug;
-use std::sync::Weak;
+use std::sync::{Mutex, Weak};
 
 use dream_math::Vector3;
 use dream_resource::resource_handle::ResourceHandle;
+use dream_resource::resource_manager::ResourceManager;
+
+use crate::entity::Entity;
+use crate::scene::Scene;
 
 #[derive(shipyard::Component, Debug, Clone, PartialEq, Default)]
 pub struct Transform {
@@ -48,7 +52,6 @@ pub struct Hierarchy {
     pub prev_sibling_runtime_id: Option<u64>,
     pub next_sibling_runtime_id: Option<u64>,
 }
-
 #[derive(shipyard::Component, Debug, Clone, Default)]
 pub struct MeshRenderer {
     pub resource_handle: Option<Weak<ResourceHandle>>,
@@ -72,14 +75,45 @@ impl MeshRenderer {
     pub fn new(resource_handle: Option<Weak<ResourceHandle>>) -> Self {
         Self { resource_handle }
     }
+
+    pub fn add_to_entity(
+        scene: Weak<Mutex<Scene>>,
+        entity_handle: u64,
+        resource_manager: &ResourceManager,
+        guid: String,
+        create_child_nodes: bool,
+    ) {
+        let resource_handle = resource_manager
+            .get_resource(guid.clone())
+            .expect("Resource handle cannot be found");
+        Entity::from_handle(entity_handle, scene.clone())
+            .add_component(MeshRenderer::new(Some(resource_handle)));
+        if create_child_nodes {
+            Scene::add_gltf_scene(scene, entity_handle, resource_manager, guid);
+        }
+    }
 }
 
-// impl Drop for MeshRenderer {
-//     fn drop(&mut self) {
-//         if self.resource_handle.is_some() {
-//             // TODO: globally access resource_manager as singleton and notify it
-//             // let rh = self.resource_handle.unwrap();
-//             // Arc::strong_count(&rh);
-//         }
-//     }
-// }
+#[derive(shipyard::Component, Debug, Clone, Default)]
+pub struct PythonScript {
+    pub resource_handle: Option<Weak<ResourceHandle>>,
+}
+
+impl PythonScript {
+    pub fn new(resource_handle: Option<Weak<ResourceHandle>>) -> Self {
+        Self { resource_handle }
+    }
+
+    pub fn add_to_entity(
+        scene: Weak<Mutex<Scene>>,
+        entity_handle: u64,
+        resource_manager: &ResourceManager,
+        guid: String,
+    ) {
+        let resource_handle = resource_manager
+            .get_resource(guid)
+            .expect("Resource handle cannot be found");
+        Entity::from_handle(entity_handle, scene)
+            .add_component(PythonScript::new(Some(resource_handle)));
+    }
+}

@@ -7,6 +7,8 @@ use rustpython_vm::{
     PyResult, VirtualMachine,
 };
 
+use dream_ecs::component::PythonScript;
+use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
 use crate::system::System;
@@ -36,14 +38,32 @@ impl System for PythonScriptComponentSystem {
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
-        let transform_entities = scene
+        let python_entities = scene
             .upgrade()
             .expect("Unable to upgrade")
             .lock()
             .expect("Unable to lock")
-            .get_entities_with_component::<dream_ecs::component::Transform>();
-        for entity_id in transform_entities {
-            let script = include_str!("default-files/script.py");
+            .get_entities_with_component::<dream_ecs::component::PythonScript>();
+        for entity_id in python_entities {
+            let mut script: String = include_str!("default-files/script.py").into();
+            {
+                println!("TODO: don't read from file system every frame");
+                let entity = Entity::from_handle(entity_id, scene.clone());
+                if let Some(python_script_component) = entity.get_component::<PythonScript>() {
+                    let resource_handle = python_script_component
+                        .resource_handle
+                        .as_ref()
+                        .unwrap()
+                        .upgrade();
+                    let script_path = &resource_handle.unwrap().path;
+                    let script_binary = dream_fs::fs::read_binary(script_path.clone(), true);
+                    if script_binary.is_ok() {
+                        let script_binary = script_binary.unwrap().clone();
+                        let script_str = String::from_utf8_lossy(&script_binary);
+                        script = script_str.parse().unwrap();
+                    }
+                }
+            }
             self.interpreter.enter(|vm| {
                 let scope = vm.new_scope_with_builtins();
                 let source_path;
@@ -57,7 +77,11 @@ impl System for PythonScriptComponentSystem {
                 // TODO: only run all this if source code changed
                 // step 1: compile python code and get name of class that is defined
                 let code_obj = vm
-                    .compile(script, compiler::Mode::BlockExpr, source_path.to_owned())
+                    .compile(
+                        script.as_str(),
+                        compiler::Mode::BlockExpr,
+                        source_path.to_owned(),
+                    )
                     .map_err(|err| vm.new_syntax_error(&err, None))
                     .unwrap();
                 vm.run_code_obj(code_obj, scope)

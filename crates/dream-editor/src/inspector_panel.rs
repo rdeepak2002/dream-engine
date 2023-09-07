@@ -94,7 +94,7 @@ impl Panel for InspectorPanel {
                         });
                     }
 
-                    if let Some(mut mesh_renderer_component) = mesh_renderer_component {
+                    if let Some(mesh_renderer_component) = mesh_renderer_component {
                         egui::collapsing_header::CollapsingState::load_with_default_open(
                             ui.ctx(),
                             ui.make_persistent_id("MeshRendererComponent"),
@@ -106,7 +106,7 @@ impl Panel for InspectorPanel {
                             })
                             .body(|ui| {
                                 ui.strong("Path");
-                                if let Some(mut resource_handle) = mesh_renderer_component.resource_handle {
+                                if let Some(resource_handle) = mesh_renderer_component.resource_handle {
                                     let path = resource_handle.upgrade().expect("Unable to upgrade resource handle for inspector for mesh renderer").path.clone();
                                     ui.label(path.to_str().expect("Unable to convert path to string"));
                                 } else {
