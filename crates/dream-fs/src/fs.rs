@@ -42,8 +42,7 @@ impl ReadDir {
 }
 
 pub fn set_fs_root(fs_root: &str) {
-    log::info!("Setting root directory to {}", fs_root);
-    println!("Setting root directory to {}", fs_root);
+    log::debug!("Setting root directory to {}", fs_root);
     *FS_ROOT.lock().unwrap() = Some(String::from(fs_root));
 }
 

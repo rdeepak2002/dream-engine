@@ -76,11 +76,7 @@ impl Default for ResourceManager {
                         PathBuf::from(String::from(file_path.to_str().unwrap()).add(".meta"));
                     if !dream_fs::fs::exists(meta_file_path.clone()) {
                         // create meta file if it does not exist
-                        log::warn!(
-                            "Creating metafile for path {}",
-                            file_path.clone().to_str().unwrap_or("none")
-                        );
-                        println!(
+                        log::debug!(
                             "Creating metafile for path {}",
                             file_path.clone().to_str().unwrap_or("none")
                         );
