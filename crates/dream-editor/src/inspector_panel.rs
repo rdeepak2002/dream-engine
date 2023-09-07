@@ -2,7 +2,7 @@ use std::sync::{Mutex, Weak};
 
 use crossbeam_channel::Receiver;
 
-use dream_ecs::component::{MeshRenderer, Tag, Transform};
+use dream_ecs::component::{MeshRenderer, PythonScript, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
@@ -53,6 +53,7 @@ impl Panel for InspectorPanel {
                     let tag_component: Option<Tag> = entity.get_component();
                     let transform_component: Option<Transform> = entity.get_component();
                     let mesh_renderer_component: Option<MeshRenderer> = entity.get_component();
+                    let python_script_component: Option<PythonScript> = entity.get_component();
 
                     if let Some(tag_component) = tag_component {
                         ui.strong(tag_component.name);
@@ -101,7 +102,6 @@ impl Panel for InspectorPanel {
                             true,
                         )
                             .show_header(ui, |ui| {
-                                // ui.toggle_value(&mut self.selected, "Click to select/unselect");
                                 ui.strong("Mesh Renderer");
                             })
                             .body(|ui| {
@@ -112,7 +112,26 @@ impl Panel for InspectorPanel {
                                 } else {
                                     ui.label("None");
                                 }
-                                // entity.add_component(mesh_renderer_component.clone());
+                            });
+                    }
+
+                    if let Some(python_script_component) = python_script_component {
+                        egui::collapsing_header::CollapsingState::load_with_default_open(
+                            ui.ctx(),
+                            ui.make_persistent_id("PythonScriptComponent"),
+                            true,
+                        )
+                            .show_header(ui, |ui| {
+                                ui.strong("Python Script");
+                            })
+                            .body(|ui| {
+                                ui.strong("Path");
+                                if let Some(resource_handle) = python_script_component.resource_handle {
+                                    let path = resource_handle.upgrade().expect("Unable to upgrade resource handle for inspector for python script").path.clone();
+                                    ui.label(path.to_str().expect("Unable to convert path to string"));
+                                } else {
+                                    ui.label("None");
+                                }
                             });
                     }
                 }
