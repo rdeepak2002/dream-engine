@@ -12,7 +12,7 @@ impl Panel for MenuBarPanel {
 
                 if ui.input_mut(|i| i.consume_shortcut(&save_shortcut)) {
                     // TODO: allow saving
-                    println!("TODO: save");
+                    log::warn!("TODO: save");
                     todo!();
                 }
 
@@ -28,7 +28,7 @@ impl Panel for MenuBarPanel {
                         .clicked()
                     {
                         // TODO: allow saving
-                        println!("TODO: save");
+                        log::warn!("TODO: save");
                         ui.close_menu();
                         todo!();
                     }

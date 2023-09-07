@@ -562,7 +562,7 @@ impl RendererWgpu {
         );
         self.model_guids
             .insert(model_guid.parse().unwrap(), Box::new(model));
-        log::debug!("model with guid {} stored", model_guid);
+        log::debug!("Model with guid {} stored", model_guid);
         Ok(str::parse(model_guid).unwrap())
     }
 

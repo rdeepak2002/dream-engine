@@ -18,6 +18,7 @@ static SCENE: Mutex<Option<Weak<Mutex<Scene>>>> = Mutex::new(None);
 pub struct PythonScriptComponentSystem {
     pub interpreter: Interpreter,
     pub entity_script: HashMap<u64, Option<PyObjectRef>>,
+    pub script_cache: HashMap<String, String>,
 }
 
 impl Default for PythonScriptComponentSystem {
@@ -29,6 +30,7 @@ impl Default for PythonScriptComponentSystem {
         Self {
             interpreter,
             entity_script: Default::default(),
+            script_cache: Default::default(),
         }
     }
 }
@@ -47,7 +49,6 @@ impl System for PythonScriptComponentSystem {
         for entity_id in python_entities {
             let mut script: String = include_str!("default-files/script.py").into();
             {
-                println!("TODO: don't read from file system every frame");
                 let entity = Entity::from_handle(entity_id, scene.clone());
                 if let Some(python_script_component) = entity.get_component::<PythonScript>() {
                     let resource_handle = python_script_component
@@ -55,12 +56,25 @@ impl System for PythonScriptComponentSystem {
                         .as_ref()
                         .unwrap()
                         .upgrade();
-                    let script_path = &resource_handle.unwrap().path;
-                    let script_binary = dream_fs::fs::read_binary(script_path.clone(), true);
-                    if script_binary.is_ok() {
-                        let script_binary = script_binary.unwrap().clone();
-                        let script_str = String::from_utf8_lossy(&script_binary);
-                        script = script_str.parse().unwrap();
+                    let rh = resource_handle.unwrap();
+                    let script_path = &rh.path;
+                    let script_key = &rh.key;
+
+                    if self.script_cache.contains_key(script_key) {
+                        script = self
+                            .script_cache
+                            .get(script_key)
+                            .expect("No cached script found")
+                            .clone();
+                    } else {
+                        log::debug!("Caching script {}", script_path.to_str().unwrap());
+                        let script_binary = dream_fs::fs::read_binary(script_path.clone(), true);
+                        if script_binary.is_ok() {
+                            let script_binary = script_binary.unwrap().clone();
+                            let script_str = String::from_utf8_lossy(&script_binary);
+                            script = script_str.parse().unwrap();
+                            self.script_cache.insert(script_key.clone(), script.clone());
+                        }
                     }
                 }
             }
