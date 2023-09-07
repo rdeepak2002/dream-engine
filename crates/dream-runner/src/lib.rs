@@ -25,11 +25,7 @@ pub async fn run_main() {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
             console_log::init_with_level(log::Level::Debug).expect("Could't initialize logger");
         } else {
-            env_logger::builder()
-            .filter_level(log::LevelFilter::Debug)
-            .format_target(false)
-            .format_timestamp(None)
-            .init();
+            env_logger::init();
         }
     }
 
