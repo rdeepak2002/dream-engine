@@ -35,10 +35,19 @@ pub async fn run_main() {
             let path = std::path::Path::new("examples").join("blank");
             dream_fs::fs::set_fs_root(path.to_str().unwrap());
         } else {
-            let path = std::path::Path::new(env!("OUT_DIR"))
-                .join("examples")
-                .join("blank");
-            dream_fs::fs::set_fs_root(path.to_str().unwrap());
+            let examples_folder_possible_path = std::path::Path::new(env!("OUT_DIR"))
+            .join("..").join("..").join("..").join("..").join("..").join("examples").join("blank");
+            if examples_folder_possible_path.exists() {
+                // in dev mode try to use the examples folder present here
+                dream_fs::fs::set_fs_root(examples_folder_possible_path.to_str().unwrap());
+            } else {
+                // otherwise in release mode use the examples folder present in the out directory
+                println!("{}", examples_folder_possible_path.to_str().unwrap());
+                let path = std::path::Path::new(env!("OUT_DIR"))
+                    .join("examples")
+                    .join("blank");
+                dream_fs::fs::set_fs_root(path.to_str().unwrap());
+            }
         }
     }
 
