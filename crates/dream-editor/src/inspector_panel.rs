@@ -94,20 +94,20 @@ impl Panel for InspectorPanel {
                             ui.strong("x");
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.scale.x)
-                                    .speed(0.1)
-                                    .max_decimals(3),
+                                    .speed(0.01)
+                                    .max_decimals(5),
                             );
                             ui.strong("y");
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.scale.y)
-                                    .speed(0.1)
-                                    .max_decimals(3),
+                                    .speed(0.01)
+                                    .max_decimals(5),
                             );
                             ui.strong("z");
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.scale.z)
-                                    .speed(0.1)
-                                    .max_decimals(3),
+                                    .speed(0.01)
+                                    .max_decimals(5),
                             );
 
                             entity.add_component(transform_component);
