@@ -24,7 +24,7 @@ use shipyard::{IntoIter, IntoWithId};
 use dream_fs::fs::read_binary;
 use dream_resource::resource_manager::ResourceManager;
 
-use crate::component::{Hierarchy, Tag, Transform};
+use crate::component::{Hierarchy, MeshRenderer, Tag, Transform};
 use crate::entity::Entity;
 
 // pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
@@ -196,13 +196,21 @@ impl Scene {
         for gltf_scene in gltf.scenes() {
             // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
             for node in gltf_scene.nodes() {
-                process_gltf_child_node(node, scene.clone(), entity_id);
+                process_gltf_child_node(
+                    node,
+                    scene.clone(),
+                    resource_manager,
+                    guid.clone(),
+                    entity_id,
+                );
             }
         }
 
         fn process_gltf_child_node(
             child_node: gltf::Node,
             scene: Weak<Mutex<Scene>>,
+            resource_manager: &ResourceManager,
+            guid: String,
             entity_id: u64,
         ) {
             match child_node.mesh() {
@@ -214,16 +222,30 @@ impl Scene {
                             Some(entity_id),
                         )
                         .expect("Unable to create entity while traversing GLTF nodes");
-                        process_gltf_child_node(child, scene.clone(), new_entity_id);
+                        process_gltf_child_node(
+                            child,
+                            scene.clone(),
+                            resource_manager,
+                            guid.clone(),
+                            new_entity_id,
+                        );
                     }
                 }
                 Some(mesh) => {
-                    Scene::create_entity(
+                    let entity_handle = Scene::create_entity(
                         scene.clone(),
                         Some(mesh.name().unwrap_or("Mesh").into()),
                         Some(entity_id),
                     )
                     .expect("Unable to create entity while traversing GLTF mesh nodes");
+                    MeshRenderer::add_to_entity(
+                        scene,
+                        entity_handle,
+                        resource_manager,
+                        guid,
+                        false,
+                        Some(mesh.index()),
+                    );
                 }
             }
         }

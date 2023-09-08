@@ -55,25 +55,31 @@ pub struct Hierarchy {
 #[derive(shipyard::Component, Debug, Clone, Default)]
 pub struct MeshRenderer {
     pub resource_handle: Option<Weak<ResourceHandle>>,
+    pub mesh_idx: Option<usize>,
 }
 
 impl PartialEq for MeshRenderer {
     fn eq(&self, other: &Self) -> bool {
-        if self.resource_handle.is_some() && other.resource_handle.is_some() {
+        if self.mesh_idx == other.mesh_idx
+            && self.resource_handle.is_some()
+            && other.resource_handle.is_some()
+        {
             let r1 = self.resource_handle.as_ref().unwrap().upgrade();
             let r2 = other.resource_handle.as_ref().unwrap().upgrade();
             if r1.is_some() && r2.is_some() {
                 return r1.unwrap().eq(&r2.unwrap());
             }
         }
-
         false
     }
 }
 
 impl MeshRenderer {
-    pub fn new(resource_handle: Option<Weak<ResourceHandle>>) -> Self {
-        Self { resource_handle }
+    pub fn new(resource_handle: Option<Weak<ResourceHandle>>, mesh_idx: Option<usize>) -> Self {
+        Self {
+            resource_handle,
+            mesh_idx,
+        }
     }
 
     pub fn add_to_entity(
@@ -82,12 +88,13 @@ impl MeshRenderer {
         resource_manager: &ResourceManager,
         guid: String,
         create_child_nodes: bool,
+        mesh_idx: Option<usize>,
     ) {
         let resource_handle = resource_manager
             .get_resource(guid.clone())
             .expect("Resource handle cannot be found");
         Entity::from_handle(entity_handle, scene.clone())
-            .add_component(MeshRenderer::new(Some(resource_handle)));
+            .add_component(MeshRenderer::new(Some(resource_handle), mesh_idx));
         if create_child_nodes {
             Scene::add_gltf_scene(scene, entity_handle, resource_manager, guid);
         }

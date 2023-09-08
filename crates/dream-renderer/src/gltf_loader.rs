@@ -55,6 +55,10 @@ pub fn read_gltf<'a>(
     }
 
     for mesh in mesh_list {
+        // ensure that the gltf file's mesh index matches the index of this new dream mesh
+        // this will verify consistency between scene's mesh index assignment to each entity
+        // and the actual index of the meshes in the renderer
+        assert_eq!(meshes.len(), mesh.index());
         for mesh in get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data) {
             meshes.push(mesh);
         }
@@ -82,7 +86,6 @@ fn get_dream_meshes_from_gltf_mesh(
     buffer_data: &Vec<Vec<u8>>,
 ) -> Vec<crate::model::Mesh> {
     let mut meshes = Vec::new();
-    mesh.index();
     let primitives = mesh.primitives();
     primitives.for_each(|primitive| {
         let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));

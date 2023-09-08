@@ -74,6 +74,7 @@ impl Default for App {
             &resource_manager,
             "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(),
             true,
+            Default::default(),
         );
         // add python script component
         PythonScript::add_to_entity(
@@ -134,11 +135,10 @@ impl App {
                         let resource_key = &upgraded_resource_handle.key;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
-                            // TODO: instead of fixed indices, the sub entities should contain the index
-                            for i in 0..2 {
+                            if let Some(mesh_idx) = mesh_renderer.mesh_idx {
                                 renderer.draw_mesh(
                                     resource_key.as_str(),
-                                    i,
+                                    mesh_idx as i32,
                                     Instance {
                                         position: cgmath::Vector3::from(transform.position),
                                         rotation: cgmath::Quaternion::from_axis_angle(

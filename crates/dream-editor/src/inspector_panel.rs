@@ -112,6 +112,10 @@ impl Panel for InspectorPanel {
                                 } else {
                                     ui.label("None");
                                 }
+                                if let Some(mesh_idx) = mesh_renderer_component.mesh_idx {
+                                    ui.strong("ID");
+                                    ui.label(format!("{mesh_idx}"));
+                                }
                             });
                     }
 
