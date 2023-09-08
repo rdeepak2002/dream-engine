@@ -18,6 +18,7 @@
 use std::sync::{Arc, Mutex, Weak};
 
 use cgmath::prelude::*;
+use cgmath::{Matrix4, Quaternion, Vector3};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -65,8 +66,11 @@ impl Default for App {
             Default::default(),
         )
         .expect("Unable to create entity");
-        Entity::from_handle(entity_handle, Arc::downgrade(&scene))
-            .add_component(Transform::from(dream_math::Vector3::new(1.0, -4.8, -6.0)));
+        Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(Transform::new(
+            dream_math::Vector3::new(1.0, -4.8, -6.0),
+            dream_math::Quaternion::from_xyz_euler_angles_degrees(0.0, 0.0, -90.0),
+            dream_math::Vector3::new(0.025, 0.025, 0.025),
+        ));
         // add mesh renderer component
         MeshRenderer::add_to_entity(
             Arc::downgrade(&scene),
@@ -126,11 +130,21 @@ impl App {
 
         // get children for root entity and render them
         if let Some(root_entity_id) = root_entity_id {
+            let mut mat: Matrix4<f32> = Matrix4::identity();
+            let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
+            if let Some(transform) = root_entity.get_component::<Transform>() {
+                mat = Matrix4::from_translation(Vector3::from(transform.position))
+                    * Matrix4::from(Quaternion::from(transform.rotation))
+                    * Matrix4::from_nonuniform_scale(
+                        transform.scale.x,
+                        transform.scale.y,
+                        transform.scale.z,
+                    );
+            }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                // TODO: traverse in tree fashion by starting at root entity
-                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone());
+                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat.clone());
             }
         }
 
@@ -139,50 +153,47 @@ impl App {
             renderer: &mut RendererWgpu,
             entity_id: u64,
             scene: Weak<Mutex<Scene>>,
+            parent_mat: Matrix4<f32>,
         ) {
             let entity = Entity::from_handle(entity_id, scene.clone());
+            let mut mat = Matrix4::identity();
 
-            {
-                if let Some(transform) = entity.get_component::<Transform>() {
-                    if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
-                        if let Some(resource_handle) = mesh_renderer.resource_handle {
-                            let upgraded_resource_handle = resource_handle
-                                .upgrade()
-                                .expect("Unable to upgrade resource handle");
-                            let resource_key = &upgraded_resource_handle.key;
+            if let Some(transform) = entity.get_component::<Transform>() {
+                // TODO: create cache of mat4 that is map of maps
+                // so basically to invalidate caches for all children
+                // all we have to do is remove the element from the map
+                let position = Vector3::from(transform.position);
+                let rotation = Quaternion::from(transform.rotation);
+                let scale = Vector3::from(transform.scale);
+                mat = Matrix4::from_translation(position)
+                    * Matrix4::from(rotation)
+                    * Matrix4::from_nonuniform_scale(scale.x, scale.y, scale.z);
+                mat = mat * parent_mat;
+                if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
+                    if let Some(resource_handle) = mesh_renderer.resource_handle {
+                        let upgraded_resource_handle = resource_handle
+                            .upgrade()
+                            .expect("Unable to upgrade resource handle");
+                        let resource_key = &upgraded_resource_handle.key;
 
-                            if renderer.is_model_stored(resource_key.as_str()) {
-                                if let Some(mesh_idx) = mesh_renderer.mesh_idx {
-                                    renderer.draw_mesh(
-                                        resource_key.as_str(),
-                                        mesh_idx as i32,
-                                        Instance {
-                                            position: cgmath::Vector3::from(transform.position),
-                                            rotation: cgmath::Quaternion::from_axis_angle(
-                                                cgmath::Vector3::new(0., 0., 1.),
-                                                cgmath::Deg(0.0),
-                                            ) * cgmath::Quaternion::from_axis_angle(
-                                                cgmath::Vector3::new(0., 1., 0.),
-                                                cgmath::Deg(-0.0),
-                                            ) * cgmath::Quaternion::from_axis_angle(
-                                                cgmath::Vector3::new(1., 0., 0.),
-                                                cgmath::Deg(-90.0),
-                                            ),
-                                            scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
-                                        },
-                                    );
-                                }
-                            } else {
-                                let resource_path = &upgraded_resource_handle.path;
-                                renderer
-                                    .store_model(
-                                        Some(resource_key.as_str()),
-                                        resource_path
-                                            .to_str()
-                                            .expect("Unable to convert resource path to a string"),
-                                    )
-                                    .expect("Unable to store model");
+                        if renderer.is_model_stored(resource_key.as_str()) {
+                            if let Some(mesh_idx) = mesh_renderer.mesh_idx {
+                                renderer.draw_mesh(
+                                    resource_key.as_str(),
+                                    mesh_idx as i32,
+                                    Instance { mat },
+                                );
                             }
+                        } else {
+                            let resource_path = &upgraded_resource_handle.path;
+                            renderer
+                                .store_model(
+                                    Some(resource_key.as_str()),
+                                    resource_path
+                                        .to_str()
+                                        .expect("Unable to convert resource path to a string"),
+                                )
+                                .expect("Unable to store model");
                         }
                     }
                 }
@@ -190,67 +201,8 @@ impl App {
 
             let children_ids = Scene::get_children_for_entity(scene.clone(), entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene.clone());
+                draw_entity_and_children(renderer, child_id, scene.clone(), mat.clone());
             }
         }
-
-        ////////////////////////////////////////////////////// old code:
-
-        // renderer.clear();
-        // let transform_entities = self
-        //     .scene
-        //     .lock()
-        //     .expect("Unable to lock scene")
-        //     .get_entities_with_component::<Transform>();
-        // for entity_id in transform_entities {
-        //     if let Some(transform) = Entity::from_handle(entity_id, Arc::downgrade(&self.scene))
-        //         .get_component::<Transform>()
-        //     {
-        //         if let Some(mesh_renderer) =
-        //             Entity::from_handle(entity_id, Arc::downgrade(&self.scene))
-        //                 .get_component::<MeshRenderer>()
-        //         {
-        //             if let Some(resource_handle) = mesh_renderer.resource_handle {
-        //                 let upgraded_resource_handle = resource_handle
-        //                     .upgrade()
-        //                     .expect("Unable to upgrade resource handle");
-        //                 let resource_key = &upgraded_resource_handle.key;
-        //
-        //                 if renderer.is_model_stored(resource_key.as_str()) {
-        //                     if let Some(mesh_idx) = mesh_renderer.mesh_idx {
-        //                         renderer.draw_mesh(
-        //                             resource_key.as_str(),
-        //                             mesh_idx as i32,
-        //                             Instance {
-        //                                 position: cgmath::Vector3::from(transform.position),
-        //                                 rotation: cgmath::Quaternion::from_axis_angle(
-        //                                     cgmath::Vector3::new(0., 0., 1.),
-        //                                     cgmath::Deg(0.0),
-        //                                 ) * cgmath::Quaternion::from_axis_angle(
-        //                                     cgmath::Vector3::new(0., 1., 0.),
-        //                                     cgmath::Deg(-0.0),
-        //                                 ) * cgmath::Quaternion::from_axis_angle(
-        //                                     cgmath::Vector3::new(1., 0., 0.),
-        //                                     cgmath::Deg(-90.0),
-        //                                 ),
-        //                                 scale: cgmath::Vector3::new(0.025, 0.025, 0.025),
-        //                             },
-        //                         );
-        //                     }
-        //                 } else {
-        //                     let resource_path = &upgraded_resource_handle.path;
-        //                     renderer
-        //                         .store_model(
-        //                             Some(resource_key.as_str()),
-        //                             resource_path
-        //                                 .to_str()
-        //                                 .expect("Unable to convert resource path to a string"),
-        //                         )
-        //                         .expect("Unable to store model");
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 }

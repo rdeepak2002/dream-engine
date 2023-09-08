@@ -71,27 +71,67 @@ impl Panel for InspectorPanel {
                         })
                         .body(|ui| {
                             ui.strong("Position");
-                            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                                ui.strong("x");
-                                ui.add(
-                                    egui::DragValue::new(&mut transform_component.position.x)
-                                        .speed(0.1)
-                                        .max_decimals(3),
-                                );
-                                ui.strong("y");
-                                ui.add(
-                                    egui::DragValue::new(&mut transform_component.position.y)
-                                        .speed(0.1)
-                                        .max_decimals(3),
-                                );
-                                ui.strong("z");
-                                ui.add(
-                                    egui::DragValue::new(&mut transform_component.position.z)
-                                        .speed(0.1)
-                                        .max_decimals(3),
-                                );
-                                entity.add_component(transform_component);
-                            });
+                            ui.strong("x");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.position.x)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+                            ui.strong("y");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.position.y)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+                            ui.strong("z");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.position.z)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+
+                            ui.strong("Scale");
+                            ui.strong("x");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.scale.x)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+                            ui.strong("y");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.scale.y)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+                            ui.strong("z");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.scale.z)
+                                    .speed(0.1)
+                                    .max_decimals(3),
+                            );
+
+                            entity.add_component(transform_component);
+                            // ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                            //     ui.strong("x");
+                            //     ui.add(
+                            //         egui::DragValue::new(&mut transform_component.position.x)
+                            //             .speed(0.1)
+                            //             .max_decimals(3),
+                            //     );
+                            //     ui.strong("y");
+                            //     ui.add(
+                            //         egui::DragValue::new(&mut transform_component.position.y)
+                            //             .speed(0.1)
+                            //             .max_decimals(3),
+                            //     );
+                            //     ui.strong("z");
+                            //     ui.add(
+                            //         egui::DragValue::new(&mut transform_component.position.z)
+                            //             .speed(0.1)
+                            //             .max_decimals(3),
+                            //     );
+                            //     entity.add_component(transform_component);
+                            // });
                         });
                     }
 

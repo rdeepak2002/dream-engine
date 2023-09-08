@@ -1,5 +1,60 @@
 use std::fmt;
 
+use cgmath::Rotation3;
+
+#[derive(Debug, Clone, PartialEq, Copy)]
+pub struct Quaternion {
+    pub vector: Vector3,
+    pub scalar: f32,
+}
+
+impl Default for Quaternion {
+    fn default() -> Self {
+        Self {
+            vector: Vector3::default(),
+            scalar: 1.0,
+        }
+    }
+}
+
+impl Quaternion {
+    pub fn new(vector: Vector3, scalar: f32) -> Self {
+        Self { vector, scalar }
+    }
+
+    pub fn from_xyz_euler_angles_degrees(x: f32, y: f32, z: f32) -> Self {
+        let quaternion: cgmath::Quaternion<f32> =
+            cgmath::Quaternion::from_axis_angle(cgmath::Vector3::new(0., 0., 1.), cgmath::Deg(x))
+                * cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::new(0., 1., 0.),
+                    cgmath::Deg(y),
+                )
+                * cgmath::Quaternion::from_axis_angle(
+                    cgmath::Vector3::new(1., 0., 0.),
+                    cgmath::Deg(z),
+                );
+        Self {
+            vector: Vector3::from(quaternion.v),
+            scalar: quaternion.s,
+        }
+    }
+}
+
+impl From<Quaternion> for cgmath::Quaternion<f32> {
+    fn from(quaternion: Quaternion) -> Self {
+        cgmath::Quaternion::from_sv(quaternion.scalar, cgmath::Vector3::from(quaternion.vector))
+    }
+}
+
+impl From<cgmath::Quaternion<f32>> for Quaternion {
+    fn from(quaternion: cgmath::Quaternion<f32>) -> Self {
+        Self {
+            vector: Vector3::from(quaternion.v),
+            scalar: quaternion.s,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vector3 {
     pub x: f32,
@@ -32,6 +87,12 @@ impl fmt::Display for Vector3 {
 impl From<Vector3> for cgmath::Vector3<f32> {
     fn from(vec: Vector3) -> Self {
         cgmath::Vector3::new(vec.x, vec.y, vec.z)
+    }
+}
+
+impl From<cgmath::Vector3<f32>> for Vector3 {
+    fn from(vec: cgmath::Vector3<f32>) -> Self {
+        Vector3::new(vec.x, vec.y, vec.z)
     }
 }
 

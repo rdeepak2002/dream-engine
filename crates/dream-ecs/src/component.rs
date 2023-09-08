@@ -1,21 +1,37 @@
 use std::fmt::Debug;
 use std::sync::{Mutex, Weak};
 
-use dream_math::Vector3;
+use dream_math::{Quaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 
 use crate::entity::Entity;
 use crate::scene::Scene;
 
-#[derive(shipyard::Component, Debug, Clone, PartialEq, Default)]
+#[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vector3,
+    pub rotation: Quaternion,
+    pub scale: Vector3,
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Self {
+            position: Vector3::default(),
+            rotation: Quaternion::default(),
+            scale: Vector3::new(1.0, 1.0, 1.0),
+        }
+    }
 }
 
 impl Transform {
-    pub fn from(position: Vector3) -> Self {
-        Self { position }
+    pub fn new(position: Vector3, rotation: Quaternion, scale: Vector3) -> Self {
+        Self {
+            position,
+            rotation,
+            scale,
+        }
     }
 }
 
