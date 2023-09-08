@@ -30,13 +30,14 @@ pub async fn run_main() {
     }
 
     // set the root directory to be the project that is opened (by default this is blank example)
+    let example_project_name = "blank";
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            let path = std::path::Path::new("examples").join("blank");
+            let path = std::path::Path::new("examples").join(example_project_name);
             dream_fs::fs::set_fs_root(path.to_str().unwrap());
         } else {
             let examples_folder_possible_path = std::path::Path::new(env!("OUT_DIR"))
-            .join("..").join("..").join("..").join("..").join("..").join("examples").join("blank");
+            .join("..").join("..").join("..").join("..").join("..").join("examples").join(example_project_name);
             if examples_folder_possible_path.exists() {
                 // in dev mode try to use the examples folder present here
                 dream_fs::fs::set_fs_root(examples_folder_possible_path.to_str().unwrap());
@@ -45,7 +46,7 @@ pub async fn run_main() {
                 println!("{}", examples_folder_possible_path.to_str().unwrap());
                 let path = std::path::Path::new(env!("OUT_DIR"))
                     .join("examples")
-                    .join("blank");
+                    .join(example_project_name);
                 dream_fs::fs::set_fs_root(path.to_str().unwrap());
             }
         }
