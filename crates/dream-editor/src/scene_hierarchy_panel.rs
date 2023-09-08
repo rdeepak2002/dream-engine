@@ -34,6 +34,7 @@ impl Panel for SceneHierarchyPanel {
                 let root_entity_id = scene.root_entity_runtime_id;
                 drop(scene);
                 if let Some(root_entity_id) = root_entity_id {
+                    // self.draw_scene_hierarchy_entity(root_entity_id, ui);
                     let children =
                         Scene::get_children_for_entity(self.scene.clone(), root_entity_id);
                     for child in children {

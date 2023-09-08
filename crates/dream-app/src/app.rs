@@ -67,16 +67,21 @@ impl Default for App {
         )
         .expect("Unable to create entity");
         Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(Transform::new(
-            dream_math::Vector3::new(1.0, -4.8, -6.0),
+            dream_math::Vector3::new(0.0, 0.0, 0.0),
             dream_math::Quaternion::from_xyz_euler_angles_degrees(0.0, 0.0, -90.0),
-            dream_math::Vector3::new(0.025, 0.025, 0.025),
+            dream_math::Vector3::new(0.002, 0.002, 0.002),
         ));
+        // Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(Transform::new(
+        //     dream_math::Vector3::new(0.0, 0.0, 0.0),
+        //     dream_math::Quaternion::from_xyz_euler_angles_degrees(0.0, 0.0, 0.0),
+        //     dream_math::Vector3::new(1.0, 1.0, 1.0),
+        // ));
         // add mesh renderer component
         MeshRenderer::add_to_entity(
             Arc::downgrade(&scene),
             entity_handle,
             &resource_manager,
-            "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(),
+            "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
             true,
             Default::default(),
         );
@@ -133,18 +138,17 @@ impl App {
             let mut mat: Matrix4<f32> = Matrix4::identity();
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
-                mat = Matrix4::from_translation(Vector3::from(transform.position))
-                    * Matrix4::from(Quaternion::from(transform.rotation))
-                    * Matrix4::from_nonuniform_scale(
-                        transform.scale.x,
-                        transform.scale.y,
-                        transform.scale.z,
-                    );
+                mat = Matrix4::from_nonuniform_scale(
+                    transform.scale.x,
+                    transform.scale.y,
+                    transform.scale.z,
+                ) * Matrix4::from(Quaternion::from(transform.rotation))
+                    * Matrix4::from_translation(Vector3::from(transform.position));
             }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat.clone());
+                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat);
             }
         }
 
@@ -165,10 +169,10 @@ impl App {
                 let position = Vector3::from(transform.position);
                 let rotation = Quaternion::from(transform.rotation);
                 let scale = Vector3::from(transform.scale);
-                mat = Matrix4::from_translation(position)
+                mat = Matrix4::from_nonuniform_scale(scale.x, scale.y, scale.z)
                     * Matrix4::from(rotation)
-                    * Matrix4::from_nonuniform_scale(scale.x, scale.y, scale.z);
-                mat = mat * parent_mat;
+                    * Matrix4::from_translation(position);
+                mat = parent_mat * mat;
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {
                         let upgraded_resource_handle = resource_handle
@@ -201,7 +205,7 @@ impl App {
 
             let children_ids = Scene::get_children_for_entity(scene.clone(), entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene.clone(), mat.clone());
+                draw_entity_and_children(renderer, child_id, scene.clone(), mat);
             }
         }
     }
