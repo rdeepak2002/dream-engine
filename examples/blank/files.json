@@ -48,11 +48,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "cube.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "link.glb",
     "fileUrl": null
   },
   {
     "filepath": "scene.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "cube.glb.meta",
     "fileUrl": null
   },
   {

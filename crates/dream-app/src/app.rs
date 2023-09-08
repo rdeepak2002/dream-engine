@@ -58,25 +58,41 @@ impl Default for App {
             None,
         )
         .expect("Unable to create dummy entity");
-        let entity_handle =
-            Scene::create_entity(Arc::downgrade(&scene), Default::default(), None, None)
-                .expect("Unable to create entity");
-        // add mesh renderer component
-        MeshRenderer::add_to_entity(
-            Arc::downgrade(&scene),
-            entity_handle,
-            &resource_manager,
-            "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
-            true,
-            Default::default(),
-        );
-        // add python script component
-        PythonScript::add_to_entity(
-            Arc::downgrade(&scene),
-            entity_handle,
-            &resource_manager,
-            "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
-        );
+        {
+            let cube_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
+                    .expect("Unable to create cube entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+        }
+        {
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
+                    .expect("Unable to create entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
+                true,
+                Default::default(),
+            );
+            // add python script component
+            PythonScript::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
+            );
+        }
 
         // init component systems
         let component_systems =
