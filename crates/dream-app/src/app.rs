@@ -48,34 +48,19 @@ impl Default for App {
 
         // populate scene
         // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
-        let dummy_entity = Scene::create_entity(
-            Arc::downgrade(&scene),
-            Default::default(),
-            Default::default(),
-        )
-        .expect("Unable to create dummy entity");
+        let dummy_entity =
+            Scene::create_entity(Arc::downgrade(&scene), Default::default(), None, None)
+                .expect("Unable to create dummy entity");
         let _dummy_entity_child = Scene::create_entity(
             Arc::downgrade(&scene),
             Default::default(),
             Some(dummy_entity),
+            None,
         )
         .expect("Unable to create dummy entity");
-        let entity_handle = Scene::create_entity(
-            Arc::downgrade(&scene),
-            Default::default(),
-            Default::default(),
-        )
-        .expect("Unable to create entity");
-        Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(Transform::new(
-            dream_math::Vector3::new(0.0, 0.0, 0.0),
-            dream_math::Quaternion::from_xyz_euler_angles_degrees(0.0, 0.0, -90.0),
-            dream_math::Vector3::new(0.002, 0.002, 0.002),
-        ));
-        // Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(Transform::new(
-        //     dream_math::Vector3::new(0.0, 0.0, 0.0),
-        //     dream_math::Quaternion::from_xyz_euler_angles_degrees(0.0, 0.0, 0.0),
-        //     dream_math::Vector3::new(1.0, 1.0, 1.0),
-        // ));
+        let entity_handle =
+            Scene::create_entity(Arc::downgrade(&scene), Default::default(), None, None)
+                .expect("Unable to create entity");
         // add mesh renderer component
         MeshRenderer::add_to_entity(
             Arc::downgrade(&scene),

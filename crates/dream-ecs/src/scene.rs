@@ -134,6 +134,7 @@ impl Scene {
         scene: Weak<Mutex<Scene>>,
         name: Option<String>,
         parent_id: Option<u64>,
+        transform: Option<Transform>,
     ) -> Result<u64> {
         let scene_mutex = scene.upgrade().ok_or_else(|| {
             anyhow!("Unable to upgrade scene weak reference when creating entity")
@@ -147,7 +148,7 @@ impl Scene {
             let new_root_entity = scene_mutex_lock
                 .handle
                 .add_entity((
-                    Transform::default(),
+                    transform.unwrap_or(Transform::default()),
                     Hierarchy::default(),
                     Tag::new("Root".into()),
                 ))
@@ -196,6 +197,12 @@ impl Scene {
         for gltf_scene in gltf.scenes() {
             // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
             for node in gltf_scene.nodes() {
+                // set transform of root node of GLTF scene to this entity we are adding scene to
+                {
+                    let transform = get_gltf_transform(&node);
+                    let entity = Entity::from_handle(entity_id, scene.clone());
+                    entity.add_component(transform);
+                }
                 process_gltf_child_node(
                     node,
                     scene.clone(),
@@ -220,6 +227,7 @@ impl Scene {
                             scene.clone(),
                             Some(child.name().unwrap_or("Node").into()),
                             Some(entity_id),
+                            Some(get_gltf_transform(&child)),
                         )
                         .expect("Unable to create entity while traversing GLTF nodes");
                         process_gltf_child_node(
@@ -236,6 +244,7 @@ impl Scene {
                         scene.clone(),
                         Some(mesh.name().unwrap_or("Mesh").into()),
                         Some(entity_id),
+                        None,
                     )
                     .expect("Unable to create entity while traversing GLTF mesh nodes");
                     MeshRenderer::add_to_entity(
@@ -248,6 +257,25 @@ impl Scene {
                     );
                 }
             }
+        }
+
+        fn get_gltf_transform(node: &gltf::Node) -> Transform {
+            let gltf_transform = node.transform();
+            let gltf_transform_decomposed = gltf_transform.decomposed();
+            let gltf_translation = gltf_transform_decomposed.0;
+            let gltf_rotation = gltf_transform_decomposed.1;
+            let gltf_scale = gltf_transform_decomposed.2;
+            let position = dream_math::Vector3::new(
+                gltf_translation[0],
+                gltf_translation[1],
+                gltf_translation[2],
+            );
+            let rotation = dream_math::Quaternion::new(
+                dream_math::Vector3::new(gltf_rotation[0], gltf_rotation[1], gltf_rotation[2]),
+                gltf_rotation[3],
+            );
+            let scale = dream_math::Vector3::new(gltf_scale[0], gltf_scale[1], gltf_scale[2]);
+            Transform::new(position, rotation, scale)
         }
     }
 }
