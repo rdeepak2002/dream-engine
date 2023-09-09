@@ -1,7 +1,6 @@
 pub fn now() -> u128 {
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            use wasm_bindgen::prelude::*;
             let window = web_sys::window().expect("should have a window in this context");
             let performance = window
                 .performance()

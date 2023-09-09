@@ -7,7 +7,6 @@ extern "C" {
 
 cfg_if::cfg_if! {
     if #[cfg(target_arch = "wasm32")] {
-        use std::time;
     } else {
         use std::{thread, time};
     }

@@ -19,8 +19,6 @@ use std::sync::{Arc, Mutex, Weak};
 
 use cgmath::prelude::*;
 use cgmath::{Matrix4, Quaternion, Vector3};
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 
 use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
@@ -125,15 +123,11 @@ impl App {
     pub fn draw(&mut self, renderer: &mut RendererWgpu) {
         renderer.clear();
         let scene_weak_ref = Arc::downgrade(&self.scene);
-        let mut root_entity_id: Option<u64> = None;
-        {
-            root_entity_id = self
-                .scene
-                .lock()
-                .expect("Unable to acquire lock on scene")
-                .root_entity_runtime_id;
-        }
-
+        let root_entity_id: Option<u64> = self
+            .scene
+            .lock()
+            .expect("Unable to acquire lock on scene")
+            .root_entity_runtime_id;
         // get children for root entity and render them
         if let Some(root_entity_id) = root_entity_id {
             let mut mat: Matrix4<f32> = Matrix4::identity();
