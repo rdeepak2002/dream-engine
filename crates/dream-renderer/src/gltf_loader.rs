@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use gltf::buffer::Source;
 use gltf::Mesh;
 use wgpu::util::DeviceExt;
@@ -34,7 +36,6 @@ pub fn read_gltf<'a>(
     }
 
     // let mut mesh_info = Vec::new();
-    let mut meshes = Vec::new();
     let mut materials = Vec::new();
 
     // get materials for model
@@ -54,14 +55,18 @@ pub fn read_gltf<'a>(
         }
     }
 
+    // use mesh map to keep track of which indices correspond to meshes to have consistency
+    // between mesh loading in scene view and mesh indices of loaded model
+    let mut mesh_map = HashMap::new();
     for mesh in mesh_list {
-        // ensure that the gltf file's mesh index matches the index of this new dream mesh
-        // this will verify consistency between scene's mesh index assignment to each entity
-        // and the actual index of the meshes in the renderer
-        assert_eq!(meshes.len(), mesh.index());
+        let idx = mesh.index();
         for mesh in get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data) {
-            meshes.push(mesh);
+            mesh_map.insert(idx, mesh);
         }
+    }
+    let mut meshes = Vec::new();
+    for i in 0..mesh_map.len() {
+        meshes.push(mesh_map.remove(&i).unwrap());
     }
 
     Model::new(meshes, materials)

@@ -69,6 +69,27 @@ impl Default for App {
                 true,
                 Default::default(),
             );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    dream_math::Vector3::new(0., -1.1, 0.),
+                    dream_math::Quaternion::default(),
+                    dream_math::Vector3::new(1., 1., 1.),
+                ),
+            );
+        }
+        {
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
+                    .expect("Unable to create entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(),
+                true,
+                Default::default(),
+            );
         }
         {
             let entity_handle =
