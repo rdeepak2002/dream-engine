@@ -181,6 +181,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-mutex"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "479db852db25d9dbf6204e6cb6253698f175c15726470f78af0d918e99d6156e"
+dependencies = [
+ "event-listener",
+]
+
+[[package]]
 name = "async-task"
 version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -874,6 +883,7 @@ dependencies = [
  "dream-math",
  "dream-renderer",
  "dream-resource",
+ "dream-tasks",
  "dream-window",
  "egui",
  "env_logger",
@@ -893,6 +903,7 @@ name = "dream-tasks"
 version = "0.1.0"
 dependencies = [
  "async-executor",
+ "async-mutex",
  "cfg-if",
  "crossbeam-channel",
  "dream-time",
@@ -900,6 +911,7 @@ dependencies = [
  "once_cell",
  "rayon",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "wasm-bindgen-rayon",
 ]
 

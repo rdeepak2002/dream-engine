@@ -18,6 +18,16 @@ use dream_window::window::Window;
 use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub async fn complete_task() {
+    dream_tasks::task_pool::complete_task().await;
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn set_multithreading_enabled(multithreading_enabled: bool) {
+    dream_tasks::task_pool::set_multithreading(multithreading_enabled);
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run_main() {
     // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {
@@ -28,6 +38,8 @@ pub async fn run_main() {
             env_logger::init();
         }
     }
+
+    log::debug!("Running main application");
 
     // set the root directory to be the project that is opened (by default this is blank example)
     let example_project_name = "blank";

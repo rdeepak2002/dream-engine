@@ -196,15 +196,30 @@ const startApplication = (showDownloadLogs = false) => {
     fetchResourceFiles(showDownloadLogs).then(() => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(async (wasmRuntime) => {
+            // TODO: enable multi threading when headers are correct and navigator.hardware supports it
+
             const mem = wasmRuntime.memory;
-            let workerInstance = await Comlink.wrap(
-                new Worker(new URL('./wasm-worker.js', import.meta.url), {
-                    type: 'module'
-                })
-            );
-            await workerInstance.initSharedMem(mem);
+            const enableMultiThreading = true;
+            if (enableMultiThreading) {
+                let workerInstance = await Comlink.wrap(
+                    new Worker(new URL('./wasm-worker.js', import.meta.url), {
+                        type: 'module'
+                    })
+                );
+                await workerInstance.initSharedMem(mem);
+            } else {
+                const backgroundAsyncInstance = await import('./build/dream_runner.js');
+                await backgroundAsyncInstance.default(undefined, mem);
+                await backgroundAsyncInstance.set_multithreading_enabled(false);
+                const asyncTask = setInterval(async () => {
+                    await backgroundAsyncInstance.complete_task();
+                }, 100);
+            }
+
             hideWindowOverlay();
             disableWebKeyboardEvents();
+
+            console.debug("Running main application");
             await run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
