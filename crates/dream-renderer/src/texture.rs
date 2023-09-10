@@ -40,9 +40,12 @@ impl Texture {
         };
         #[allow(unused_mut, unused_assignments)]
         let mut fmt: Option<wgpu::TextureFormat> = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
+        let web_gpu_enabled = crate::is_webgpu_enabled();
         cfg_if::cfg_if! {
             if #[cfg(target_arch = "wasm32")] {
-                fmt = Some(wgpu::TextureFormat::Bgra8Unorm);    // for webgl: Rgba8UnormSrgb
+                // fmt = Some(wgpu::TextureFormat::Bgra8Unorm);     // web gpu: Bgra8Unorm
+                // fmt = Some(wgpu::TextureFormat::Rgba8UnormSrgb);    // webgl: Rgba8UnormSrgb
+                fmt = if web_gpu_enabled { Some(wgpu::TextureFormat::Bgra8Unorm) } else { Some(wgpu::TextureFormat::Rgba8UnormSrgb) };
             }
         }
         let desc = wgpu::TextureDescriptor {

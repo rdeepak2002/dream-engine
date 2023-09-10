@@ -17,6 +17,7 @@
  **********************************************************************************/
 
 use std::iter;
+use std::sync::RwLock;
 
 use wgpu::util::DeviceExt;
 use wgpu::{CompositeAlphaMode, PresentMode};
@@ -38,6 +39,21 @@ pub mod model;
 pub mod path_not_found_error;
 pub mod render_map_key;
 pub mod texture;
+
+pub static WEB_GPU_ENABLED: RwLock<bool> = RwLock::new(true);
+
+pub fn set_webgpu_enabled(wgpu_enabled: bool) {
+    let mut wgpu_enabled_lock = WEB_GPU_ENABLED
+        .try_write()
+        .expect("Unable to acquire lock on multithreading flag");
+    *wgpu_enabled_lock = wgpu_enabled;
+}
+
+pub fn is_webgpu_enabled() -> bool {
+    *WEB_GPU_ENABLED
+        .try_read()
+        .expect("Unable to read wgpu enabled")
+}
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 struct RenderMapKey {
@@ -74,10 +90,22 @@ impl RendererWgpu {
     pub async fn default(window: Option<&winit::window::Window>) -> Self {
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            dx12_shader_compiler: Default::default(),
-        });
+        let web_gpu_enabled = is_webgpu_enabled();
+        cfg_if::cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+                    // backends: wgpu::Backends::PRIMARY,  // web gpu
+                    // backends: wgpu::Backends::all(), // web gl
+                    backends: if web_gpu_enabled { wgpu::Backends::all() } else { wgpu::Backends::all() },
+                    dx12_shader_compiler: Default::default(),
+                });
+            } else {
+                let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+                    backends: wgpu::Backends::PRIMARY,
+                    dx12_shader_compiler: Default::default(),
+                });
+            }
+        }
 
         let size;
         let surface;
@@ -100,10 +128,10 @@ impl RendererWgpu {
                 .request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::default(),
                     compatible_surface: surface.as_ref(),
-                    force_fallback_adapter: false,
+                    force_fallback_adapter: true,
                 })
                 .await
-                .expect("Unable to request for adapter to initialize renderer");
+                .expect("(1) Unable to request for adapter to initialize renderer");
         } else {
             adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -112,18 +140,24 @@ impl RendererWgpu {
                     force_fallback_adapter: true,
                 })
                 .await
-                .expect("Unable to request for adapter to initialize renderer");
+                .expect("(2) Unable to request for adapter to initialize renderer");
         }
 
-        // let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
-        // web_gl_limits.max_texture_dimension_2d = 4096;
+        let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
+        web_gl_limits.max_texture_dimension_2d = 4096;
 
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
+                    // limits: wgpu::Limits::default(), // web gpu
+                    // limits: web_gl_limits, // web gl
+                    limits: if web_gpu_enabled {
+                        wgpu::Limits::default()
+                    } else {
+                        web_gl_limits
+                    },
                 },
                 None,
             )
@@ -160,7 +194,9 @@ impl RendererWgpu {
                 if #[cfg(target_arch = "wasm32")] {
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                        format: wgpu::TextureFormat::Bgra8Unorm,
+                        // format: wgpu::TextureFormat::Bgra8Unorm,        // web gpu
+                        // format: wgpu::TextureFormat::Bgra8UnormSrgb,    // webgl
+                        format: if web_gpu_enabled { wgpu::TextureFormat::Bgra8Unorm } else { wgpu::TextureFormat::Bgra8UnormSrgb },
                         width: size.width,
                         height: size.height,
                         present_mode: PresentMode::AutoNoVsync,

@@ -1,4 +1,4 @@
-import init, {run_main} from './build/dream_runner.js';
+import init, {run_main, set_multithreading_enabled, set_webgpu_enabled} from './build/dream_runner.js';
 import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
 import {fs} from 'https://cdn.jsdelivr.net/npm/memfs@4.2.0/+esm';
 
@@ -199,8 +199,18 @@ const startApplication = (showDownloadLogs = false) => {
             // TODO: enable multi threading when headers are correct and navigator.hardware supports it
             // problem where rayon spawn sometimes blocks main thread which causes program to fail
             const mem = wasmRuntime.memory;
+
+            const enableWebGpu = navigator?.gpu !== undefined;
+            console.debug("Web GPU enabled: ", enableWebGpu);
+
+            if (!enableWebGpu) {
+                alert("Your device does not support Web GPU. Please enable the webgl feature in Cargo.toml")
+            }
+
             const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
             console.debug("Multi-threading enabled: ", enableMultiThreading);
+
+            set_multithreading_enabled(enableMultiThreading);
             if (enableMultiThreading) {
                 let workerInstance = await Comlink.wrap(
                     new Worker(new URL('./wasm-worker.js', import.meta.url), {
@@ -211,7 +221,6 @@ const startApplication = (showDownloadLogs = false) => {
             } else {
                 const backgroundAsyncInstance = await import('./build/dream_runner.js');
                 await backgroundAsyncInstance.default(undefined, mem);
-                await backgroundAsyncInstance.set_multithreading_enabled(false);
                 const asyncTask = setInterval(() => {
                     backgroundAsyncInstance.complete_task();
                 }, 100);
@@ -219,7 +228,7 @@ const startApplication = (showDownloadLogs = false) => {
 
             hideWindowOverlay();
             disableWebKeyboardEvents();
-
+            set_webgpu_enabled(enableWebGpu);
             await run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
