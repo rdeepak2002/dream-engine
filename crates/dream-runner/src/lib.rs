@@ -28,6 +28,11 @@ pub fn set_multithreading_enabled(multithreading_enabled: bool) {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn start_worker_thread() {
+    dream_tasks::task_pool::start_worker_thread();
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run_main() {
     // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {

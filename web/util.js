@@ -199,7 +199,8 @@ const startApplication = (showDownloadLogs = false) => {
             // TODO: enable multi threading when headers are correct and navigator.hardware supports it
             // problem where rayon spawn sometimes blocks main thread which causes program to fail
             const mem = wasmRuntime.memory;
-            const enableMultiThreading = false;
+            const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
+            console.debug("Multi-threading enabled: ", enableMultiThreading);
             if (enableMultiThreading) {
                 let workerInstance = await Comlink.wrap(
                     new Worker(new URL('./wasm-worker.js', import.meta.url), {
