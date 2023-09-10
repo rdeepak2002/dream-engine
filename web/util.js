@@ -197,9 +197,9 @@ const startApplication = (showDownloadLogs = false) => {
         // initialize web assembly application and disable possible keyboard input events
         init().then(async (wasmRuntime) => {
             // TODO: enable multi threading when headers are correct and navigator.hardware supports it
-
+            // problem where rayon spawn sometimes blocks main thread which causes program to fail
             const mem = wasmRuntime.memory;
-            const enableMultiThreading = true;
+            const enableMultiThreading = false;
             if (enableMultiThreading) {
                 let workerInstance = await Comlink.wrap(
                     new Worker(new URL('./wasm-worker.js', import.meta.url), {
