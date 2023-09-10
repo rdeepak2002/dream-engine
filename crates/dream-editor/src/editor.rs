@@ -34,25 +34,12 @@ pub struct EditorEguiWgpu {
 }
 
 pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
-    let web_gpu_enabled = dream_renderer::is_webgpu_enabled();
-
-    cfg_if::cfg_if! {
-        if #[cfg(target_arch = "wasm32")] {
-            egui_wgpu::Renderer::new(
-                &state.device,
-                if web_gpu_enabled { wgpu::TextureFormat::Bgra8Unorm } else { wgpu::TextureFormat::Rgba8UnormSrgb },
-                Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
-                1,
-            )
-        } else {
-            egui_wgpu::Renderer::new(
-                &state.device,
-                wgpu::TextureFormat::Bgra8UnormSrgb,
-                Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
-                1,
-            )
-        }
-    }
+    egui_wgpu::Renderer::new(
+        &state.device,
+        state.preferred_texture_format.unwrap(),
+        Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
+        1,
+    )
 }
 
 pub fn generate_egui_wgpu_depth_texture(

@@ -84,28 +84,20 @@ pub struct RendererWgpu {
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
     pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
+    pub preferred_texture_format: Option<wgpu::TextureFormat>,
 }
 
 impl RendererWgpu {
     pub async fn default(window: Option<&winit::window::Window>) -> Self {
+        let mut preferred_texture_format = None;
+
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
         let web_gpu_enabled = is_webgpu_enabled();
-        cfg_if::cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-                    // backends: wgpu::Backends::PRIMARY,  // web gpu
-                    // backends: wgpu::Backends::all(), // web gl
-                    backends: wgpu::Backends::all(),
-                    dx12_shader_compiler: Default::default(),
-                });
-            } else {
-                let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-                    backends: wgpu::Backends::PRIMARY,
-                    dx12_shader_compiler: Default::default(),
-                });
-            }
-        }
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::all(),
+            dx12_shader_compiler: Default::default(),
+        });
 
         let size;
         let surface;
@@ -128,7 +120,7 @@ impl RendererWgpu {
                 .request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::default(),
                     compatible_surface: surface.as_ref(),
-                    force_fallback_adapter: true,
+                    force_fallback_adapter: false,
                 })
                 .await
                 .expect("(1) Unable to request for adapter to initialize renderer");
@@ -151,8 +143,6 @@ impl RendererWgpu {
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    // limits: wgpu::Limits::default(), // web gpu
-                    // limits: web_gl_limits, // web gl
                     limits: if web_gpu_enabled {
                         wgpu::Limits::default()
                     } else {
@@ -180,6 +170,8 @@ impl RendererWgpu {
                 .find(|f| f.is_srgb())
                 .unwrap_or(surface_caps.formats[0]);
 
+            preferred_texture_format = Some(surface_format);
+
             config = wgpu::SurfaceConfiguration {
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                 format: surface_format,
@@ -190,13 +182,13 @@ impl RendererWgpu {
                 view_formats: vec![],
             };
         } else {
+            // case where there is no surface
             cfg_if::cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
+                    preferred_texture_format = Some(if web_gpu_enabled { wgpu::TextureFormat::Bgra8Unorm } else { wgpu::TextureFormat::Bgra8UnormSrgb });
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                        // format: wgpu::TextureFormat::Bgra8Unorm,        // web gpu
-                        // format: wgpu::TextureFormat::Bgra8UnormSrgb,    // webgl
-                        format: if web_gpu_enabled { wgpu::TextureFormat::Bgra8Unorm } else { wgpu::TextureFormat::Bgra8UnormSrgb },
+                        format: preferred_texture_format.unwrap(),
                         width: size.width,
                         height: size.height,
                         present_mode: PresentMode::AutoNoVsync,
@@ -204,9 +196,10 @@ impl RendererWgpu {
                         view_formats: vec![],
                     };
                 } else {
+                    preferred_texture_format = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-                        format: wgpu::TextureFormat::Bgra8UnormSrgb,
+                        format: preferred_texture_format.unwrap(),
                         width: size.width,
                         height: size.height,
                         present_mode: PresentMode::AutoNoVsync,
@@ -422,6 +415,7 @@ impl RendererWgpu {
             config.width,
             config.height,
             "frame_texture",
+            preferred_texture_format.unwrap(),
         );
 
         let render_pipeline_layout =
@@ -510,6 +504,7 @@ impl RendererWgpu {
             instance_buffer_map: Default::default(),
             pbr_material_factors_bind_group_layout,
             pbr_material_textures_bind_group_layout,
+            preferred_texture_format,
         }
     }
 
@@ -543,6 +538,7 @@ impl RendererWgpu {
                 self.config.width,
                 self.config.height,
                 "frame_texture",
+                self.preferred_texture_format.unwrap(),
             );
             self.depth_texture = texture::Texture::create_depth_texture(
                 &self.device,
