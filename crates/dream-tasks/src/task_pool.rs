@@ -76,7 +76,15 @@ where
             }
         }
     } else {
-        spawn_web_task(func);
+        cfg_if! {
+            if #[cfg(target_arch = "wasm32")] {
+                // on web build we have to send tasks to executor(s) to be executed on web worker
+                spawn_web_task(func);
+            } else {
+                // on non-web build we can just normally spawn tasks
+                func();
+            }
+        }
     }
 }
 
