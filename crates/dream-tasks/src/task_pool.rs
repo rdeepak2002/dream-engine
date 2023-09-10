@@ -29,11 +29,10 @@ pub fn sleep_universal(sleep_millis: u64) {
 }
 
 // for web build to complete tasks in background when running in non-multithreaded environment
-pub async fn complete_task() {
+pub fn complete_task() {
     let executor = EXECUTOR.lock().expect("Unable to acquire lock on executor");
     if !executor.is_empty() {
-        log::debug!("Running async task on async executor");
-        executor.tick().await;
+        executor.try_tick();
     }
 }
 
@@ -53,12 +52,8 @@ where
         .expect("Unable to acquire lock on multithreading flag");
 
     if multithreaded.eq(&true) {
-        log::debug!("Queueing task on thread pool");
         rayon::spawn(func);
-        // occurs when we freshly open this in new incognito tab
-        log::debug!("Done queueing task on thread pool");
     } else {
-        log::debug!("Queueing async task on async executor");
         let executor = EXECUTOR.lock().expect("Unable to acquire lock on executor");
         let task = executor.spawn(async move {
             func();

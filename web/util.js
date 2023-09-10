@@ -211,15 +211,14 @@ const startApplication = (showDownloadLogs = false) => {
                 const backgroundAsyncInstance = await import('./build/dream_runner.js');
                 await backgroundAsyncInstance.default(undefined, mem);
                 await backgroundAsyncInstance.set_multithreading_enabled(false);
-                const asyncTask = setInterval(async () => {
-                    await backgroundAsyncInstance.complete_task();
+                const asyncTask = setInterval(() => {
+                    backgroundAsyncInstance.complete_task();
                 }, 100);
             }
 
             hideWindowOverlay();
             disableWebKeyboardEvents();
 
-            console.debug("Running main application");
             await run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');

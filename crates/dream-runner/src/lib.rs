@@ -18,8 +18,8 @@ use dream_window::window::Window;
 use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub async fn complete_task() {
-    dream_tasks::task_pool::complete_task().await;
+pub fn complete_task() {
+    dream_tasks::task_pool::complete_task();
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
