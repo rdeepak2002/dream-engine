@@ -96,7 +96,7 @@ impl RendererWgpu {
                 let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                     // backends: wgpu::Backends::PRIMARY,  // web gpu
                     // backends: wgpu::Backends::all(), // web gl
-                    backends: if web_gpu_enabled { wgpu::Backends::all() } else { wgpu::Backends::all() },
+                    backends: wgpu::Backends::all(),
                     dx12_shader_compiler: Default::default(),
                 });
             } else {
