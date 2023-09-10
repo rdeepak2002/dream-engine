@@ -54,10 +54,16 @@ where
     if multithreaded.eq(&true) {
         rayon::spawn(func);
     } else {
-        let executor = EXECUTOR.lock().expect("Unable to acquire lock on executor");
-        let task = executor.spawn(async move {
-            func();
-        });
-        task.detach();
+        loop {
+            if let Ok(executor) = EXECUTOR.try_lock() {
+                let task = executor.spawn(async move {
+                    func();
+                });
+                task.detach();
+                break;
+            } else {
+                log::warn!("Attempting to acquire lock for executor again");
+            }
+        }
     }
 }
