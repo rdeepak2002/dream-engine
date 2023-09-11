@@ -3959,7 +3959,6 @@ dependencies = [
 [[package]]
 name = "wasm-bindgen-rayon"
 version = "1.0.3"
-source = "git+https://github.com/rdeepak2002/wasm-bindgen-rayon.git#14d40cbfa73fbc97aaaadeafbd13716ddfdb6c24"
 dependencies = [
  "js-sys",
  "rayon",
