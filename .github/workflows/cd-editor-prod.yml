@@ -1,12 +1,12 @@
-on:
-  push:
-    tags:
-      - '**'
-
 #on:
 #  push:
-#    branches:
+#    tags:
 #      - '**'
+
+on:
+  push:
+    branches:
+      - '**'
 
 name: CD Prod
 
@@ -32,7 +32,7 @@ jobs:
         run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
       - name: Build web webgl
         working-directory: crates/dream-runner
-        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release --features=wgpu/webgl
+        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build-webgl --release --features=wgpu/webgl
       - name: Delete web git ignore
         working-directory: web
         run: rm -rf .gitignore
