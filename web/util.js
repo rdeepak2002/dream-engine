@@ -1,4 +1,4 @@
-import init, {run_main, set_multithreading_enabled} from './build/dream_runner.js';
+// import init, {run_main, set_multithreading_enabled} from './build/dream_runner.js';
 import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
 import {fs} from 'https://cdn.jsdelivr.net/npm/memfs@4.2.0/+esm';
 
@@ -193,31 +193,30 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
 }
 
 const startApplication = (showDownloadLogs = false) => {
-    fetchResourceFiles(showDownloadLogs).then(() => {
+    fetchResourceFiles(showDownloadLogs).then(async () => {
+        const enableWebGpu = navigator?.gpu !== undefined;
+        console.debug("Web GPU enabled: ", enableWebGpu);
+
+        const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
+        console.debug("Multi-threading enabled: ", enableMultiThreading);
+
+        const importPath = enableWebGpu ? './build/dream_runner.js' : './build-webgl/dream_runner.js';
+        const dreamApp = await import(importPath);
+        console.log(dreamApp);
+
         // initialize web assembly application and disable possible keyboard input events
-        init().then(async (wasmRuntime) => {
+        dreamApp.default().then(async (wasmRuntime) => {
             // TODO: enable multi threading when headers are correct and navigator.hardware supports it
             // problem where rayon spawn sometimes blocks main thread which causes program to fail
             const mem = wasmRuntime.memory;
-
-            const enableWebGpu = navigator?.gpu !== undefined;
-            console.debug("Web GPU enabled: ", enableWebGpu);
-
-            if (!enableWebGpu) {
-                alert("Your device does not support Web GPU. Please enable the webgl feature in Cargo.toml")
-            }
-
-            const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
-            console.debug("Multi-threading enabled: ", enableMultiThreading);
-
-            set_multithreading_enabled(enableMultiThreading);
+            dreamApp.set_multithreading_enabled(enableMultiThreading);
             if (enableMultiThreading) {
                 let workerInstance = await Comlink.wrap(
                     new Worker(new URL('./wasm-worker.js', import.meta.url), {
                         type: 'module'
                     })
                 );
-                await workerInstance.initSharedMem(mem);
+                await workerInstance.initSharedMem(mem, importPath);
             } else {
                 const backgroundAsyncInstance = await import('./build/dream_runner.js');
                 await backgroundAsyncInstance.default(undefined, mem);
@@ -228,7 +227,7 @@ const startApplication = (showDownloadLogs = false) => {
 
             hideWindowOverlay();
             disableWebKeyboardEvents();
-            await run_main();
+            await dreamApp.run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');
             console.error('Unable to initialize application', err);

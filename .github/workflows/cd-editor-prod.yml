@@ -30,6 +30,9 @@ jobs:
       - name: Build web
         working-directory: crates/dream-runner
         run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+      - name: Build web webgl
+        working-directory: crates/dream-runner
+        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release --features=wgpu/webgl
       - name: Delete web git ignore
         working-directory: web
         run: rm -rf .gitignore
