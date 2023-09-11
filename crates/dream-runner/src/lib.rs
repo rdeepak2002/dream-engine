@@ -33,11 +33,6 @@ pub fn start_worker_thread() {
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
-pub fn set_webgpu_enabled(wgpu_enabled: bool) {
-    dream_renderer::set_webgpu_enabled(wgpu_enabled);
-}
-
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run_main() {
     // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {

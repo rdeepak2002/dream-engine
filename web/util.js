@@ -1,4 +1,4 @@
-import init, {run_main, set_multithreading_enabled, set_webgpu_enabled} from './build/dream_runner.js';
+import init, {run_main, set_multithreading_enabled} from './build/dream_runner.js';
 import * as Comlink from "./unpkg.com_comlink@4.4.1_dist_esm_comlink.mjs";
 import {fs} from 'https://cdn.jsdelivr.net/npm/memfs@4.2.0/+esm';
 
@@ -228,7 +228,6 @@ const startApplication = (showDownloadLogs = false) => {
 
             hideWindowOverlay();
             disableWebKeyboardEvents();
-            set_webgpu_enabled(enableWebGpu);
             await run_main();
         }).catch((err) => {
             alert('Unable to initialize application. Please try again later.');

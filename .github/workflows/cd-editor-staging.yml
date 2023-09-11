@@ -36,6 +36,9 @@ jobs:
       - name: Delete web/build git ignore
         working-directory: web/build
         run: rm -rf .gitignore
+      - name: Delete web/build-webgl git ignore
+        working-directory: web/build-webgl
+        run: rm -rf .gitignore
       #      - name: Deploy to Heroku
       #        uses: akhileshns/heroku-deploy@v3.12.14
       #        with:
