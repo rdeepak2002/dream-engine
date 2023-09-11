@@ -54,7 +54,7 @@ crossbeam-channel = "0.5"
 
 # multi-threading manager
 rayon = "1.5"
-wasm-bindgen-rayon = { path = "crates/dream-wasm-bindgen-rayon" }
+wasm-bindgen-rayon = { version = "1.0", features = ["no-bundler"] }
 
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }
