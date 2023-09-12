@@ -81,11 +81,15 @@ impl Window {
         }
 
         let mut app = Arc::new(Mutex::new(App::default().await));
-        app.lock().unwrap().initialize().await;
 
         let mut renderer = Arc::new(RwLock::new(
             dream_renderer::RendererWgpu::default(Some(&self.window)).await,
         ));
+
+        app.lock()
+            .unwrap()
+            .initialize(Some(Arc::downgrade(&renderer)))
+            .await;
 
         // TODO: have app store weak reference to renderer
         // TODO: need to create globally available method to update app and have it draw to renderer

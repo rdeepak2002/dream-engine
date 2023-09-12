@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Mutex, RwLock, Weak};
 
 use async_recursion::async_recursion;
 use cgmath::prelude::*;
@@ -40,6 +40,7 @@ pub struct App {
     pub python_component_system: Option<Arc<Mutex<PythonScriptComponentSystem>>>,
     pub resource_manager: Option<ResourceManager>,
     pub scene: Option<Arc<Mutex<Scene>>>,
+    pub renderer: Option<Weak<RwLock<RendererWgpu>>>,
 }
 
 impl App {
@@ -49,6 +50,7 @@ impl App {
             python_component_system: None,
             resource_manager: None,
             scene: None,
+            renderer: None,
         }
         // let resource_manager = ResourceManager::default().await;
         // let scene = Scene::create();
@@ -135,7 +137,7 @@ impl App {
         // }
     }
 
-    pub async fn initialize(&mut self) {
+    pub async fn initialize(&mut self, renderer: Option<Weak<RwLock<RendererWgpu>>>) {
         let resource_manager = ResourceManager::default().await;
         let scene = Scene::create();
 
@@ -218,6 +220,7 @@ impl App {
             Some(Arc::new(Mutex::new(PythonScriptComponentSystem::default())));
         self.resource_manager = Some(resource_manager);
         self.scene = Some(scene);
+        self.renderer = renderer;
     }
 
     pub async fn update(&mut self) -> f32 {
@@ -241,7 +244,20 @@ impl App {
 
     pub async fn update_async(&mut self) {}
 
-    pub async fn draw(&mut self, renderer: &mut RendererWgpu) {
+    pub async fn draw(&mut self) {
+        if self.renderer.is_none() {
+            log::warn!("No renderer assigned to app");
+            return;
+        }
+        let renderer = self
+            .renderer
+            .as_ref()
+            .unwrap()
+            .upgrade()
+            .expect("Unable to get reference to renderer");
+        let mut renderer = renderer
+            .try_write()
+            .expect("Unable to acquire write lock on renderer");
         renderer.clear();
         let scene_weak_ref = Arc::downgrade(self.scene.as_ref().unwrap());
         let root_entity_id: Option<u64> = self
@@ -267,7 +283,8 @@ impl App {
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat).await;
+                draw_entity_and_children(&mut renderer, child_id, scene_weak_ref.clone(), mat)
+                    .await;
             }
         }
 
