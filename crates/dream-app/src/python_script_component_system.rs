@@ -35,8 +35,8 @@ impl Default for PythonScriptComponentSystem {
     }
 }
 
-impl PythonScriptComponentSystem {
-    pub(crate) async fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
+impl System for PythonScriptComponentSystem {
+    fn update(&mut self, dt: f32, scene: Weak<Mutex<Scene>>) {
         if SCENE.lock().unwrap().is_none() {
             *SCENE.lock().unwrap() = Some(scene.clone());
         }
@@ -68,8 +68,7 @@ impl PythonScriptComponentSystem {
                             .clone();
                     } else {
                         log::debug!("Caching script {}", script_path.to_str().unwrap());
-                        let script_binary =
-                            dream_fs::fs::read_binary(script_path.clone(), true).await;
+                        let script_binary = dream_fs::fs::read_binary(script_path.clone(), true);
                         if script_binary.is_ok() {
                             let script_binary = script_binary.unwrap().clone();
                             let script_str = String::from_utf8_lossy(&script_binary);

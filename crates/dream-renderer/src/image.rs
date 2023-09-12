@@ -28,7 +28,7 @@ fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String
     }
 }
 
-pub async fn get_texture_bytes_info_from_gltf<'a>(
+pub fn get_texture_bytes_info_from_gltf<'a>(
     texture: gltf::Texture<'a>,
     buffer_data: &[Vec<u8>],
 ) -> (Vec<u8>, String, Option<String>) {
@@ -52,7 +52,6 @@ pub async fn get_texture_bytes_info_from_gltf<'a>(
             mime_type: _mime_type,
         } => {
             let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
-                .await
                 .expect("unable to load binary");
             let buf_dat: &[u8] = &bin;
             (buf_dat.to_vec(), String::from(texture_name), None)
@@ -89,13 +88,13 @@ impl Image {
         self.receiver = Some(rx);
     }
 
-    pub async fn load_from_gltf_texture_threaded<'a>(
+    pub fn load_from_gltf_texture_threaded(
         &mut self,
-        texture: gltf::Texture<'a>,
+        texture: gltf::Texture,
         buffer_data: &[Vec<u8>],
     ) {
-        let (bytes, label, mime_type) =
-            get_texture_bytes_info_from_gltf(texture, buffer_data).await;
+        let texture = texture.clone();
+        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
         self.load_from_bytes_threaded(&bytes, label.as_str(), mime_type);
     }
 
@@ -120,8 +119,7 @@ impl Image {
         buffer_data: &[Vec<u8>],
     ) {
         let texture = texture.clone();
-        let (bytes, label, mime_type) =
-            get_texture_bytes_info_from_gltf(texture, buffer_data).await;
+        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
         self.load_from_bytes(&bytes, label.as_str(), mime_type)
             .await;
     }

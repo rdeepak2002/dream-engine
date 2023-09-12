@@ -1,9 +1,7 @@
-use std::sync::{Arc, Mutex, RwLock, Weak};
+use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::unbounded;
 use egui::RawInput;
-
-use dream_renderer::RendererWgpu;
 
 use crate::assets_panel::AssetsPanel;
 use crate::inspector_panel::InspectorPanel;
@@ -57,19 +55,13 @@ pub fn generate_egui_wgpu_depth_texture(
 
 impl EditorEguiWgpu {
     pub async fn new(
-        app: Weak<Mutex<dream_app::app::App>>,
-        renderer: Weak<RwLock<RendererWgpu>>,
+        app: &dream_app::app::App,
+        renderer: &dream_renderer::RendererWgpu,
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
-        let app = app.upgrade().expect("Unable to upgrade app reference");
-        let app_mutex_guard = app.lock().unwrap();
-        let renderer = renderer
-            .upgrade()
-            .expect("Unable to upgrade renderer reference");
-        let renderer = renderer.try_read().unwrap();
-        let depth_texture_egui = generate_egui_wgpu_depth_texture(&renderer);
-        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(&renderer);
+        let depth_texture_egui = generate_egui_wgpu_depth_texture(renderer);
+        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(renderer);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(scale_factor);
         let egui_winit_context = egui::Context::default();
@@ -78,19 +70,19 @@ impl EditorEguiWgpu {
 
         let inspector_panel = Arc::new(Mutex::new(InspectorPanel::new(
             rx,
-            Arc::downgrade(app_mutex_guard.scene.as_ref().unwrap()),
+            Arc::downgrade(&app.scene),
         )));
         let assets_panel = Arc::new(Mutex::new(AssetsPanel::new(
-            &renderer,
+            renderer,
             &mut egui_wgpu_renderer,
         )));
         let renderer_controls_panel = Arc::new(Mutex::new(RendererControlsPanel::new(
-            &renderer,
+            renderer,
             &mut egui_wgpu_renderer,
         )));
         let scene_hierarchy_panel = Arc::new(Mutex::new(SceneHierarchyPanel::new(
             sx,
-            Arc::downgrade(app_mutex_guard.scene.as_ref().unwrap()),
+            Arc::downgrade(&app.scene),
         )));
         let renderer_panel = Arc::new(Mutex::new(RendererPanel::default()));
 

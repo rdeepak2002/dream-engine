@@ -15,9 +15,8 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
-use std::sync::{Arc, Mutex, RwLock, Weak};
+use std::sync::{Arc, Mutex, Weak};
 
-use async_recursion::async_recursion;
 use cgmath::prelude::*;
 use cgmath::{Matrix4, Quaternion, Vector3};
 
@@ -31,114 +30,18 @@ use dream_resource::resource_manager::ResourceManager;
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 use crate::python_script_component_system::PythonScriptComponentSystem;
-
-// use crate::system::System;
+use crate::system::System;
 
 pub struct App {
     pub dt: f32,
-    // pub component_systems: Vec<Arc<Mutex<dyn System>>>,
-    pub python_component_system: Option<Arc<Mutex<PythonScriptComponentSystem>>>,
-    pub resource_manager: Option<ResourceManager>,
-    pub scene: Option<Arc<Mutex<Scene>>>,
-    pub renderer: Option<Weak<RwLock<RendererWgpu>>>,
+    pub component_systems: Vec<Arc<Mutex<dyn System>>>,
+    pub resource_manager: ResourceManager,
+    pub scene: Arc<Mutex<Scene>>,
 }
 
-impl App {
-    pub async fn default() -> App {
-        Self {
-            dt: 0.0,
-            python_component_system: None,
-            resource_manager: None,
-            scene: None,
-            renderer: None,
-        }
-        // let resource_manager = ResourceManager::default().await;
-        // let scene = Scene::create();
-        //
-        // // populate scene
-        // // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
-        // let dummy_entity =
-        //     Scene::create_entity(Arc::downgrade(&scene), Default::default(), None, None)
-        //         .expect("Unable to create dummy entity");
-        // let _dummy_entity_child = Scene::create_entity(
-        //     Arc::downgrade(&scene),
-        //     Default::default(),
-        //     Some(dummy_entity),
-        //     None,
-        // )
-        // .expect("Unable to create dummy entity");
-        // {
-        //     let cube_entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
-        //             .expect("Unable to create cube entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         cube_entity_handle,
-        //         &resource_manager,
-        //         "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
-        //         true,
-        //         Default::default(),
-        //     );
-        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-        //         Transform::new(
-        //             dream_math::Vector3::new(0., -1.1, 0.),
-        //             dream_math::Quaternion::default(),
-        //             dream_math::Vector3::new(1., 1., 1.),
-        //         ),
-        //     );
-        // }
-        // {
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
-        //             .expect("Unable to create entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(),
-        //         true,
-        //         Default::default(),
-        //     );
-        // }
-        // {
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
-        //             .expect("Unable to create entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(), // berserk armor: "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
-        //         true,
-        //         Default::default(),
-        //     );
-        //     // add python script component
-        //     PythonScript::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
-        //     );
-        // }
-        //
-        // // init component systems
-        // // let component_systems =
-        // //     vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-        // //         as Arc<Mutex<dyn System>>];
-        //
-        // Self {
-        //     dt: 0.0,
-        //     python_component_system: Arc::new(Mutex::new(PythonScriptComponentSystem::default())),
-        //     resource_manager,
-        //     scene,
-        // }
-    }
-
-    pub async fn initialize(&mut self, renderer: Option<Weak<RwLock<RendererWgpu>>>) {
-        let resource_manager = ResourceManager::default().await;
+impl Default for App {
+    fn default() -> App {
+        let resource_manager = ResourceManager::default();
         let scene = Scene::create();
 
         // populate scene
@@ -211,59 +114,38 @@ impl App {
         }
 
         // init component systems
-        // let component_systems =
-        //     vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-        //         as Arc<Mutex<dyn System>>];
+        let component_systems =
+            vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
+                as Arc<Mutex<dyn System>>];
 
-        self.dt = 0.0;
-        self.python_component_system =
-            Some(Arc::new(Mutex::new(PythonScriptComponentSystem::default())));
-        self.resource_manager = Some(resource_manager);
-        self.scene = Some(scene);
-        self.renderer = renderer;
+        Self {
+            dt: 0.0,
+            component_systems,
+            resource_manager,
+            scene,
+        }
     }
+}
 
-    pub async fn update(&mut self) -> f32 {
+impl App {
+    pub fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
-        self.python_component_system
-            .as_ref()
-            .unwrap()
-            .lock()
-            .unwrap()
-            .update(self.dt, Arc::downgrade(self.scene.as_ref().unwrap()))
-            .await;
-        // for i in 0..self.component_systems.len() {
-        //     self.component_systems[i]
-        //         .lock()
-        //         .unwrap()
-        //         .update(self.dt, Arc::downgrade(&self.scene))
-        //         .await;
-        // }
+        for i in 0..self.component_systems.len() {
+            self.component_systems[i]
+                .lock()
+                .unwrap()
+                .update(self.dt, Arc::downgrade(&self.scene));
+        }
         self.dt
     }
 
     pub async fn update_async(&mut self) {}
 
-    pub async fn draw(&mut self) {
-        if self.renderer.is_none() {
-            log::warn!("No renderer assigned to app");
-            return;
-        }
-        let renderer = self
-            .renderer
-            .as_ref()
-            .unwrap()
-            .upgrade()
-            .expect("Unable to get reference to renderer");
-        let mut renderer = renderer
-            .try_write()
-            .expect("Unable to acquire write lock on renderer");
+    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
         renderer.clear();
-        let scene_weak_ref = Arc::downgrade(self.scene.as_ref().unwrap());
+        let scene_weak_ref = Arc::downgrade(&self.scene);
         let root_entity_id: Option<u64> = self
             .scene
-            .as_ref()
-            .unwrap()
             .lock()
             .expect("Unable to acquire lock on scene")
             .root_entity_runtime_id;
@@ -283,14 +165,12 @@ impl App {
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(&mut renderer, child_id, scene_weak_ref.clone(), mat)
-                    .await;
+                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat);
             }
         }
 
         // draw and entity and its children
-        #[async_recursion(? Send)]
-        async fn draw_entity_and_children(
+        fn draw_entity_and_children(
             renderer: &mut RendererWgpu,
             entity_id: u64,
             scene: Weak<Mutex<Scene>>,
@@ -334,7 +214,6 @@ impl App {
                                         .to_str()
                                         .expect("Unable to convert resource path to a string"),
                                 )
-                                .await
                                 .expect("Unable to store model");
                         }
                     }
@@ -342,9 +221,8 @@ impl App {
             }
 
             let children_ids = Scene::get_children_for_entity(scene.clone(), entity_id);
-
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene.clone(), mat).await;
+                draw_entity_and_children(renderer, child_id, scene.clone(), mat);
             }
         }
     }

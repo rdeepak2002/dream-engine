@@ -1,5 +1,3 @@
-use wasm_bindgen::prelude::*;
-
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///
@@ -16,6 +14,8 @@ use wasm_bindgen::prelude::*;
 /// You should have received a copy of the GNU Affero General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use dream_window::window::Window;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn complete_task() {

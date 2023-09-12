@@ -36,22 +36,20 @@ pub fn create_meta_file(file_path: PathBuf) {
     dream_fs::fs::write_binary(meta_file_path, res.into_bytes().to_vec());
 }
 
-async fn get_meta_data(file_path: PathBuf) -> MetaData {
+fn get_meta_data(file_path: PathBuf) -> MetaData {
     let meta_file_path = format!("{}{}", file_path.to_str().unwrap(), ".meta");
     let meta_file_path = PathBuf::from(meta_file_path);
-    let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true)
-        .await
-        .unwrap_or_else(|_| {
-            panic!(
-                "Unable to retrieve bytes for {}",
-                meta_file_path.to_str().unwrap()
-            )
-        });
+    let bytes = dream_fs::fs::read_binary(meta_file_path.clone(), true).unwrap_or_else(|_| {
+        panic!(
+            "Unable to retrieve bytes for {}",
+            meta_file_path.to_str().unwrap()
+        )
+    });
     serde_yaml::from_slice(bytes.as_slice()).expect("Unable to get meta data")
 }
 
-impl ResourceManager {
-    pub async fn default() -> ResourceManager {
+impl Default for ResourceManager {
+    fn default() -> ResourceManager {
         // traverse all files in project folder and map guid's to file paths
         let mut guid_to_filepath: HashMap<String, Arc<ResourceHandle>> = HashMap::default();
         let project_root = dream_fs::fs::get_fs_root();
@@ -85,7 +83,7 @@ impl ResourceManager {
                         create_meta_file(file_path.clone());
                     }
                     // get the guid from the meta file
-                    let meta_data = get_meta_data(file_path.clone()).await;
+                    let meta_data = get_meta_data(file_path.clone());
                     let guid = meta_data.guid;
                     guid_to_filepath
                         .insert(guid.clone(), Arc::new(ResourceHandle::new(guid, file_path)));
@@ -99,7 +97,9 @@ impl ResourceManager {
 
         Self { guid_to_filepath }
     }
+}
 
+impl ResourceManager {
     pub fn get_resource(&self, key: String) -> Option<Weak<ResourceHandle>> {
         self.guid_to_filepath.get(key.as_str()).map(Arc::downgrade)
     }
