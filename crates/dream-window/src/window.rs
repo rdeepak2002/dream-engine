@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 use crossbeam_channel::unbounded;
 use winit::{
@@ -83,22 +83,22 @@ impl Window {
         let mut app = Arc::new(Mutex::new(App::default().await));
         app.lock().unwrap().initialize().await;
 
-        let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
+        let mut renderer = Arc::new(RwLock::new(
+            dream_renderer::RendererWgpu::default(Some(&self.window)).await,
+        ));
 
-        // TODO: need to create globally available methods to update app and have it draw to renderer
-        // dream_tasks::task_pool::spawn(async move || {
-        //     // let app_cloned = app.clone();
-        //     // app_cloned.update().await;
-        //     // app_cloned.draw(&mut renderer).await;
-        // });
+        // TODO: have app store weak reference to renderer
+        // TODO: need to create globally available method to update app and have it draw to renderer
 
         let mut editor = EditorEguiWgpu::new(
             Arc::downgrade(&app),
-            &renderer,
+            Arc::downgrade(&renderer),
             self.window.scale_factor() as f32,
             &self.event_loop,
         )
         .await;
+
+        let renderer_weak_ref = Arc::downgrade(&renderer);
 
         let sleep_millis: u64 = 16;
         let mut last_update_time = dream_time::time::now();
@@ -120,51 +120,90 @@ impl Window {
                     }
 
                     // draw the scene (to texture)
-                    let size = renderer.size;
-                    match renderer.render() {
-                        Ok(_) => {}
-                        // reconfigure the surface if it's lost or outdated
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(size);
-                            editor.handle_resize(&mut renderer);
-                        }
-                        // quit when system is out of memory
-                        Err(wgpu::SurfaceError::OutOfMemory) => {
-                            log::error!("Quitting because system out of memory");
-                            *control_flow = ControlFlow::Exit
-                        }
-                        // ignore timeout
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                    }
+                    let renderer = renderer_weak_ref
+                        .upgrade()
+                        .expect("Unable to upgrade renderer reference");
 
-                    // draw editor
-                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
-                        Ok(_) => {
-                            renderer.set_camera_aspect_ratio(editor.get_renderer_aspect_ratio());
+                    // TODO: might have to poll to lock renderer
+                    loop {
+                        let renderer_try_write = renderer.try_write();
+                        if renderer_try_write.is_ok() {
+                            let mut renderer = renderer_try_write.unwrap();
+                            let size = renderer.size;
+                            match renderer.render() {
+                                Ok(_) => {}
+                                // reconfigure the surface if it's lost or outdated
+                                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                    renderer.resize(size);
+                                    editor.handle_resize(&mut renderer);
+                                }
+                                // quit when system is out of memory
+                                Err(wgpu::SurfaceError::OutOfMemory) => {
+                                    log::error!("Quitting because system out of memory");
+                                    *control_flow = ControlFlow::Exit
+                                }
+                                // ignore timeout
+                                Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                            }
+
+                            // draw editor
+                            match editor.render_wgpu(
+                                &renderer,
+                                editor_raw_input,
+                                editor_pixels_per_point,
+                            ) {
+                                Ok(_) => {
+                                    renderer.set_camera_aspect_ratio(
+                                        editor.get_renderer_aspect_ratio(),
+                                    );
+                                }
+                                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                    renderer.resize(size);
+                                    editor.handle_resize(&renderer);
+                                }
+                                Err(wgpu::SurfaceError::OutOfMemory) => {
+                                    *control_flow = ControlFlow::Exit
+                                }
+                                Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                            }
+                            // break out of polling loop
+                            break;
+                        } else {
+                            log::warn!("(1) Waiting to acquire lock on renderer");
                         }
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(size);
-                            editor.handle_resize(&renderer);
-                        }
-                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
                     }
                 }
 
                 Event::WindowEvent { event, .. } => {
-                    if !editor.handle_event(&event) {
-                        match event {
-                            WindowEvent::Resized(physical_size) => {
-                                renderer.resize(physical_size);
-                                editor.handle_resize(&renderer);
+                    let renderer = renderer_weak_ref
+                        .upgrade()
+                        .expect("Unable to upgrade renderer reference");
+
+                    loop {
+                        let renderer_try_write = renderer.try_write();
+                        if renderer_try_write.is_ok() {
+                            let mut renderer = renderer_try_write.unwrap();
+                            if !editor.handle_event(&event) {
+                                match event {
+                                    WindowEvent::Resized(physical_size) => {
+                                        renderer.resize(physical_size);
+                                        editor.handle_resize(&renderer);
+                                    }
+                                    WindowEvent::CloseRequested => {
+                                        *control_flow = ControlFlow::Exit
+                                    }
+                                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                                        // new_inner_size is &mut so w have to dereference it twice
+                                        renderer.resize(*new_inner_size);
+                                        editor.handle_resize(&renderer);
+                                    }
+                                    _ => (),
+                                }
                             }
-                            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(*new_inner_size);
-                                editor.handle_resize(&renderer);
-                            }
-                            _ => (),
+                            // break out of polling loop
+                            break;
+                        } else {
+                            log::warn!("(2) Waiting to acquire lock on renderer");
                         }
                     }
                 }

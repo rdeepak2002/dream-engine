@@ -1,7 +1,9 @@
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Mutex, RwLock, Weak};
 
 use crossbeam_channel::unbounded;
 use egui::RawInput;
+
+use dream_renderer::RendererWgpu;
 
 use crate::assets_panel::AssetsPanel;
 use crate::inspector_panel::InspectorPanel;
@@ -56,14 +58,18 @@ pub fn generate_egui_wgpu_depth_texture(
 impl EditorEguiWgpu {
     pub async fn new(
         app: Weak<Mutex<dream_app::app::App>>,
-        renderer: &dream_renderer::RendererWgpu,
+        renderer: Weak<RwLock<RendererWgpu>>,
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
         let app = app.upgrade().expect("Unable to upgrade app reference");
         let app_mutex_guard = app.lock().unwrap();
-        let depth_texture_egui = generate_egui_wgpu_depth_texture(renderer);
-        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(renderer);
+        let renderer = renderer
+            .upgrade()
+            .expect("Unable to upgrade renderer reference");
+        let renderer = renderer.try_read().unwrap();
+        let depth_texture_egui = generate_egui_wgpu_depth_texture(&renderer);
+        let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(&renderer);
         let mut egui_winit_state = egui_winit::State::new(&event_loop);
         egui_winit_state.set_pixels_per_point(scale_factor);
         let egui_winit_context = egui::Context::default();
@@ -75,11 +81,11 @@ impl EditorEguiWgpu {
             Arc::downgrade(app_mutex_guard.scene.as_ref().unwrap()),
         )));
         let assets_panel = Arc::new(Mutex::new(AssetsPanel::new(
-            renderer,
+            &renderer,
             &mut egui_wgpu_renderer,
         )));
         let renderer_controls_panel = Arc::new(Mutex::new(RendererControlsPanel::new(
-            renderer,
+            &renderer,
             &mut egui_wgpu_renderer,
         )));
         let scene_hierarchy_panel = Arc::new(Mutex::new(SceneHierarchyPanel::new(
