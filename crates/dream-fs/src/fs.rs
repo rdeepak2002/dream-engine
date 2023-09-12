@@ -55,7 +55,7 @@ pub fn get_fs_root() -> PathBuf {
     std::path::PathBuf::from(fs_root)
 }
 
-pub fn read_binary(file_path: PathBuf, absolute: bool) -> Result<Vec<u8>> {
+pub async fn read_binary(file_path: PathBuf, absolute: bool) -> Result<Vec<u8>> {
     let path = if absolute {
         file_path
     } else {
@@ -63,7 +63,7 @@ pub fn read_binary(file_path: PathBuf, absolute: bool) -> Result<Vec<u8>> {
     };
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            let data = crate::js_fs::read_binary_from_web_storage(path.to_str().unwrap());
+            let data = crate::js_fs::read_binary_from_web_storage(path.to_str().unwrap()).await;
         } else {
             let data = std::fs::read(path)?;
         }
@@ -92,7 +92,7 @@ pub fn read_dir(file_path: PathBuf) -> Result<Vec<ReadDir>> {
     Ok(files_in_directory)
 }
 
-pub fn write_binary(file_path: PathBuf, content: Vec<u8>) {
+pub async fn write_binary(file_path: PathBuf, content: Vec<u8>) {
     cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             crate::js_fs::write_all_to_web_storage(file_path, content);

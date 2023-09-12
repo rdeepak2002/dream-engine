@@ -1,3 +1,5 @@
+use wasm_bindgen::prelude::*;
+
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///
@@ -14,8 +16,6 @@
 /// You should have received a copy of the GNU Affero General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use dream_window::window::Window;
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn complete_task() {
@@ -45,6 +45,33 @@ pub async fn run_main() {
     }
 
     log::debug!("Running main application");
+
+    // TODO: remove this sample code
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            // Open my_db v1
+            let mut db_req: OpenDbRequest = IdbDatabase::open_u32("my_db", 1).expect("Err");
+            db_req.set_on_upgrade_needed(Some(|evt: &IdbVersionChangeEvent| -> Result<(), JsValue> {
+                // Check if the object store exists; create it if it doesn't
+                if let None = evt.db().object_store_names().find(|n| n == "my_store") {
+                    evt.db().create_object_store("my_store").expect("Err");
+                }
+                Ok(())
+            }));
+
+            let db: IdbDatabase = db_req.into_future().await.expect("Err");
+
+            // Insert/overwrite a record
+            let tx: IdbTransaction = db
+                .transaction_on_one_with_mode("my_store", IdbTransactionMode::Readwrite)
+                .expect("Err");
+            let store: IdbObjectStore = tx.object_store("my_store").expect("Err");
+            let value_to_put: JsValue = JsValue::from("bar");
+            store.put_key_val_owned("foo", &value_to_put).expect("Err");
+            tx.await.into_result().expect("Err");
+        } else {
+        }
+    }
 
     // set the root directory to be the project that is opened (by default this is blank example)
     let example_project_name = "blank";

@@ -17,6 +17,7 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
+use async_recursion::async_recursion;
 use cgmath::prelude::*;
 use cgmath::{Matrix4, Quaternion, Vector3};
 
@@ -30,18 +31,20 @@ use dream_resource::resource_manager::ResourceManager;
 pub use wasm_bindgen_rayon::init_thread_pool;
 
 use crate::python_script_component_system::PythonScriptComponentSystem;
-use crate::system::System;
+
+// use crate::system::System;
 
 pub struct App {
     pub dt: f32,
-    pub component_systems: Vec<Arc<Mutex<dyn System>>>,
+    // pub component_systems: Vec<Arc<Mutex<dyn System>>>,
+    pub python_component_system: Arc<Mutex<PythonScriptComponentSystem>>,
     pub resource_manager: ResourceManager,
     pub scene: Arc<Mutex<Scene>>,
 }
 
-impl Default for App {
-    fn default() -> App {
-        let resource_manager = ResourceManager::default();
+impl App {
+    pub async fn default() -> App {
+        let resource_manager = ResourceManager::default().await;
         let scene = Scene::create();
 
         // populate scene
@@ -114,34 +117,38 @@ impl Default for App {
         }
 
         // init component systems
-        let component_systems =
-            vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-                as Arc<Mutex<dyn System>>];
+        // let component_systems =
+        //     vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
+        //         as Arc<Mutex<dyn System>>];
 
         Self {
             dt: 0.0,
-            component_systems,
+            python_component_system: Arc::new(Mutex::new(PythonScriptComponentSystem::default())),
             resource_manager,
             scene,
         }
     }
-}
 
-impl App {
-    pub fn update(&mut self) -> f32 {
+    pub async fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
-        for i in 0..self.component_systems.len() {
-            self.component_systems[i]
-                .lock()
-                .unwrap()
-                .update(self.dt, Arc::downgrade(&self.scene));
-        }
+        self.python_component_system
+            .lock()
+            .unwrap()
+            .update(self.dt, Arc::downgrade(&self.scene))
+            .await;
+        // for i in 0..self.component_systems.len() {
+        //     self.component_systems[i]
+        //         .lock()
+        //         .unwrap()
+        //         .update(self.dt, Arc::downgrade(&self.scene))
+        //         .await;
+        // }
         self.dt
     }
 
     pub async fn update_async(&mut self) {}
 
-    pub fn draw(&mut self, renderer: &mut RendererWgpu) {
+    pub async fn draw(&mut self, renderer: &mut RendererWgpu) {
         renderer.clear();
         let scene_weak_ref = Arc::downgrade(&self.scene);
         let root_entity_id: Option<u64> = self
@@ -165,12 +172,13 @@ impl App {
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat);
+                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat).await;
             }
         }
 
         // draw and entity and its children
-        fn draw_entity_and_children(
+        #[async_recursion(? Send)]
+        async fn draw_entity_and_children(
             renderer: &mut RendererWgpu,
             entity_id: u64,
             scene: Weak<Mutex<Scene>>,
@@ -214,6 +222,7 @@ impl App {
                                         .to_str()
                                         .expect("Unable to convert resource path to a string"),
                                 )
+                                .await
                                 .expect("Unable to store model");
                         }
                     }
@@ -221,8 +230,9 @@ impl App {
             }
 
             let children_ids = Scene::get_children_for_entity(scene.clone(), entity_id);
+
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene.clone(), mat);
+                draw_entity_and_children(renderer, child_id, scene.clone(), mat).await;
             }
         }
     }

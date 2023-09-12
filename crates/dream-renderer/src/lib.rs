@@ -564,7 +564,7 @@ impl RendererWgpu {
         self.model_guids.contains_key(model_guid)
     }
 
-    pub fn store_model(
+    pub async fn store_model(
         &mut self,
         model_guid_in: Option<&str>,
         model_path: &str,
@@ -581,7 +581,8 @@ impl RendererWgpu {
             model_path,
             &self.device,
             &self.pbr_material_factors_bind_group_layout,
-        );
+        )
+        .await;
         self.model_guids
             .insert(model_guid.parse().unwrap(), Box::new(model));
         log::debug!("Model with guid {} stored", model_guid);

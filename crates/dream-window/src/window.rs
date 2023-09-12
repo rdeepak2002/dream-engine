@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use crossbeam_channel::unbounded;
 use winit::{
     event::*,
@@ -78,10 +80,10 @@ impl Window {
             closure.forget();
         }
 
-        let mut app = App::default();
+        let mut app = Arc::new(Mutex::new(App::default().await));
         let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
         let mut editor = EditorEguiWgpu::new(
-            &app,
+            Arc::downgrade(&app),
             &renderer,
             self.window.scale_factor() as f32,
             &self.event_loop,
@@ -102,8 +104,8 @@ impl Window {
 
                     let now = dream_time::time::now();
                     if now - last_update_time > sleep_millis as u128 {
-                        app.update();
-                        app.draw(&mut renderer);
+                        // app.update().await;
+                        // app.draw(&mut renderer).await;
                         last_update_time = dream_time::time::now();
                     }
 

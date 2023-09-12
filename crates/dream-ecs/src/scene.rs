@@ -171,7 +171,7 @@ impl Scene {
         Ok(new_entity_id)
     }
 
-    pub fn add_gltf_scene(
+    pub async fn add_gltf_scene(
         scene: Weak<Mutex<Scene>>,
         entity_id: u64,
         resource_manager: &ResourceManager,
@@ -189,6 +189,7 @@ impl Scene {
             .expect("Unable to get resource path");
         let gltf = gltf::Gltf::from_slice(
             &read_binary(std::path::PathBuf::from(path), true)
+                .await
                 .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
         )
         .expect("Error loading from slice for glb");
@@ -446,3 +447,13 @@ impl Scene {
 //
 //     // TODO: test removing entities
 // }
+
+pub trait ToEntity {
+    fn to_entity(&self, scene: Weak<Mutex<Scene>>) -> Entity;
+}
+
+impl ToEntity for u64 {
+    fn to_entity(&self, scene: Weak<Mutex<Scene>>) -> Entity {
+        Entity::from_handle(*self, scene)
+    }
+}

@@ -19,6 +19,8 @@ async-executor = { workspace = true }
 rayon = { workspace = true }
 wasm-bindgen = { workspace = true }
 anyhow = { workspace = true }
+futures = { workspace = true }
+async-recursion = "1.0.5"
 
 # python interpreter
 rustpython-common = { git = "https://github.com/RustPython/RustPython" }

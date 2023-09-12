@@ -71,7 +71,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub(crate) fn new<'a>(
+    pub(crate) async fn new<'a>(
         material: gltf::Material<'a>,
         device: &wgpu::Device,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
@@ -87,8 +87,10 @@ impl Material {
                 base_color_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                let texture = texture_info.texture().clone();
                 base_color_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                    .load_from_gltf_texture_threaded(texture, buffer_data)
+                    .await;
             }
         }
 
@@ -100,7 +102,10 @@ impl Material {
                 metallic_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                metallic_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                let texture = texture_info.texture().clone();
+                metallic_image
+                    .load_from_gltf_texture_threaded(texture, buffer_data)
+                    .await;
             }
         }
 
@@ -112,8 +117,10 @@ impl Material {
                 normal_map_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                let texture = texture_info.texture().clone();
                 normal_map_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                    .load_from_gltf_texture_threaded(texture, buffer_data)
+                    .await;
             }
         }
 
@@ -125,7 +132,10 @@ impl Material {
                 emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                emissive_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                let texture = texture_info.texture().clone();
+                emissive_image
+                    .load_from_gltf_texture_threaded(texture, buffer_data)
+                    .await;
             }
         }
 
@@ -137,8 +147,10 @@ impl Material {
                 occlusion_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                let texture = texture_info.texture().clone();
                 occlusion_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                    .load_from_gltf_texture_threaded(texture, buffer_data)
+                    .await;
             }
         }
 
