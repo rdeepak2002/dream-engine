@@ -81,7 +81,17 @@ impl Window {
         }
 
         let mut app = Arc::new(Mutex::new(App::default().await));
+        app.lock().unwrap().initialize().await;
+
         let mut renderer = dream_renderer::RendererWgpu::default(Some(&self.window)).await;
+
+        // TODO: need to create globally available methods to update app and have it draw to renderer
+        // dream_tasks::task_pool::spawn(async move || {
+        //     // let app_cloned = app.clone();
+        //     // app_cloned.update().await;
+        //     // app_cloned.draw(&mut renderer).await;
+        // });
+
         let mut editor = EditorEguiWgpu::new(
             Arc::downgrade(&app),
             &renderer,

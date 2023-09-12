@@ -37,13 +37,105 @@ use crate::python_script_component_system::PythonScriptComponentSystem;
 pub struct App {
     pub dt: f32,
     // pub component_systems: Vec<Arc<Mutex<dyn System>>>,
-    pub python_component_system: Arc<Mutex<PythonScriptComponentSystem>>,
-    pub resource_manager: ResourceManager,
-    pub scene: Arc<Mutex<Scene>>,
+    pub python_component_system: Option<Arc<Mutex<PythonScriptComponentSystem>>>,
+    pub resource_manager: Option<ResourceManager>,
+    pub scene: Option<Arc<Mutex<Scene>>>,
 }
 
 impl App {
     pub async fn default() -> App {
+        Self {
+            dt: 0.0,
+            python_component_system: None,
+            resource_manager: None,
+            scene: None,
+        }
+        // let resource_manager = ResourceManager::default().await;
+        // let scene = Scene::create();
+        //
+        // // populate scene
+        // // let entity_handle = scene.lock().expect("Unable to lock scene").create_entity();
+        // let dummy_entity =
+        //     Scene::create_entity(Arc::downgrade(&scene), Default::default(), None, None)
+        //         .expect("Unable to create dummy entity");
+        // let _dummy_entity_child = Scene::create_entity(
+        //     Arc::downgrade(&scene),
+        //     Default::default(),
+        //     Some(dummy_entity),
+        //     None,
+        // )
+        // .expect("Unable to create dummy entity");
+        // {
+        //     let cube_entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
+        //             .expect("Unable to create cube entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         cube_entity_handle,
+        //         &resource_manager,
+        //         "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             dream_math::Vector3::new(0., -1.1, 0.),
+        //             dream_math::Quaternion::default(),
+        //             dream_math::Vector3::new(1., 1., 1.),
+        //         ),
+        //     );
+        // }
+        // {
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        // }
+        // {
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(), // berserk armor: "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
+        //         true,
+        //         Default::default(),
+        //     );
+        //     // add python script component
+        //     PythonScript::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
+        //     );
+        // }
+        //
+        // // init component systems
+        // // let component_systems =
+        // //     vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
+        // //         as Arc<Mutex<dyn System>>];
+        //
+        // Self {
+        //     dt: 0.0,
+        //     python_component_system: Arc::new(Mutex::new(PythonScriptComponentSystem::default())),
+        //     resource_manager,
+        //     scene,
+        // }
+    }
+
+    pub async fn initialize(&mut self) {
         let resource_manager = ResourceManager::default().await;
         let scene = Scene::create();
 
@@ -121,20 +213,21 @@ impl App {
         //     vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
         //         as Arc<Mutex<dyn System>>];
 
-        Self {
-            dt: 0.0,
-            python_component_system: Arc::new(Mutex::new(PythonScriptComponentSystem::default())),
-            resource_manager,
-            scene,
-        }
+        self.dt = 0.0;
+        self.python_component_system =
+            Some(Arc::new(Mutex::new(PythonScriptComponentSystem::default())));
+        self.resource_manager = Some(resource_manager);
+        self.scene = Some(scene);
     }
 
     pub async fn update(&mut self) -> f32 {
         self.dt = 1.0 / 60.0;
         self.python_component_system
+            .as_ref()
+            .unwrap()
             .lock()
             .unwrap()
-            .update(self.dt, Arc::downgrade(&self.scene))
+            .update(self.dt, Arc::downgrade(self.scene.as_ref().unwrap()))
             .await;
         // for i in 0..self.component_systems.len() {
         //     self.component_systems[i]
@@ -150,9 +243,11 @@ impl App {
 
     pub async fn draw(&mut self, renderer: &mut RendererWgpu) {
         renderer.clear();
-        let scene_weak_ref = Arc::downgrade(&self.scene);
+        let scene_weak_ref = Arc::downgrade(self.scene.as_ref().unwrap());
         let root_entity_id: Option<u64> = self
             .scene
+            .as_ref()
+            .unwrap()
             .lock()
             .expect("Unable to acquire lock on scene")
             .root_entity_runtime_id;

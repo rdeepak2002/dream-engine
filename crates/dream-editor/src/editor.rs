@@ -72,7 +72,7 @@ impl EditorEguiWgpu {
 
         let inspector_panel = Arc::new(Mutex::new(InspectorPanel::new(
             rx,
-            Arc::downgrade(&app_mutex_guard.scene),
+            Arc::downgrade(app_mutex_guard.scene.as_ref().unwrap()),
         )));
         let assets_panel = Arc::new(Mutex::new(AssetsPanel::new(
             renderer,
@@ -84,7 +84,7 @@ impl EditorEguiWgpu {
         )));
         let scene_hierarchy_panel = Arc::new(Mutex::new(SceneHierarchyPanel::new(
             sx,
-            Arc::downgrade(&app_mutex_guard.scene),
+            Arc::downgrade(app_mutex_guard.scene.as_ref().unwrap()),
         )));
         let renderer_panel = Arc::new(Mutex::new(RendererPanel::default()));
 
