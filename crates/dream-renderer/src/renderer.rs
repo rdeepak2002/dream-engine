@@ -297,7 +297,7 @@ impl RendererWgpu {
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
             config.width as f32 / config.height as f32,
-            std::f32::consts::FRAC_PI_4 * 0.6,
+            std::f32::consts::FRAC_PI_4,
             0.01,
             1000.0,
         );
