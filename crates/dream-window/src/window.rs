@@ -109,12 +109,11 @@ impl Window {
                     }
 
                     // draw the scene (to texture)
-                    let size = renderer.size;
                     match renderer.render() {
                         Ok(_) => {}
                         // reconfigure the surface if it's lost or outdated
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(size);
+                            renderer.resize(None);
                             editor.handle_resize(&mut renderer);
                         }
                         // quit when system is out of memory
@@ -132,7 +131,7 @@ impl Window {
                             renderer.set_camera_aspect_ratio(editor.get_renderer_aspect_ratio());
                         }
                         Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(size);
+                            renderer.resize(None);
                             editor.handle_resize(&renderer);
                         }
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
@@ -144,13 +143,13 @@ impl Window {
                     if !editor.handle_event(&event) {
                         match event {
                             WindowEvent::Resized(physical_size) => {
-                                renderer.resize(physical_size);
+                                renderer.resize(Some(physical_size));
                                 editor.handle_resize(&renderer);
                             }
                             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                             WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
                                 // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(*new_inner_size);
+                                renderer.resize(Some(*new_inner_size));
                                 editor.handle_resize(&renderer);
                             }
                             _ => (),

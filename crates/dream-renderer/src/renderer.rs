@@ -50,7 +50,6 @@ pub struct RendererWgpu {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    pub size: PhysicalSize<u32>,
     pub frame_texture_view: Option<wgpu::TextureView>,
     pub camera: camera::Camera,
     pub camera_uniform: CameraUniform,
@@ -424,7 +423,6 @@ impl RendererWgpu {
             surface,
             device,
             queue,
-            size,
             config,
             render_pipeline,
             depth_texture,
@@ -456,32 +454,33 @@ impl RendererWgpu {
         }
     }
 
-    pub fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        if new_size.width > 0 && new_size.height > 0 {
-            self.size = new_size;
-            self.config.width = new_size.width;
-            self.config.height = new_size.height;
-            if self.surface.is_some() {
-                self.surface
-                    .as_mut()
-                    .unwrap()
-                    .configure(&self.device, &self.config);
+    pub fn resize(&mut self, new_size: Option<PhysicalSize<u32>>) {
+        if let Some(new_size) = new_size {
+            if new_size.width > 0 && new_size.height > 0 {
+                self.config.width = new_size.width;
+                self.config.height = new_size.height;
             }
-            // resize frame textures
-            self.frame_texture = texture::Texture::create_frame_texture(
-                &self.device,
-                self.config.width,
-                self.config.height,
-                "frame_texture",
-                self.preferred_texture_format.unwrap(),
-            );
-            self.depth_texture = texture::Texture::create_depth_texture(
-                &self.device,
-                self.config.width,
-                self.config.height,
-                "depth_texture",
-            );
         }
+        if self.surface.is_some() {
+            self.surface
+                .as_mut()
+                .unwrap()
+                .configure(&self.device, &self.config);
+        }
+        // resize frame textures
+        self.frame_texture = texture::Texture::create_frame_texture(
+            &self.device,
+            self.config.width,
+            self.config.height,
+            "frame_texture",
+            self.preferred_texture_format.unwrap(),
+        );
+        self.depth_texture = texture::Texture::create_depth_texture(
+            &self.device,
+            self.config.width,
+            self.config.height,
+            "depth_texture",
+        );
     }
 
     pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
