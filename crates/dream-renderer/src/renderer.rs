@@ -24,7 +24,6 @@ use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
 use crate::camera_uniform::CameraUniform;
-use crate::image::Image;
 use crate::instance::{Instance, InstanceRaw};
 use crate::model::{DrawModel, Model, ModelVertex, Vertex};
 use crate::path_not_found_error::PathNotFoundError;
@@ -52,24 +51,20 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub size: PhysicalSize<u32>,
-    render_pipeline: wgpu::RenderPipeline,
-    depth_texture: texture::Texture,
-    frame_texture: texture::Texture,
     pub frame_texture_view: Option<wgpu::TextureView>,
-    // TODO: move these icons to editor
-    pub play_icon_texture: texture::Texture,
-    pub file_icon_texture: texture::Texture,
-    pub directory_icon_texture: texture::Texture,
     pub camera: camera::Camera,
     pub camera_uniform: CameraUniform,
     pub camera_buffer: wgpu::Buffer,
+    pub preferred_texture_format: Option<wgpu::TextureFormat>,
+    render_pipeline: wgpu::RenderPipeline,
+    depth_texture: texture::Texture,
+    frame_texture: texture::Texture,
     camera_bind_group: wgpu::BindGroup,
     model_guids: std::collections::HashMap<String, Box<Model>>,
     render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
     instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
     pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
-    pub preferred_texture_format: Option<wgpu::TextureFormat>,
 }
 
 impl RendererWgpu {
@@ -341,40 +336,6 @@ impl RendererWgpu {
             label: Some("camera_bind_group"),
         });
 
-        let play_icon_texture_bytes = include_bytes!("icons/PlayIcon.png");
-        let mut play_icon_image = Image::default();
-        play_icon_image
-            .load_from_bytes(play_icon_texture_bytes, "icons/PlayIcon.png", None)
-            .await;
-        let rgba = play_icon_image.to_rgba8();
-        let play_icon_texture =
-            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
-                .expect("Unable to load play icon texture");
-
-        let file_icon_texture_bytes = include_bytes!("icons/FileIcon.png");
-        let mut file_icon_image = Image::default();
-        file_icon_image
-            .load_from_bytes(file_icon_texture_bytes, "icons/FileIcon.png", None)
-            .await;
-        let rgba = file_icon_image.to_rgba8();
-        let file_icon_texture =
-            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
-                .expect("Unable to load file icon texture");
-
-        let directory_icon_texture_bytes = include_bytes!("icons/DirectoryIcon.png");
-        let mut directory_icon_image = Image::default();
-        directory_icon_image
-            .load_from_bytes(
-                directory_icon_texture_bytes,
-                "icons/DirectoryIcon.png",
-                None,
-            )
-            .await;
-        let rgba = directory_icon_image.to_rgba8();
-        let directory_icon_texture =
-            texture::Texture::new(&device, &queue, rgba.to_vec(), rgba.dimensions(), None)
-                .expect("Unable to load directory icon texture");
-
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -469,9 +430,6 @@ impl RendererWgpu {
             depth_texture,
             frame_texture,
             frame_texture_view: None,
-            play_icon_texture,
-            file_icon_texture,
-            directory_icon_texture,
             camera,
             camera_uniform,
             camera_buffer,

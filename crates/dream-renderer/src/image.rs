@@ -108,7 +108,7 @@ impl Image {
         }
     }
 
-    pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
+    pub fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
         self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
         self.update_rgba();
     }
@@ -120,8 +120,7 @@ impl Image {
     ) {
         let texture = texture.clone();
         let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
-        self.load_from_bytes(&bytes, label.as_str(), mime_type)
-            .await;
+        self.load_from_bytes(&bytes, label.as_str(), mime_type);
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {
