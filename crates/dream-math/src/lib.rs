@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cgmath::Rotation3;
+use nalgebra::{Rotation3, UnitQuaternion};
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Quaternion {
@@ -23,34 +23,30 @@ impl Quaternion {
     }
 
     pub fn from_xyz_euler_angles_degrees(x: f32, y: f32, z: f32) -> Self {
-        let quaternion: cgmath::Quaternion<f32> =
-            cgmath::Quaternion::from_axis_angle(cgmath::Vector3::new(0., 0., 1.), cgmath::Deg(x))
-                * cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::new(0., 1., 0.),
-                    cgmath::Deg(y),
-                )
-                * cgmath::Quaternion::from_axis_angle(
-                    cgmath::Vector3::new(1., 0., 0.),
-                    cgmath::Deg(z),
-                );
+        let quaternion: UnitQuaternion<f32> = Rotation3::from_euler_angles(x, y, z).into();
+        let vec = quaternion.vector();
         Self {
-            vector: Vector3::from(quaternion.v),
-            scalar: quaternion.s,
+            vector: Vector3::new(vec.x, vec.y, vec.z),
+            scalar: quaternion.scalar(),
         }
     }
 }
 
-impl From<Quaternion> for cgmath::Quaternion<f32> {
+impl From<Quaternion> for nalgebra::Quaternion<f32> {
     fn from(quaternion: Quaternion) -> Self {
-        cgmath::Quaternion::from_sv(quaternion.scalar, cgmath::Vector3::from(quaternion.vector))
+        nalgebra::Quaternion::from_parts(
+            quaternion.scalar,
+            nalgebra::Vector3::from(quaternion.vector),
+        )
     }
 }
 
-impl From<cgmath::Quaternion<f32>> for Quaternion {
-    fn from(quaternion: cgmath::Quaternion<f32>) -> Self {
+impl From<nalgebra::Quaternion<f32>> for Quaternion {
+    fn from(quaternion: nalgebra::Quaternion<f32>) -> Self {
+        let vec = quaternion.vector();
         Self {
-            vector: Vector3::from(quaternion.v),
-            scalar: quaternion.s,
+            vector: Vector3::new(vec.x, vec.y, vec.z),
+            scalar: quaternion.scalar(),
         }
     }
 }
@@ -84,14 +80,14 @@ impl fmt::Display for Vector3 {
     }
 }
 
-impl From<Vector3> for cgmath::Vector3<f32> {
+impl From<Vector3> for nalgebra::Vector3<f32> {
     fn from(vec: Vector3) -> Self {
-        cgmath::Vector3::new(vec.x, vec.y, vec.z)
+        nalgebra::Vector3::new(vec.x, vec.y, vec.z)
     }
 }
 
-impl From<cgmath::Vector3<f32>> for Vector3 {
-    fn from(vec: cgmath::Vector3<f32>) -> Self {
+impl From<nalgebra::Vector3<f32>> for Vector3 {
+    fn from(vec: nalgebra::Vector3<f32>) -> Self {
         Vector3::new(vec.x, vec.y, vec.z)
     }
 }

@@ -1,5 +1,7 @@
+use nalgebra::Matrix4;
+
 pub struct Instance {
-    pub mat: cgmath::Matrix4<f32>,
+    pub mat: Matrix4<f32>,
 }
 
 impl Instance {

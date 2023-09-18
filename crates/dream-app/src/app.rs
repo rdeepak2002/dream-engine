@@ -17,8 +17,7 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use cgmath::prelude::*;
-use cgmath::{Matrix4, Quaternion, Vector3};
+use nalgebra::{Matrix4, Quaternion, UnitQuaternion, Vector3};
 
 use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
@@ -154,13 +153,9 @@ impl App {
             let mut mat: Matrix4<f32> = Matrix4::identity();
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
-                mat = Matrix4::from_translation(Vector3::from(transform.position))
-                    * Matrix4::from_nonuniform_scale(
-                        transform.scale.x,
-                        transform.scale.y,
-                        transform.scale.z,
-                    )
-                    * Matrix4::from(Quaternion::from(transform.rotation));
+                mat = Matrix4::new_translation(&Vector3::from(transform.position))
+                    * Matrix4::new_nonuniform_scaling(&Vector3::from(transform.scale))
+                    * UnitQuaternion::from_quaternion(transform.rotation.into()).to_homogeneous();
             }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
@@ -186,9 +181,9 @@ impl App {
                 let position = Vector3::from(transform.position);
                 let rotation = Quaternion::from(transform.rotation);
                 let scale = Vector3::from(transform.scale);
-                mat = Matrix4::from_translation(position)
-                    * Matrix4::from_nonuniform_scale(scale.x, scale.y, scale.z)
-                    * Matrix4::from(rotation);
+                mat = Matrix4::new_translation(&position)
+                    * Matrix4::new_nonuniform_scaling(&scale)
+                    * UnitQuaternion::from_quaternion(rotation).to_homogeneous();
                 mat = parent_mat * mat;
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {

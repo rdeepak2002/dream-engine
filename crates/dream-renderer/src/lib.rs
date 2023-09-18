@@ -18,6 +18,7 @@
 
 use std::iter;
 
+use nalgebra::{Point3, Vector3};
 use wgpu::util::DeviceExt;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
@@ -83,7 +84,7 @@ pub struct RendererWgpu {
 
 impl RendererWgpu {
     pub async fn default(window: Option<&winit::window::Window>) -> Self {
-        let mut preferred_texture_format = None;
+        let preferred_texture_format;
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -307,19 +308,15 @@ impl RendererWgpu {
                 label: Some("pbr_textures_bind_group_layout"),
             });
 
-        let camera = camera::Camera {
-            // position the camera one unit up and 2 units back
-            // +z is out of the screen
-            eye: (5.0, 5.0, 5.0).into(),
-            // have it look at the origin
-            target: (0.0, 0.0, 0.0).into(),
-            // which way is "up"
-            up: cgmath::Vector3::unit_y(),
-            aspect: config.width as f32 / config.height as f32,
-            fovy: 45.0,
-            znear: 0.01,
-            zfar: 1000.0,
-        };
+        let camera = camera::Camera::new(
+            Point3::new(5.0, 5.0, 5.0),
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            config.width as f32 / config.height as f32,
+            std::f32::consts::FRAC_PI_4 * 0.6,
+            0.01,
+            1000.0,
+        );
 
         let mut camera_uniform = CameraUniform::default();
         camera_uniform.update_view_proj(&camera);

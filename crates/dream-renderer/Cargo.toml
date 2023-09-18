@@ -11,7 +11,8 @@ gltf = { workspace = true }
 image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 crossbeam-channel = { workspace = true }
 anyhow = { workspace = true }
-cgmath = { workspace = true }
+nalgebra = { workspace = true }
+nalgebra-glm = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }
 wgpu = { workspace = true }

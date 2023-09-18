@@ -1,4 +1,4 @@
-use cgmath::SquareMatrix;
+use nalgebra::Matrix4;
 
 use crate::camera;
 
@@ -17,7 +17,7 @@ impl CameraUniform {
 impl Default for CameraUniform {
     fn default() -> Self {
         Self {
-            view_proj: cgmath::Matrix4::identity().into(),
+            view_proj: Matrix4::identity().into(),
         }
     }
 }

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 gc = "0.4.1"
-cgmath = { workspace = true }
+nalgebra = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }
 log = { workspace = true }
