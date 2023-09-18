@@ -71,12 +71,19 @@ impl Image {
         let mime_type = mime_type;
         let (sx, rx) = unbounded();
 
-        rayon::spawn(move || {
+        dream_tasks::task_pool::spawn(move || {
             let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
             let rgba8 = dynamic_image.to_rgba8();
             sx.send((dynamic_image, rgba8))
                 .expect("Unable to send dynamic image contents");
         });
+
+        // rayon::spawn(move || {
+        //     let dynamic_image = dynamic_image_from_bytes(&bytes, label.as_str(), mime_type);
+        //     let rgba8 = dynamic_image.to_rgba8();
+        //     sx.send((dynamic_image, rgba8))
+        //         .expect("Unable to send dynamic image contents");
+        // });
 
         self.receiver = Some(rx);
     }
@@ -101,7 +108,7 @@ impl Image {
         }
     }
 
-    pub async fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
+    pub fn load_from_bytes(&mut self, bytes: &[u8], label: &str, mime_type: Option<String>) {
         self.dynamic_image = Some(dynamic_image_from_bytes(bytes, label, mime_type));
         self.update_rgba();
     }
@@ -113,8 +120,7 @@ impl Image {
     ) {
         let texture = texture.clone();
         let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
-        self.load_from_bytes(&bytes, label.as_str(), mime_type)
-            .await;
+        self.load_from_bytes(&bytes, label.as_str(), mime_type);
     }
 
     pub fn to_rgba8(&self) -> RgbaImage {

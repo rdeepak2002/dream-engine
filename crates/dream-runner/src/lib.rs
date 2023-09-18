@@ -18,27 +18,54 @@ use dream_window::window::Window;
 use wasm_bindgen::prelude::*;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn complete_task() {
+    dream_tasks::task_pool::complete_task();
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn set_multithreading_enabled(multithreading_enabled: bool) {
+    dream_tasks::task_pool::set_multithreading(multithreading_enabled);
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
+pub fn start_worker_thread() {
+    dream_tasks::task_pool::start_worker_thread();
+}
+
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub async fn run_main() {
     // setup logging (TODO: move logging logic to a new crate)
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
             std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-            console_log::init_with_level(log::Level::Warn).expect("Could't initialize logger");
+            console_log::init_with_level(log::Level::Debug).expect("Could't initialize logger");
         } else {
             env_logger::init();
         }
     }
 
+    log::debug!("Running main application");
+
     // set the root directory to be the project that is opened (by default this is blank example)
+    let example_project_name = "blank";
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
-            let path = std::path::Path::new("examples").join("blank");
+            let path = std::path::Path::new("examples").join(example_project_name);
             dream_fs::fs::set_fs_root(path.to_str().unwrap());
         } else {
-            let path = std::path::Path::new(env!("OUT_DIR"))
-                .join("examples")
-                .join("blank");
-            dream_fs::fs::set_fs_root(path.to_str().unwrap());
+            let examples_folder_possible_path = std::path::Path::new(env!("OUT_DIR"))
+            .join("..").join("..").join("..").join("..").join("..").join("examples").join(example_project_name);
+            if examples_folder_possible_path.exists() {
+                // in dev mode try to use the examples folder present here
+                dream_fs::fs::set_fs_root(examples_folder_possible_path.to_str().unwrap());
+            } else {
+                // otherwise in release mode use the examples folder present in the out directory
+                println!("{}", examples_folder_possible_path.to_str().unwrap());
+                let path = std::path::Path::new(env!("OUT_DIR"))
+                    .join("examples")
+                    .join(example_project_name);
+                dream_fs::fs::set_fs_root(path.to_str().unwrap());
+            }
         }
     }
 

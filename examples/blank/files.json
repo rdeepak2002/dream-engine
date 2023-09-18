@@ -1,5 +1,9 @@
 [
   {
+    "filepath": "main_mat_normal.png",
+    "fileUrl": null
+  },
+  {
     "filepath": "shadow.glb.meta",
     "fileUrl": null
   },
@@ -16,6 +20,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "main_mat_normal.png.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "robot.glb.meta",
     "fileUrl": null
   },
@@ -28,7 +36,15 @@
     "fileUrl": null
   },
   {
+    "filepath": "main_mat_metallicRoughness.png.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "shadow.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "script.py.meta",
     "fileUrl": null
   },
   {
@@ -40,7 +56,27 @@
     "fileUrl": null
   },
   {
+    "filepath": "berserk_armor.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "main_mat_baseColor.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "berserk_armor.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "files.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "cube.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "main_mat_baseColor.png",
     "fileUrl": null
   },
   {
@@ -52,27 +88,15 @@
     "fileUrl": null
   },
   {
-    "filepath": "textures/main_mat_normal.png",
+    "filepath": "main_mat_metallicRoughness.png",
     "fileUrl": null
   },
   {
-    "filepath": "textures/main_mat_normal.png.meta",
+    "filepath": "cube.glb.meta",
     "fileUrl": null
   },
   {
-    "filepath": "textures/main_mat_metallicRoughness.png.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "textures/main_mat_baseColor.png.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "textures/main_mat_baseColor.png",
-    "fileUrl": null
-  },
-  {
-    "filepath": "textures/main_mat_metallicRoughness.png",
+    "filepath": "script.py",
     "fileUrl": null
   }
 ]

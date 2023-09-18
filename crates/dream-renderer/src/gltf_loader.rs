@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use gltf::buffer::Source;
 use gltf::Mesh;
 use wgpu::util::DeviceExt;
@@ -34,7 +36,6 @@ pub fn read_gltf<'a>(
     }
 
     // let mut mesh_info = Vec::new();
-    let mut meshes = Vec::new();
     let mut materials = Vec::new();
 
     // get materials for model
@@ -54,10 +55,18 @@ pub fn read_gltf<'a>(
         }
     }
 
+    // use mesh map to keep track of which indices correspond to meshes to have consistency
+    // between mesh loading in scene view and mesh indices of loaded model
+    let mut mesh_map = HashMap::new();
     for mesh in mesh_list {
+        let idx = mesh.index();
         for mesh in get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data) {
-            meshes.push(mesh);
+            mesh_map.insert(idx, mesh);
         }
+    }
+    let mut meshes = Vec::new();
+    for i in 0..mesh_map.len() {
+        meshes.push(mesh_map.remove(&i).unwrap());
     }
 
     Model::new(meshes, materials)
@@ -82,7 +91,6 @@ fn get_dream_meshes_from_gltf_mesh(
     buffer_data: &Vec<Vec<u8>>,
 ) -> Vec<crate::model::Mesh> {
     let mut meshes = Vec::new();
-    mesh.index();
     let primitives = mesh.primitives();
     primitives.for_each(|primitive| {
         let reader = primitive.reader(|buffer| Some(&buffer_data[buffer.index()]));

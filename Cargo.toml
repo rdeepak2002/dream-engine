@@ -12,7 +12,11 @@ serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
 
 # rendering API
-wgpu = "0.17.0"
+#wgpu = { version = "0.17.0", features = ["webgl"] } # enable this feature to do webgl
+wgpu = { version = "0.17.0" }
+
+# 3D model parsing
+gltf = "1.1.0"
 
 # windowing
 winit = "0.28"
@@ -27,7 +31,8 @@ once_cell = "1.17.1"
 cfg-if = "1"
 
 # linar algebra math
-cgmath = "0.18"
+nalgebra = "0.32.3"
+nalgebra-glm = "0.18.0"
 
 # immediate gui library
 egui = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
@@ -50,7 +55,7 @@ crossbeam-channel = "0.5"
 
 # multi-threading manager
 rayon = "1.5"
-wasm-bindgen-rayon = { git = "https://github.com/rdeepak2002/wasm-bindgen-rayon.git" }
+wasm-bindgen-rayon = { version = "1.0", features = ["no-bundler"] }
 
 # dream sub-dependencies
 dream-editor = { path = "crates/dream-editor" }

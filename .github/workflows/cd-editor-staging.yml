@@ -30,11 +30,17 @@ jobs:
       - name: Build web
         working-directory: crates/dream-runner
         run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+      - name: Build web webgl
+        working-directory: crates/dream-runner
+        run: rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build-webgl --release --features=wgpu/webgl
       - name: Delete web git ignore
         working-directory: web
         run: rm -rf .gitignore
       - name: Delete web/build git ignore
         working-directory: web/build
+        run: rm -rf .gitignore
+      - name: Delete web/build-webgl git ignore
+        working-directory: web/build-webgl
         run: rm -rf .gitignore
       #      - name: Deploy to Heroku
       #        uses: akhileshns/heroku-deploy@v3.12.14

@@ -17,6 +17,7 @@
  **********************************************************************************/
 
 use anyhow::*;
+use wgpu::TextureFormat;
 
 pub struct Texture {
     pub texture: wgpu::Texture,
@@ -32,26 +33,20 @@ impl Texture {
         width: u32,
         height: u32,
         label: &str,
+        preferred_texture_format: TextureFormat,
     ) -> Self {
         let size = wgpu::Extent3d {
             width,
             height,
             depth_or_array_layers: 1,
         };
-        #[allow(unused_mut, unused_assignments)]
-        let mut fmt: Option<wgpu::TextureFormat> = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
-        cfg_if::cfg_if! {
-            if #[cfg(target_arch = "wasm32")] {
-                fmt = Some(wgpu::TextureFormat::Bgra8Unorm);    // for webgl: Rgba8UnormSrgb
-            }
-        }
         let desc = wgpu::TextureDescriptor {
             label: Some(label),
             size,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: fmt.unwrap(),
+            format: preferred_texture_format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         };

@@ -26,6 +26,7 @@ dream-app = { workspace = true }
 dream-window = { workspace = true }
 dream-fs = { workspace = true }
 dream-resource = { workspace = true }
+dream-tasks = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"

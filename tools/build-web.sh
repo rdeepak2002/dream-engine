@@ -1,4 +1,5 @@
 rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build-webgl --release --features=wgpu/webgl
 
 # start server is build succeeded
 if [ $? -eq 0 ]; then

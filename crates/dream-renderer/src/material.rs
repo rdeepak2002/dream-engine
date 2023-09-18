@@ -24,7 +24,11 @@ impl MaterialFactors {
         alpha_cutoff: f32,
     ) -> Self {
         Self {
-            base_color: cgmath::Vector4::from(base_color).truncate().into(),
+            base_color: [
+                *base_color.get(0).unwrap(),
+                *base_color.get(1).unwrap(),
+                *base_color.get(2).unwrap(),
+            ],
             _padding1: 0.,
             emissive,
             _padding2: 0.,
@@ -55,8 +59,8 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 pub struct Material {
     pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
-    pub factor_base_color: cgmath::Vector3<f32>,
-    pub factor_emissive: cgmath::Vector3<f32>,
+    pub factor_base_color: nalgebra::Vector3<f32>,
+    pub factor_emissive: nalgebra::Vector3<f32>,
     pub factor_metallic: f32,
     pub factor_roughness: f32,
     pub factor_alpha: f32,

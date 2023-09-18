@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 gc = "0.4.1"
-cgmath = { workspace = true }
+nalgebra = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }
 log = { workspace = true }
@@ -14,9 +14,11 @@ dream-ecs = { workspace = true }
 dream-renderer = { workspace = true }
 dream-resource = { workspace = true }
 dream-tasks = { workspace = true }
+dream-fs = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
 wasm-bindgen = { workspace = true }
+anyhow = { workspace = true }
 
 # python interpreter
 rustpython-common = { git = "https://github.com/RustPython/RustPython" }

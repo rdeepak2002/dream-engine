@@ -9,7 +9,9 @@
     <option name="withSudo" value="false" />
     <option name="buildTarget" value="REMOTE" />
     <option name="backtrace" value="SHORT" />
-    <envs />
+    <envs>
+      <env name="RUST_LOG" value="none,dream_editor=debug,dream_renderer=debug,dream_ecs=debug,dream_math=debug,dream_app=debug,dream_window=debug,dream_fs=debug,dream_resource=debug,dream_tasks=debug,dream_runner=debug,dream_time=debug" />
+    </envs>
     <option name="isRedirectInput" value="false" />
     <option name="redirectInputPath" value="" />
     <method v="2">
