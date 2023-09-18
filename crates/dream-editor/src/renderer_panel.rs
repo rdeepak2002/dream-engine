@@ -10,7 +10,7 @@ pub struct RendererPanel {
 impl RendererPanel {
     pub fn update_texture(
         &mut self,
-        state: &dream_renderer::RendererWgpu,
+        state: &dream_renderer::renderer::RendererWgpu,
         egui_wgpu_renderer: &mut Renderer,
     ) {
         if state.frame_texture_view.is_some() {

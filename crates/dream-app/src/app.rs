@@ -23,7 +23,7 @@ use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 use dream_renderer::instance::Instance;
-use dream_renderer::RendererWgpu;
+use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;

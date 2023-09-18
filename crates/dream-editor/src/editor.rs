@@ -33,7 +33,9 @@ pub struct EditorEguiWgpu {
     egui_context: egui::Context,
 }
 
-pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui_wgpu::Renderer {
+pub fn generate_egui_wgpu_renderer(
+    state: &dream_renderer::renderer::RendererWgpu,
+) -> egui_wgpu::Renderer {
     egui_wgpu::Renderer::new(
         &state.device,
         state.preferred_texture_format.unwrap(),
@@ -43,7 +45,7 @@ pub fn generate_egui_wgpu_renderer(state: &dream_renderer::RendererWgpu) -> egui
 }
 
 pub fn generate_egui_wgpu_depth_texture(
-    state: &dream_renderer::RendererWgpu,
+    state: &dream_renderer::renderer::RendererWgpu,
 ) -> dream_renderer::texture::Texture {
     dream_renderer::texture::Texture::create_depth_texture(
         &state.device,
@@ -56,7 +58,7 @@ pub fn generate_egui_wgpu_depth_texture(
 impl EditorEguiWgpu {
     pub async fn new(
         app: &dream_app::app::App,
-        renderer: &dream_renderer::RendererWgpu,
+        renderer: &dream_renderer::renderer::RendererWgpu,
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
@@ -117,7 +119,7 @@ impl EditorEguiWgpu {
 
     pub fn render_wgpu(
         &mut self,
-        state: &dream_renderer::RendererWgpu,
+        state: &dream_renderer::renderer::RendererWgpu,
         input: RawInput,
         pixels_per_point: f32,
     ) -> Result<(), wgpu::SurfaceError> {
@@ -214,7 +216,7 @@ impl EditorEguiWgpu {
         Ok(())
     }
 
-    pub fn handle_resize(&mut self, state: &dream_renderer::RendererWgpu) {
+    pub fn handle_resize(&mut self, state: &dream_renderer::renderer::RendererWgpu) {
         self.depth_texture_egui = generate_egui_wgpu_depth_texture(state);
     }
 

@@ -8,7 +8,10 @@ pub struct RendererControlsPanel {
 }
 
 impl RendererControlsPanel {
-    pub fn new(renderer: &dream_renderer::RendererWgpu, egui_wgpu_renderer: &mut Renderer) -> Self {
+    pub fn new(
+        renderer: &dream_renderer::renderer::RendererWgpu,
+        egui_wgpu_renderer: &mut Renderer,
+    ) -> Self {
         let play_icon_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
             &renderer.device,
             &renderer.play_icon_texture.view,

@@ -8,7 +8,10 @@ pub struct AssetsPanel {
 }
 
 impl AssetsPanel {
-    pub fn new(renderer: &dream_renderer::RendererWgpu, egui_wgpu_renderer: &mut Renderer) -> Self {
+    pub fn new(
+        renderer: &dream_renderer::renderer::RendererWgpu,
+        egui_wgpu_renderer: &mut Renderer,
+    ) -> Self {
         let file_epaint_texture_id = egui_wgpu_renderer.register_native_texture(
             &renderer.device,
             &renderer.file_icon_texture.view,
