@@ -13,6 +13,7 @@ impl RendererPanel {
         state: &dream_renderer::renderer::RendererWgpu,
         egui_wgpu_renderer: &mut Renderer,
     ) {
+        // show final render
         if state.frame_texture_view.is_some() {
             if self.render_output_epaint_texture_id.is_some() {
                 // free old texture to prevent memory leak
@@ -23,10 +24,44 @@ impl RendererPanel {
             self.render_output_epaint_texture_id =
                 Some(egui_wgpu_renderer.register_native_texture(
                     &state.device,
-                    &state.frame_texture_view.as_ref().unwrap(),
+                    state.frame_texture_view.as_ref().unwrap(),
                     wgpu::FilterMode::default(),
                 ));
         }
+
+        // show normal gbuffer
+        // let i = 0;
+        // if state.g_buffer_texture_views[i].is_some() {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             state.g_buffer_texture_views[i].as_ref().unwrap(),
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
+
+        // show albedo gbuffer
+        // let i = 1;
+        // if state.g_buffer_texture_views[i].is_some() {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             state.g_buffer_texture_views[i].as_ref().unwrap(),
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
     }
 
     pub fn get_aspect_ratio(&self) -> f32 {

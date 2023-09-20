@@ -51,10 +51,12 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub frame_texture_view: Option<wgpu::TextureView>,
+    pub g_buffer_texture_views: [Option<wgpu::TextureView>; 2],
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
     camera: camera::Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
+    render_pipeline_write_g_buffers: wgpu::RenderPipeline,
     render_pipeline: wgpu::RenderPipeline,
     depth_texture: texture::Texture,
     frame_texture: texture::Texture,
@@ -335,6 +337,11 @@ impl RendererWgpu {
             label: Some("camera_bind_group"),
         });
 
+        let shader_write_g_buffers = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader Write G Buffers"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shader_write_g_buffers.wgsl").into()),
+        });
+
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
@@ -346,6 +353,27 @@ impl RendererWgpu {
             config.height,
             "depth_texture",
         );
+
+        let texture_g_buffer_normal = texture::Texture::create_frame_texture(
+            &device,
+            config.width,
+            config.height,
+            "Texture GBuffer Normal",
+            wgpu::TextureFormat::Rgba16Float,
+        );
+
+        let texture_g_buffer_albedo = texture::Texture::create_frame_texture(
+            &device,
+            config.width,
+            config.height,
+            "Texture GBuffer Albedo",
+            wgpu::TextureFormat::Bgra8Unorm,
+        );
+
+        let g_buffer_texture_views = [
+            Some(texture_g_buffer_normal.view),
+            Some(texture_g_buffer_albedo.view),
+        ];
 
         let frame_texture = texture::Texture::create_frame_texture(
             &device,
@@ -364,6 +392,62 @@ impl RendererWgpu {
                     &pbr_material_textures_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
+            });
+
+        let render_pipeline_write_g_buffers =
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Render Pipeline Write G Buffers"),
+                layout: Some(&render_pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: &shader_write_g_buffers,
+                    entry_point: "vs_main",
+                    buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
+                    // buffers: &[Vertex::desc()],
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: &shader_write_g_buffers,
+                    entry_point: "fs_main",
+                    targets: &[
+                        // normal
+                        Some(wgpu::ColorTargetState {
+                            format: wgpu::TextureFormat::Rgba16Float,
+                            blend: None,
+                            write_mask: wgpu::ColorWrites::ALL,
+                        }),
+                        // albedo
+                        Some(wgpu::ColorTargetState {
+                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            blend: None,
+                            write_mask: wgpu::ColorWrites::ALL,
+                        }),
+                    ],
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: Some(wgpu::Face::Back),
+                    // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
+                    // or Features::POLYGON_MODE_POINT
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    // Requires Features::DEPTH_CLIP_CONTROL
+                    unclipped_depth: false,
+                    // Requires Features::CONSERVATIVE_RASTERIZATION
+                    conservative: false,
+                },
+                depth_stencil: Some(wgpu::DepthStencilState {
+                    format: texture::Texture::DEPTH_FORMAT,
+                    depth_write_enabled: true,
+                    depth_compare: wgpu::CompareFunction::Less,
+                    stencil: wgpu::StencilState::default(),
+                    bias: wgpu::DepthBiasState::default(),
+                }),
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
             });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -438,6 +522,8 @@ impl RendererWgpu {
             pbr_material_factors_bind_group_layout,
             pbr_material_textures_bind_group_layout,
             preferred_texture_format,
+            render_pipeline_write_g_buffers,
+            g_buffer_texture_views,
         }
     }
 
@@ -543,6 +629,160 @@ impl RendererWgpu {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
+
+        {
+            // define render pass to write to GBuffers
+            let mut render_pass_write_g_buffers =
+                encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass Write G Buffers"),
+                    color_attachments: &[
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[0].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[1].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                    ],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
+                });
+            render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
+
+            // camera bind group
+            render_pass_write_g_buffers.set_bind_group(0, &self.camera_bind_group, &[]);
+
+            // setup instance buffer for meshes
+            for (render_map_key, transforms) in &self.render_map {
+                // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
+                {
+                    let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
+                    let instance_buffer =
+                        self.device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: Some("Instance Buffer"),
+                                contents: bytemuck::cast_slice(&instance_data),
+                                usage: wgpu::BufferUsages::VERTEX,
+                            });
+                    // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
+                    self.instance_buffer_map
+                        .insert(render_map_key.clone(), instance_buffer);
+                }
+            }
+
+            // TODO: combine this with loop below to make things more concise
+            // update materials
+            for (render_map_key, _transforms) in &self.render_map {
+                let model_map = &mut self.model_guids;
+                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
+                let model_guid = render_map_key.model_guid.clone();
+                let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
+                    panic!("no model loaded in renderer with guid {}", model_guid)
+                });
+                let mesh_index = render_map_key.mesh_index;
+                let mesh = model
+                    .meshes
+                    .get_mut(mesh_index as usize)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "no mesh at index {} for model with guid {}",
+                            mesh_index, model_guid
+                        )
+                    });
+                let material = model
+                    .materials
+                    .get_mut(mesh.material)
+                    .expect("No material at index");
+                if !material.loaded() {
+                    material.update_images();
+                    material.update_textures(
+                        &self.device,
+                        &self.queue,
+                        &self.pbr_material_textures_bind_group_layout,
+                    );
+                    // println!(
+                    //     "material loading progress: {:.2}%",
+                    //     material.get_progress() * 100.0
+                    // );
+                    // log::warn!(
+                    //     "material loading progress: {:.2}%",
+                    //     material.get_progress() * 100.0
+                    // );
+                }
+            }
+
+            // iterate through all meshes that should be instanced drawn
+            for (render_map_key, transforms) in &self.render_map {
+                let model_map = &self.model_guids;
+                // get the mesh to be instance drawn
+                let model_guid = render_map_key.model_guid.clone();
+                if model_map.get(&*model_guid).is_none() {
+                    log::warn!("skipping drawing of model {}", model_guid);
+                    continue;
+                }
+                let model = model_map.get(&*model_guid).unwrap_or_else(|| {
+                    panic!("no model loaded in renderer with guid {}", model_guid)
+                });
+                let mesh_index = render_map_key.mesh_index;
+                let mesh = model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
+                    panic!(
+                        "no mesh at index {} for model with guid {}",
+                        mesh_index, model_guid
+                    )
+                });
+                // setup instancing buffer
+                let instance_buffer = self
+                    .instance_buffer_map
+                    .get(render_map_key)
+                    .expect("No instance buffer found in map");
+                render_pass_write_g_buffers.set_vertex_buffer(1, instance_buffer.slice(..));
+                // get the material and set it in the bind group
+                let material = model
+                    .materials
+                    .get(mesh.material)
+                    .expect("No material at index");
+                if material.pbr_material_textures_bind_group.is_some() {
+                    render_pass_write_g_buffers.set_bind_group(
+                        1,
+                        &material.pbr_material_factors_bind_group,
+                        &[],
+                    );
+                    render_pass_write_g_buffers.set_bind_group(
+                        2,
+                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                        &[],
+                    );
+                    // draw the mesh
+                    render_pass_write_g_buffers
+                        .draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+                }
+            }
+        }
 
         {
             // define render pass
