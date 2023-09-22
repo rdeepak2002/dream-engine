@@ -553,6 +553,31 @@ impl RendererWgpu {
                 .unwrap()
                 .configure(&self.device, &self.config);
         }
+        // update gbuffers
+        {
+            let texture_g_buffer_normal = texture::Texture::create_frame_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "Texture GBuffer Normal",
+                wgpu::TextureFormat::Rgba16Float,
+            );
+
+            let texture_g_buffer_albedo = texture::Texture::create_frame_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "Texture GBuffer Albedo",
+                wgpu::TextureFormat::Bgra8Unorm,
+            );
+
+            let g_buffer_texture_views = [
+                Some(texture_g_buffer_normal.view),
+                Some(texture_g_buffer_albedo.view),
+            ];
+
+            self.g_buffer_texture_views = g_buffer_texture_views;
+        }
         // resize frame textures
         self.frame_texture = texture::Texture::create_frame_texture(
             &self.device,
