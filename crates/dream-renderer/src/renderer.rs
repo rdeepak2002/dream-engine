@@ -51,7 +51,7 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub frame_texture_view: Option<wgpu::TextureView>,
-    pub g_buffer_texture_views: [Option<wgpu::TextureView>; 2],
+    pub g_buffer_texture_views: [Option<wgpu::TextureView>; 4],
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
     camera: camera::Camera,
     camera_uniform: CameraUniform,
@@ -115,22 +115,35 @@ impl RendererWgpu {
                 .expect("(2) Unable to request for adapter to initialize renderer");
         }
 
-        let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
-        web_gl_limits.max_texture_dimension_2d =
-            std::cmp::max(4096, web_gl_limits.max_texture_dimension_2d);
-
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    limits: web_gl_limits,
+                    limits: wgpu::Limits::default(),
                 },
                 None,
             )
             .await
             .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
             .unwrap();
+
+        // let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
+        // web_gl_limits.max_texture_dimension_2d =
+        //     std::cmp::max(4096, web_gl_limits.max_texture_dimension_2d);
+        //
+        // let (device, queue) = adapter
+        //     .request_device(
+        //         &wgpu::DeviceDescriptor {
+        //             label: None,
+        //             features: wgpu::Features::empty(),
+        //             limits: web_gl_limits,
+        //         },
+        //         None,
+        //     )
+        //     .await
+        //     .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
+        //     .unwrap();
 
         let config;
 
@@ -370,9 +383,27 @@ impl RendererWgpu {
             wgpu::TextureFormat::Bgra8Unorm,
         );
 
+        let texture_g_buffer_emissive = texture::Texture::create_frame_texture(
+            &device,
+            config.width,
+            config.height,
+            "Texture GBuffer Emissive",
+            wgpu::TextureFormat::Bgra8Unorm,
+        );
+
+        let texture_g_buffer_ao_roughness_metallic = texture::Texture::create_frame_texture(
+            &device,
+            config.width,
+            config.height,
+            "Texture GBuffer AO Roughness Metallic",
+            wgpu::TextureFormat::Bgra8Unorm,
+        );
+
         let g_buffer_texture_views = [
             Some(texture_g_buffer_normal.view),
             Some(texture_g_buffer_albedo.view),
+            Some(texture_g_buffer_emissive.view),
+            Some(texture_g_buffer_ao_roughness_metallic.view),
         ];
 
         let frame_texture = texture::Texture::create_frame_texture(
@@ -415,6 +446,18 @@ impl RendererWgpu {
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
                         // albedo
+                        Some(wgpu::ColorTargetState {
+                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            blend: None,
+                            write_mask: wgpu::ColorWrites::ALL,
+                        }),
+                        // emissive
+                        Some(wgpu::ColorTargetState {
+                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            blend: None,
+                            write_mask: wgpu::ColorWrites::ALL,
+                        }),
+                        // ao + roughness + metallic
                         Some(wgpu::ColorTargetState {
                             format: wgpu::TextureFormat::Bgra8Unorm,
                             blend: None,
@@ -571,9 +614,27 @@ impl RendererWgpu {
                 wgpu::TextureFormat::Bgra8Unorm,
             );
 
+            let texture_g_buffer_emissive = texture::Texture::create_frame_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "Texture GBuffer Emissive",
+                wgpu::TextureFormat::Bgra8Unorm,
+            );
+
+            let texture_g_buffer_ao_roughness_metallic = texture::Texture::create_frame_texture(
+                &self.device,
+                self.config.width,
+                self.config.height,
+                "Texture GBuffer AO Roughness Metallic",
+                wgpu::TextureFormat::Bgra8Unorm,
+            );
+
             let g_buffer_texture_views = [
                 Some(texture_g_buffer_normal.view),
                 Some(texture_g_buffer_albedo.view),
+                Some(texture_g_buffer_emissive.view),
+                Some(texture_g_buffer_ao_roughness_metallic.view),
             ];
 
             self.g_buffer_texture_views = g_buffer_texture_views;
@@ -716,14 +777,16 @@ impl RendererWgpu {
                 label: Some("Render Encoder"),
             });
 
-        {
-            self.update_mesh_instance_buffer_and_materials();
+        self.update_mesh_instance_buffer_and_materials();
 
+        // render to gbuffers
+        {
             // define render pass to write to GBuffers
             let mut render_pass_write_g_buffers =
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Render Pass Write G Buffers"),
                     color_attachments: &[
+                        // albedo
                         Some(wgpu::RenderPassColorAttachment {
                             view: self.g_buffer_texture_views[0].as_ref().unwrap(),
                             resolve_target: None,
@@ -737,8 +800,37 @@ impl RendererWgpu {
                                 store: true,
                             },
                         }),
+                        // normal
                         Some(wgpu::RenderPassColorAttachment {
                             view: self.g_buffer_texture_views[1].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                        // emissive
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[2].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                        // ao roughness metallic
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[3].as_ref().unwrap(),
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -813,6 +905,7 @@ impl RendererWgpu {
             }
         }
 
+        // render final result
         {
             // define render pass
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

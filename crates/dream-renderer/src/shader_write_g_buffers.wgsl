@@ -46,8 +46,9 @@ fn vs_main(
 // Fragment shader
 struct GBufferOutput {
   @location(0) normal : vec4<f32>,
-  // Textures: diffuse color, specular color, smoothness, emissive etc. could go here
   @location(1) albedo : vec4<f32>,
+  @location(2) emissive : vec4<f32>,
+  @location(3) ao_roughness_metallic : vec4<f32>,
 }
 
 struct MaterialFactors {
@@ -94,10 +95,23 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let base_color = base_color_texture * base_color_factor;
+    // normal map
+    // TODO: compute actual normal mapping equation
+    let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
     // emissive
     let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
     let emissive_factor = vec4(material_factors.emissive, 1.0);
     let emissive = emissive_texture * emissive_factor;
+    // ambient occlusion
+    let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);
+    let ao = vec4(occlusion_texture.r, occlusion_texture.r, occlusion_texture.r, 1.0);
+    // metallic
+    let metallic_roughness_texture = textureSample(texture_metallic, sampler_metallic, in.tex_coords);
+    let metallic_factor = vec4(material_factors.metallic, material_factors.metallic, material_factors.metallic, 1.0);
+    let metallic = vec4(metallic_roughness_texture.b, metallic_roughness_texture.b, metallic_roughness_texture.b, 1.0) * metallic_factor;
+    // roughness
+    let roughness_factor = vec4(material_factors.roughness, material_factors.roughness, material_factors.roughness, 1.0);
+    let roughness = vec4(metallic_roughness_texture.g, metallic_roughness_texture.g, metallic_roughness_texture.g, 1.0) * roughness_factor;
     // final color
     let final_color_no_alpha = base_color + emissive;
     let final_color_rgb = vec3(final_color_no_alpha.r, final_color_no_alpha.g, final_color_no_alpha.b);
@@ -108,8 +122,15 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     }
 
     var output : GBufferOutput;
-    output.normal = vec4(in.normal, 1.0);
+    output.normal = vec4(normal_map_texture);
     output.albedo = vec4(base_color.r, base_color.g, base_color.b, alpha);
+    output.emissive = vec4(emissive.r, emissive.g, emissive.b, 1.0);
+    output.ao_roughness_metallic = vec4(ao.r, roughness.g, metallic.b, 1.0);
+
+    // uncomment to debug each channel separately:
+//    output.ao_roughness_metallic = vec4(ao.r, ao.g, ao.b, 1.0);
+//    output.ao_roughness_metallic = vec4(roughness.r, roughness.g, roughness.b, 1.0);
+//    output.ao_roughness_metallic = vec4(metallic.r, metallic.g, metallic.b, 1.0);
 
     return output;
 }

@@ -62,6 +62,40 @@ impl RendererPanel {
         //             wgpu::FilterMode::default(),
         //         ));
         // }
+
+        // show emissive gbuffer
+        // let i = 2;
+        // if state.g_buffer_texture_views[i].is_some() {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             state.g_buffer_texture_views[i].as_ref().unwrap(),
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
+
+        // show ao + roughness + metallic gbuffer
+        // let i = 3;
+        // if state.g_buffer_texture_views[i].is_some() {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             state.g_buffer_texture_views[i].as_ref().unwrap(),
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
     }
 
     pub fn get_aspect_ratio(&self) -> f32 {
