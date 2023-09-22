@@ -112,9 +112,6 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     // roughness
     let roughness_factor = vec4(material_factors.roughness, material_factors.roughness, material_factors.roughness, 1.0);
     let roughness = vec4(metallic_roughness_texture.g, metallic_roughness_texture.g, metallic_roughness_texture.g, 1.0) * roughness_factor;
-    // final color
-    let final_color_no_alpha = base_color + emissive;
-    let final_color_rgb = vec3(final_color_no_alpha.r, final_color_no_alpha.g, final_color_no_alpha.b);
     // transparency
     var alpha = material_factors.alpha;
     if (alpha <= material_factors.alpha_cutoff) {
