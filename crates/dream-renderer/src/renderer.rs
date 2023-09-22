@@ -561,6 +561,7 @@ impl RendererWgpu {
             "frame_texture",
             self.preferred_texture_format.unwrap(),
         );
+        // resize depth texture
         self.depth_texture = texture::Texture::create_depth_texture(
             &self.device,
             self.config.width,
@@ -618,65 +619,9 @@ impl RendererWgpu {
         Ok(str::parse(model_guid).unwrap())
     }
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let texture_view = self
-            .frame_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
-
+    pub fn update_mesh_instance_buffer_and_materials(&mut self) {
+        // update internal meshes and materials
         {
-            // define render pass to write to GBuffers
-            let mut render_pass_write_g_buffers =
-                encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Render Pass Write G Buffers"),
-                    color_attachments: &[
-                        Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[0].as_ref().unwrap(),
-                            resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color {
-                                    r: 0.0,
-                                    g: 0.0,
-                                    b: 0.0,
-                                    a: 1.0,
-                                }),
-                                store: true,
-                            },
-                        }),
-                        Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[1].as_ref().unwrap(),
-                            resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color {
-                                    r: 0.0,
-                                    g: 0.0,
-                                    b: 0.0,
-                                    a: 1.0,
-                                }),
-                                store: true,
-                            },
-                        }),
-                    ],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.view,
-                        depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
-                            store: true,
-                        }),
-                        stencil_ops: None,
-                    }),
-                });
-            render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
-
-            // camera bind group
-            render_pass_write_g_buffers.set_bind_group(0, &self.camera_bind_group, &[]);
-
             // setup instance buffer for meshes
             for (render_map_key, transforms) in &self.render_map {
                 // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
@@ -725,16 +670,75 @@ impl RendererWgpu {
                         &self.queue,
                         &self.pbr_material_textures_bind_group_layout,
                     );
-                    // println!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                    // log::warn!(
+                    // log::debug!(
                     //     "material loading progress: {:.2}%",
                     //     material.get_progress() * 100.0
                     // );
                 }
             }
+        }
+    }
+
+    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        let texture_view = self
+            .frame_texture
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
+
+        {
+            self.update_mesh_instance_buffer_and_materials();
+
+            // define render pass to write to GBuffers
+            let mut render_pass_write_g_buffers =
+                encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("Render Pass Write G Buffers"),
+                    color_attachments: &[
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[0].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                        Some(wgpu::RenderPassColorAttachment {
+                            view: self.g_buffer_texture_views[1].as_ref().unwrap(),
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                }),
+                                store: true,
+                            },
+                        }),
+                    ],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &self.depth_texture.view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(1.0),
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
+                });
+            render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
+
+            // camera bind group
+            render_pass_write_g_buffers.set_bind_group(0, &self.camera_bind_group, &[]);
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in &self.render_map {
@@ -814,65 +818,6 @@ impl RendererWgpu {
 
             // camera bind group
             render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
-
-            // setup instance buffer for meshes
-            for (render_map_key, transforms) in &self.render_map {
-                // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
-                {
-                    let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
-                    let instance_buffer =
-                        self.device
-                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                                label: Some("Instance Buffer"),
-                                contents: bytemuck::cast_slice(&instance_data),
-                                usage: wgpu::BufferUsages::VERTEX,
-                            });
-                    // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                    self.instance_buffer_map
-                        .insert(render_map_key.clone(), instance_buffer);
-                }
-            }
-
-            // TODO: combine this with loop below to make things more concise
-            // update materials
-            for (render_map_key, _transforms) in &self.render_map {
-                let model_map = &mut self.model_guids;
-                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                let model_guid = render_map_key.model_guid.clone();
-                let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
-                    panic!("no model loaded in renderer with guid {}", model_guid)
-                });
-                let mesh_index = render_map_key.mesh_index;
-                let mesh = model
-                    .meshes
-                    .get_mut(mesh_index as usize)
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "no mesh at index {} for model with guid {}",
-                            mesh_index, model_guid
-                        )
-                    });
-                let material = model
-                    .materials
-                    .get_mut(mesh.material)
-                    .expect("No material at index");
-                if !material.loaded() {
-                    material.update_images();
-                    material.update_textures(
-                        &self.device,
-                        &self.queue,
-                        &self.pbr_material_textures_bind_group_layout,
-                    );
-                    // println!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                    // log::warn!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                }
-            }
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in &self.render_map {
