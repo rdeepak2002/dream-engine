@@ -58,7 +58,8 @@ pub struct RendererWgpu {
     camera_buffer: wgpu::Buffer,
     render_pipeline_write_g_buffers: wgpu::RenderPipeline,
     render_pipeline_forward_rendering: wgpu::RenderPipeline,
-    depth_texture: texture::Texture,
+    depth_texture_g_buffers: texture::Texture,
+    depth_texture_forward_rendering: texture::Texture,
     frame_texture: texture::Texture,
     camera_bind_group: wgpu::BindGroup,
     model_guids: std::collections::HashMap<String, Box<Model>>,
@@ -360,11 +361,18 @@ impl RendererWgpu {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
         });
 
-        let depth_texture = texture::Texture::create_depth_texture(
+        let depth_texture_g_buffers = texture::Texture::create_depth_texture(
             &device,
             config.width,
             config.height,
-            "depth_texture",
+            "depth_texture_g_buffers",
+        );
+
+        let depth_texture_forward_rendering = texture::Texture::create_depth_texture(
+            &device,
+            config.width,
+            config.height,
+            "depth_texture_forward_rendering",
         );
 
         let texture_g_buffer_normal = texture::Texture::create_frame_texture(
@@ -553,7 +561,8 @@ impl RendererWgpu {
             queue,
             config,
             render_pipeline_forward_rendering,
-            depth_texture,
+            depth_texture_g_buffers,
+            depth_texture_forward_rendering,
             frame_texture,
             frame_texture_view: None,
             camera,
@@ -648,12 +657,19 @@ impl RendererWgpu {
             "frame_texture",
             self.preferred_texture_format.unwrap(),
         );
-        // resize depth texture
-        self.depth_texture = texture::Texture::create_depth_texture(
+        // resize depth texture for g buffers
+        self.depth_texture_g_buffers = texture::Texture::create_depth_texture(
             &self.device,
             self.config.width,
             self.config.height,
-            "depth_texture",
+            "depth_texture_g_buffers",
+        );
+        // resize depth texture for forward rendering
+        self.depth_texture_forward_rendering = texture::Texture::create_depth_texture(
+            &self.device,
+            self.config.width,
+            self.config.height,
+            "depth_texture_forward_rendering",
         );
     }
 
@@ -845,7 +861,7 @@ impl RendererWgpu {
                         }),
                     ],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.view,
+                        view: &self.depth_texture_g_buffers.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
                             store: true,
@@ -926,7 +942,7 @@ impl RendererWgpu {
                         },
                     })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture.view,
+                        view: &self.depth_texture_forward_rendering.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
                             store: true,
