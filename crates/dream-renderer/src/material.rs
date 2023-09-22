@@ -68,7 +68,7 @@ pub struct Material {
     pub alpha_blend_mode: AlphaBlendMode,
     pub double_sided: bool,
     pub base_color_image: Image,
-    pub metallic_image: Image,
+    pub metallic_roughness_image: Image,
     pub normal_map_image: Image,
     pub emissive_image: Image,
     pub occlusion_image: Image,
@@ -97,14 +97,15 @@ impl Material {
         }
 
         // get metallic texture
-        let mut metallic_image = Image::default();
+        let mut metallic_roughness_image = Image::default();
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
-                metallic_image.load_from_bytes_threaded(bytes, "default", None);
+                metallic_roughness_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                metallic_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                metallic_roughness_image
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -185,7 +186,7 @@ impl Material {
             alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
             double_sided: material.double_sided(),
             base_color_image,
-            metallic_image,
+            metallic_roughness_image,
             normal_map_image,
             emissive_image,
             occlusion_image,
@@ -206,7 +207,7 @@ impl Material {
             return;
         }
 
-        if !self.metallic_image.loaded() {
+        if !self.metallic_roughness_image.loaded() {
             return;
         }
 
@@ -234,15 +235,15 @@ impl Material {
         .expect("Unable to load base color texture");
 
         // load metallic image
-        let rgba_image = self.metallic_image.to_rgba8();
-        let metallic_texture = crate::texture::Texture::new(
+        let rgba_image = self.metallic_roughness_image.to_rgba8();
+        let metallic_roughness_texture = crate::texture::Texture::new(
             device,
             queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
-            Some("Metallic texture"),
+            Some("Metallic roughness texture"),
         )
-        .expect("Unable to load metallic texture");
+        .expect("Unable to load metallic roughness texture");
 
         // load normal map image
         let rgba_image = self.normal_map_image.to_rgba8();
@@ -291,11 +292,15 @@ impl Material {
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::TextureView(&metallic_texture.view),
+                        resource: wgpu::BindingResource::TextureView(
+                            &metallic_roughness_texture.view,
+                        ),
                     },
                     wgpu::BindGroupEntry {
                         binding: 3,
-                        resource: wgpu::BindingResource::Sampler(&metallic_texture.sampler),
+                        resource: wgpu::BindingResource::Sampler(
+                            &metallic_roughness_texture.sampler,
+                        ),
                     },
                     wgpu::BindGroupEntry {
                         binding: 4,
@@ -331,8 +336,8 @@ impl Material {
             self.base_color_image.update();
         }
 
-        if !self.metallic_image.loaded() {
-            self.metallic_image.update();
+        if !self.metallic_roughness_image.loaded() {
+            self.metallic_roughness_image.update();
         }
 
         if !self.normal_map_image.loaded() {
@@ -350,13 +355,16 @@ impl Material {
 
     pub fn get_progress(&self) -> f32 {
         let base_color_image = self.base_color_image.loaded() as i32;
-        let metallic_image = self.metallic_image.loaded() as i32;
+        let metallic_roughness_image = self.metallic_roughness_image.loaded() as i32;
         let normal_map_image = self.normal_map_image.loaded() as i32;
         let emissive_image = self.emissive_image.loaded() as i32;
         let occlusion_image = self.occlusion_image.loaded() as i32;
 
-        (base_color_image + metallic_image + normal_map_image + emissive_image + occlusion_image)
-            as f32
+        (base_color_image
+            + metallic_roughness_image
+            + normal_map_image
+            + emissive_image
+            + occlusion_image) as f32
             / 5.0
     }
 

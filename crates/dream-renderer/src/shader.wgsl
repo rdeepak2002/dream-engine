@@ -60,11 +60,11 @@ var<uniform> material_factors: MaterialFactors;
 var texture_base_color: texture_2d<f32>;
 @group(2) @binding(1)
 var sampler_base_color: sampler;
-// metallic texture
+// metallic roughness texture
 @group(2) @binding(2)
-var texture_metallic: texture_2d<f32>;
+var texture_metallic_roughness: texture_2d<f32>;
 @group(2) @binding(3)
-var sampler_metallic: sampler;
+var sampler_metallic_roughness: sampler;
 // normal map texture
 @group(2) @binding(4)
 var texture_normal_map: texture_2d<f32>;
