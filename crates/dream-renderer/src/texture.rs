@@ -118,6 +118,7 @@ impl Texture {
         rgba: Vec<u8>,
         dimensions: (u32, u32),
         label: Option<&str>,
+        mip_map_filter: Option<wgpu::FilterMode>,
     ) -> Result<Self> {
         let size = wgpu::Extent3d {
             width: dimensions.0,
@@ -159,7 +160,7 @@ impl Texture {
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,
             min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: mip_map_filter.unwrap_or(wgpu::FilterMode::Nearest),
             ..Default::default()
         });
 

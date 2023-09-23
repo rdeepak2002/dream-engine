@@ -25,6 +25,7 @@ impl AssetsPanel {
             rgba.to_vec(),
             rgba.dimensions(),
             None,
+            Some(wgpu::FilterMode::Nearest),
         )
         .expect("Unable to load file icon texture");
 
@@ -42,6 +43,7 @@ impl AssetsPanel {
             rgba.to_vec(),
             rgba.dimensions(),
             None,
+            Some(wgpu::FilterMode::Nearest),
         )
         .expect("Unable to load directory icon texture");
 

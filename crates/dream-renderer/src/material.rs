@@ -231,6 +231,7 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Base color texture"),
+            Some(wgpu::FilterMode::Linear),
         )
         .expect("Unable to load base color texture");
 
@@ -242,6 +243,7 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Metallic roughness texture"),
+            Some(wgpu::FilterMode::Linear),
         )
         .expect("Unable to load metallic roughness texture");
 
@@ -253,6 +255,7 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Normal map texture"),
+            Some(wgpu::FilterMode::Linear),
         )
         .expect("Unable to load normal map texture");
 
@@ -264,6 +267,7 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Emissive texture"),
+            Some(wgpu::FilterMode::Linear),
         )
         .expect("Unable to load emissive texture");
 
@@ -275,6 +279,7 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Occlusion texture"),
+            Some(wgpu::FilterMode::Linear),
         )
         .expect("Unable to load occlusion texture");
 
