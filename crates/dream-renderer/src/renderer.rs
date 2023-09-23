@@ -356,9 +356,9 @@ impl RendererWgpu {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader_write_g_buffers.wgsl").into()),
         });
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+        let shader_forward = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("Shader Forward"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shader_forward.wgsl").into()),
         });
 
         let depth_texture_g_buffers = texture::Texture::create_depth_texture(
@@ -506,13 +506,13 @@ impl RendererWgpu {
                 label: Some("Render Pipeline Forward Rendering"),
                 layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader,
+                    module: &shader_forward,
                     entry_point: "vs_main",
                     buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader,
+                    module: &shader_forward,
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: config.format,
@@ -904,7 +904,8 @@ impl RendererWgpu {
                     .materials
                     .get(mesh.material)
                     .expect("No material at index");
-                if material.pbr_material_textures_bind_group.is_some() {
+                let is_opaque = material.factor_alpha >= 1.0;
+                if is_opaque && material.pbr_material_textures_bind_group.is_some() {
                     render_pass_write_g_buffers.set_bind_group(
                         1,
                         &material.pbr_material_factors_bind_group,
@@ -922,7 +923,7 @@ impl RendererWgpu {
             }
         }
 
-        // render final result
+        // forward render
         {
             // define render pass
             let mut render_pass_forward_rendering =
@@ -985,7 +986,9 @@ impl RendererWgpu {
                     .materials
                     .get(mesh.material)
                     .expect("No material at index");
-                if material.pbr_material_textures_bind_group.is_some() {
+                // only draw transparent objects
+                let is_translucent = material.factor_alpha < 1.0;
+                if is_translucent && material.pbr_material_textures_bind_group.is_some() {
                     render_pass_forward_rendering.set_bind_group(
                         1,
                         &material.pbr_material_factors_bind_group,
