@@ -40,8 +40,11 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
         texture_g_buffer_albedo,
         vec2<i32>(floor(coord.xy)),
         0
-    ).rgb;
-    return vec4(albedo, 1.0);
+    ).rgba;
+    if (albedo.a <= 0.0) {
+        discard;
+    }
+    return vec4(albedo.rgb, 1.0);
 
 //    let albedo = textureSample(texture_g_buffer_albedo, sampler_g_buffer_albedo, coord.xy * vec2(1.0/2000.0, 1.0/1000.0)).rgb;
 //    return vec4(albedo, 1.0);
