@@ -57,7 +57,7 @@ pub struct RendererWgpu {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     render_pipeline_write_g_buffers: wgpu::RenderPipeline,
-    render_pipeline_forward_rendering: wgpu::RenderPipeline,
+    render_pipeline_forward_render_translucent_objects: wgpu::RenderPipeline,
     depth_texture: texture::Texture,
     frame_texture: texture::Texture,
     camera_bind_group: wgpu::BindGroup,
@@ -67,8 +67,8 @@ pub struct RendererWgpu {
     pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
     pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
     render_pipeline_render_deferred_result: wgpu::RenderPipeline,
-    deferred_gbuffers_bind_group_layout: wgpu::BindGroupLayout,
-    deferred_gbuffers_bind_group: wgpu::BindGroup,
+    render_lights_for_deferred_gbuffers_bind_group_layout: wgpu::BindGroupLayout,
+    render_lights_for_deferred_gbuffers_bind_group: wgpu::BindGroup,
 }
 
 impl RendererWgpu {
@@ -215,7 +215,7 @@ impl RendererWgpu {
                     },
                     count: None,
                 }],
-                label: Some("texture_bind_group_layout"),
+                label: Some("pbr_material_factors_bind_group_layout"),
             });
 
         let pbr_material_textures_bind_group_layout =
@@ -358,74 +358,59 @@ impl RendererWgpu {
             source: wgpu::ShaderSource::Wgsl(include_str!("shader_write_g_buffers.wgsl").into()),
         });
 
-        let shader_render_deferred_result =
+        let shader_render_lights_for_deferred =
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("Shader Render Deferred Result"),
+                label: Some("Shader Render Lights for Deferred"),
                 source: wgpu::ShaderSource::Wgsl(
-                    include_str!("shader_render_deferred_result.wgsl").into(),
+                    include_str!("shader_render_lights_for_deferred.wgsl").into(),
                 ),
             });
 
-        let shader_forward = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader_forward_render = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader Forward"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shader_forward.wgsl").into()),
         });
 
-        let depth_texture_g_buffers = texture::Texture::create_depth_texture(
+        let depth_texture = texture::Texture::create_depth_texture(
             &device,
             config.width,
             config.height,
             "depth_texture_g_buffers",
         );
 
-        let depth_texture_forward_rendering = texture::Texture::create_depth_texture(
-            &device,
-            config.width,
-            config.height,
-            "depth_texture_forward_rendering",
-        );
-
-        let texture_g_buffer_normal = texture::Texture::create_frame_texture(
-            &device,
-            config.width,
-            config.height,
-            "Texture GBuffer Normal",
-            wgpu::TextureFormat::Rgba16Float,
-        );
-
-        let texture_g_buffer_albedo = texture::Texture::create_frame_texture(
-            &device,
-            config.width,
-            config.height,
-            "Texture GBuffer Albedo",
-            wgpu::TextureFormat::Bgra8Unorm,
-        );
-
-        let texture_g_buffer_emissive = texture::Texture::create_frame_texture(
-            &device,
-            config.width,
-            config.height,
-            "Texture GBuffer Emissive",
-            wgpu::TextureFormat::Bgra8Unorm,
-        );
-
-        let texture_g_buffer_ao_roughness_metallic = texture::Texture::create_frame_texture(
-            &device,
-            config.width,
-            config.height,
-            "Texture GBuffer AO Roughness Metallic",
-            wgpu::TextureFormat::Bgra8Unorm,
-        );
-
         let g_buffer_texture_views = [
-            Some(texture_g_buffer_normal),
-            Some(texture_g_buffer_albedo),
-            Some(texture_g_buffer_emissive),
-            Some(texture_g_buffer_ao_roughness_metallic),
+            Some(texture::Texture::create_frame_texture(
+                &device,
+                config.width,
+                config.height,
+                "Texture GBuffer Normal",
+                wgpu::TextureFormat::Rgba16Float,
+            )),
+            Some(texture::Texture::create_frame_texture(
+                &device,
+                config.width,
+                config.height,
+                "Texture GBuffer Albedo",
+                wgpu::TextureFormat::Bgra8Unorm,
+            )),
+            Some(texture::Texture::create_frame_texture(
+                &device,
+                config.width,
+                config.height,
+                "Texture GBuffer Emissive",
+                wgpu::TextureFormat::Bgra8Unorm,
+            )),
+            Some(texture::Texture::create_frame_texture(
+                &device,
+                config.width,
+                config.height,
+                "Texture GBuffer AO Roughness Metallic",
+                wgpu::TextureFormat::Bgra8Unorm,
+            )),
         ];
 
-        let deferred_gbuffers_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let render_lights_for_deferred_gbuffers_bind_group_layout = device
+            .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
                     // normal
                     wgpu::BindGroupLayoutEntry {
@@ -499,68 +484,61 @@ impl RendererWgpu {
                 label: Some("deferred_gbuffers_bind_group_layout"),
             });
 
-        let deferred_gbuffers_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &deferred_gbuffers_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(
-                        &g_buffer_texture_views[0].as_ref().unwrap().view,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(
-                        &g_buffer_texture_views[0].as_ref().unwrap().sampler,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::TextureView(
-                        &g_buffer_texture_views[1].as_ref().unwrap().view,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: wgpu::BindingResource::Sampler(
-                        &g_buffer_texture_views[1].as_ref().unwrap().sampler,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 4,
-                    resource: wgpu::BindingResource::TextureView(
-                        &g_buffer_texture_views[2].as_ref().unwrap().view,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 5,
-                    resource: wgpu::BindingResource::Sampler(
-                        &g_buffer_texture_views[2].as_ref().unwrap().sampler,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 6,
-                    resource: wgpu::BindingResource::TextureView(
-                        &g_buffer_texture_views[3].as_ref().unwrap().view,
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 7,
-                    resource: wgpu::BindingResource::Sampler(
-                        &g_buffer_texture_views[3].as_ref().unwrap().sampler,
-                    ),
-                },
-            ],
-            label: Some("deferred_rendering_gbuffers_bind_group"),
-        });
-
-        let deferred_render_result_texture = texture::Texture::create_frame_texture(
-            &device,
-            config.width,
-            config.height,
-            "deferred_render_result_texture",
-            preferred_texture_format.unwrap(),
-        );
+        let render_lights_for_deferred_gbuffers_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &render_lights_for_deferred_gbuffers_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(
+                            &g_buffer_texture_views[0].as_ref().unwrap().view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(
+                            &g_buffer_texture_views[0].as_ref().unwrap().sampler,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(
+                            &g_buffer_texture_views[1].as_ref().unwrap().view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
+                        resource: wgpu::BindingResource::Sampler(
+                            &g_buffer_texture_views[1].as_ref().unwrap().sampler,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 4,
+                        resource: wgpu::BindingResource::TextureView(
+                            &g_buffer_texture_views[2].as_ref().unwrap().view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 5,
+                        resource: wgpu::BindingResource::Sampler(
+                            &g_buffer_texture_views[2].as_ref().unwrap().sampler,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 6,
+                        resource: wgpu::BindingResource::TextureView(
+                            &g_buffer_texture_views[3].as_ref().unwrap().view,
+                        ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 7,
+                        resource: wgpu::BindingResource::Sampler(
+                            &g_buffer_texture_views[3].as_ref().unwrap().sampler,
+                        ),
+                    },
+                ],
+                label: Some("deferred_rendering_gbuffers_bind_group"),
+            });
 
         let frame_texture = texture::Texture::create_frame_texture(
             &device,
@@ -570,7 +548,7 @@ impl RendererWgpu {
             preferred_texture_format.unwrap(),
         );
 
-        let render_pipeline_layout =
+        let render_pipeline_pbr_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
@@ -584,7 +562,7 @@ impl RendererWgpu {
         let render_pipeline_write_g_buffers =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Write G Buffers"),
-                layout: Some(&render_pipeline_layout),
+                layout: Some(&render_pipeline_pbr_layout),
                 vertex: wgpu::VertexState {
                     module: &shader_write_g_buffers,
                     entry_point: "vs_main",
@@ -652,7 +630,7 @@ impl RendererWgpu {
         let quad_render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Quad Render Pipeline Layout"),
-                bind_group_layouts: &[&deferred_gbuffers_bind_group_layout],
+                bind_group_layouts: &[&render_lights_for_deferred_gbuffers_bind_group_layout],
                 push_constant_ranges: &[],
             });
 
@@ -661,13 +639,13 @@ impl RendererWgpu {
                 label: Some("Render Pipeline Render Deferred Result"),
                 layout: Some(&quad_render_pipeline_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader_render_deferred_result,
+                    module: &shader_render_lights_for_deferred,
                     entry_point: "vs_main",
                     buffers: &[],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader_render_deferred_result,
+                    module: &shader_render_lights_for_deferred,
                     entry_point: "fs_main",
                     targets: &[
                         // final deferred result render texture
@@ -700,18 +678,18 @@ impl RendererWgpu {
                 multiview: None,
             });
 
-        let render_pipeline_forward_rendering =
+        let render_pipeline_forward_render_translucent_objects =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Forward Rendering"),
-                layout: Some(&render_pipeline_layout),
+                layout: Some(&render_pipeline_pbr_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader_forward,
+                    module: &shader_forward_render,
                     entry_point: "vs_main",
                     buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader_forward,
+                    module: &shader_forward_render,
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: config.format,
@@ -759,8 +737,8 @@ impl RendererWgpu {
             device,
             queue,
             config,
-            render_pipeline_forward_rendering,
-            depth_texture: depth_texture_g_buffers,
+            render_pipeline_forward_render_translucent_objects,
+            depth_texture,
             frame_texture,
             frame_texture_view: None,
             camera,
@@ -776,8 +754,8 @@ impl RendererWgpu {
             render_pipeline_write_g_buffers,
             render_pipeline_render_deferred_result,
             g_buffer_texture_views,
-            deferred_gbuffers_bind_group_layout,
-            deferred_gbuffers_bind_group,
+            render_lights_for_deferred_gbuffers_bind_group_layout,
+            render_lights_for_deferred_gbuffers_bind_group,
         }
     }
 
@@ -1120,7 +1098,7 @@ impl RendererWgpu {
         // deferred result combining gbuffers
         {
             // define render pass
-            let mut render_pass_deferred_result =
+            let mut render_pass_render_lights_for_deferred =
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Render Pass Deferred Result"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -1139,9 +1117,9 @@ impl RendererWgpu {
                     depth_stencil_attachment: None,
                 });
 
-            self.deferred_gbuffers_bind_group =
+            self.render_lights_for_deferred_gbuffers_bind_group =
                 self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    layout: &self.deferred_gbuffers_bind_group_layout,
+                    layout: &self.render_lights_for_deferred_gbuffers_bind_group_layout,
                     entries: &[
                         wgpu::BindGroupEntry {
                             binding: 0,
@@ -1195,10 +1173,15 @@ impl RendererWgpu {
                     label: Some("deferred_rendering_gbuffers_bind_group"),
                 });
 
-            render_pass_deferred_result.set_bind_group(0, &self.deferred_gbuffers_bind_group, &[]);
-            render_pass_deferred_result.set_pipeline(&self.render_pipeline_render_deferred_result);
-            // render_pass_deferred_result.set_vertex_buffer(0, self.quad_vertex_buffer.slice(..));
-            render_pass_deferred_result.draw(0..6, 0..1);
+            render_pass_render_lights_for_deferred.set_bind_group(
+                0,
+                &self.render_lights_for_deferred_gbuffers_bind_group,
+                &[],
+            );
+            render_pass_render_lights_for_deferred
+                .set_pipeline(&self.render_pipeline_render_deferred_result);
+            // draw quad (2 triangles defined by 6 vertices)
+            render_pass_render_lights_for_deferred.draw(0..6, 0..1);
         }
 
         // forward render
@@ -1224,7 +1207,8 @@ impl RendererWgpu {
                         stencil_ops: None,
                     }),
                 });
-            render_pass_forward_rendering.set_pipeline(&self.render_pipeline_forward_rendering);
+            render_pass_forward_rendering
+                .set_pipeline(&self.render_pipeline_forward_render_translucent_objects);
 
             // camera bind group
             render_pass_forward_rendering.set_bind_group(0, &self.camera_bind_group, &[]);
