@@ -53,14 +53,12 @@ pub struct RendererWgpu {
     pub frame_texture_view: Option<wgpu::TextureView>,
     pub g_buffer_texture_views: [Option<wgpu::TextureView>; 4],
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
-    pub deferred_render_result_texture: texture::Texture,
     camera: camera::Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     render_pipeline_write_g_buffers: wgpu::RenderPipeline,
     render_pipeline_forward_rendering: wgpu::RenderPipeline,
-    depth_texture_g_buffers: texture::Texture,
-    depth_texture_forward_rendering: texture::Texture,
+    depth_texture: texture::Texture,
     frame_texture: texture::Texture,
     camera_bind_group: wgpu::BindGroup,
     model_guids: std::collections::HashMap<String, Box<Model>>,
@@ -714,9 +712,7 @@ impl RendererWgpu {
             queue,
             config,
             render_pipeline_forward_rendering,
-            depth_texture_g_buffers,
-            depth_texture_forward_rendering,
-            deferred_render_result_texture,
+            depth_texture: depth_texture_g_buffers,
             frame_texture,
             frame_texture_view: None,
             camera,
@@ -763,14 +759,6 @@ impl RendererWgpu {
                 .unwrap()
                 .configure(&self.device, &self.config);
         }
-        // update final deferred render result
-        self.deferred_render_result_texture = texture::Texture::create_frame_texture(
-            &self.device,
-            self.config.width,
-            self.config.height,
-            "deferred_render_result_texture",
-            self.preferred_texture_format.unwrap(),
-        );
         // update gbuffers
         {
             let texture_g_buffer_normal = texture::Texture::create_frame_texture(
@@ -823,18 +811,11 @@ impl RendererWgpu {
             self.preferred_texture_format.unwrap(),
         );
         // resize depth texture for g buffers
-        self.depth_texture_g_buffers = texture::Texture::create_depth_texture(
+        self.depth_texture = texture::Texture::create_depth_texture(
             &self.device,
             self.config.width,
             self.config.height,
             "depth_texture_g_buffers",
-        );
-        // resize depth texture for forward rendering
-        self.depth_texture_forward_rendering = texture::Texture::create_depth_texture(
-            &self.device,
-            self.config.width,
-            self.config.height,
-            "depth_texture_forward_rendering",
         );
     }
 
@@ -1026,7 +1007,7 @@ impl RendererWgpu {
                         }),
                     ],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture_g_buffers.view,
+                        view: &self.depth_texture.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
                             store: true,
@@ -1095,13 +1076,13 @@ impl RendererWgpu {
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Render Pass Deferred Result"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &self.deferred_render_result_texture.view,
+                        view: &self.frame_texture.view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.0,
-                                g: 0.0,
-                                b: 0.0,
+                                r: 0.1,
+                                g: 0.2,
+                                b: 0.3,
                                 a: 1.0,
                             }),
                             store: true,
@@ -1155,22 +1136,17 @@ impl RendererWgpu {
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Render Pass Forward Rendering"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &texture_view,
+                        view: &self.frame_texture.view,
                         resolve_target: None,
                         ops: wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(wgpu::Color {
-                                r: 0.1,
-                                g: 0.2,
-                                b: 0.3,
-                                a: 1.0,
-                            }),
+                            load: wgpu::LoadOp::Load,
                             store: true,
                         },
                     })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                        view: &self.depth_texture_forward_rendering.view,
+                        view: &self.depth_texture.view,
                         depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
+                            load: wgpu::LoadOp::Load,
                             store: true,
                         }),
                         stencil_ops: None,
@@ -1238,12 +1214,6 @@ impl RendererWgpu {
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
         self.frame_texture_view = Some(output_texture_view);
-
-        // let output_texture_view = self
-        //     .deferred_render_result_texture
-        //     .texture
-        //     .create_view(&wgpu::TextureViewDescriptor::default());
-        // self.frame_texture_view = Some(output_texture_view);
 
         Ok(())
     }
