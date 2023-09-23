@@ -75,7 +75,7 @@ impl RendererPanel {
         //     self.render_output_epaint_texture_id =
         //         Some(egui_wgpu_renderer.register_native_texture(
         //             &state.device,
-        //             state.g_buffer_texture_views[i].as_ref().unwrap(),
+        //             &state.g_buffer_texture_views[i].as_ref().unwrap().view,
         //             wgpu::FilterMode::default(),
         //         ));
         // }

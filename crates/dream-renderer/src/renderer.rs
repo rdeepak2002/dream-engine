@@ -51,7 +51,7 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub frame_texture_view: Option<wgpu::TextureView>,
-    pub g_buffer_texture_views: [Option<wgpu::TextureView>; 4],
+    pub g_buffer_texture_views: [Option<texture::Texture>; 4],
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
     camera: camera::Camera,
     camera_uniform: CameraUniform,
@@ -418,10 +418,10 @@ impl RendererWgpu {
         );
 
         let g_buffer_texture_views = [
-            Some(texture_g_buffer_normal.view),
-            Some(texture_g_buffer_albedo.view),
-            Some(texture_g_buffer_emissive.view),
-            Some(texture_g_buffer_ao_roughness_metallic.view),
+            Some(texture_g_buffer_normal),
+            Some(texture_g_buffer_albedo),
+            Some(texture_g_buffer_emissive),
+            Some(texture_g_buffer_ao_roughness_metallic),
         ];
 
         let deferred_gbuffers_bind_group_layout =
@@ -438,18 +438,13 @@ impl RendererWgpu {
                         },
                         count: None,
                     },
-                    // albedo
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
-                    // emissive
+                    // albedo
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
                         visibility: wgpu::ShaderStages::FRAGMENT,
@@ -460,15 +455,44 @@ impl RendererWgpu {
                         },
                         count: None,
                     },
-                    // ao roughness metallic
                     wgpu::BindGroupLayoutEntry {
                         binding: 3,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    // emissive
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 4,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
                         },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 5,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                    // ao roughness metallic
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 6,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 7,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
                 ],
@@ -481,25 +505,49 @@ impl RendererWgpu {
                 wgpu::BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::TextureView(
-                        g_buffer_texture_views[0].as_ref().unwrap(),
+                        &g_buffer_texture_views[0].as_ref().unwrap().view,
                     ),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(
-                        g_buffer_texture_views[1].as_ref().unwrap(),
+                    resource: wgpu::BindingResource::Sampler(
+                        &g_buffer_texture_views[0].as_ref().unwrap().sampler,
                     ),
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
                     resource: wgpu::BindingResource::TextureView(
-                        g_buffer_texture_views[2].as_ref().unwrap(),
+                        &g_buffer_texture_views[1].as_ref().unwrap().view,
                     ),
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
+                    resource: wgpu::BindingResource::Sampler(
+                        &g_buffer_texture_views[1].as_ref().unwrap().sampler,
+                    ),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
                     resource: wgpu::BindingResource::TextureView(
-                        g_buffer_texture_views[3].as_ref().unwrap(),
+                        &g_buffer_texture_views[2].as_ref().unwrap().view,
+                    ),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: wgpu::BindingResource::Sampler(
+                        &g_buffer_texture_views[2].as_ref().unwrap().sampler,
+                    ),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 6,
+                    resource: wgpu::BindingResource::TextureView(
+                        &g_buffer_texture_views[3].as_ref().unwrap().view,
+                    ),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 7,
+                    resource: wgpu::BindingResource::Sampler(
+                        &g_buffer_texture_views[3].as_ref().unwrap().sampler,
                     ),
                 },
             ],
@@ -794,10 +842,10 @@ impl RendererWgpu {
             );
 
             let g_buffer_texture_views = [
-                Some(texture_g_buffer_normal.view),
-                Some(texture_g_buffer_albedo.view),
-                Some(texture_g_buffer_emissive.view),
-                Some(texture_g_buffer_ao_roughness_metallic.view),
+                Some(texture_g_buffer_normal),
+                Some(texture_g_buffer_albedo),
+                Some(texture_g_buffer_emissive),
+                Some(texture_g_buffer_ao_roughness_metallic),
             ];
 
             self.g_buffer_texture_views = g_buffer_texture_views;
@@ -951,7 +999,7 @@ impl RendererWgpu {
                     color_attachments: &[
                         // albedo
                         Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[0].as_ref().unwrap(),
+                            view: &self.g_buffer_texture_views[0].as_ref().unwrap().view,
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -965,7 +1013,7 @@ impl RendererWgpu {
                         }),
                         // normal
                         Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[1].as_ref().unwrap(),
+                            view: &self.g_buffer_texture_views[1].as_ref().unwrap().view,
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -979,7 +1027,7 @@ impl RendererWgpu {
                         }),
                         // emissive
                         Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[2].as_ref().unwrap(),
+                            view: &self.g_buffer_texture_views[2].as_ref().unwrap().view,
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -993,7 +1041,7 @@ impl RendererWgpu {
                         }),
                         // ao roughness metallic
                         Some(wgpu::RenderPassColorAttachment {
-                            view: self.g_buffer_texture_views[3].as_ref().unwrap(),
+                            view: &self.g_buffer_texture_views[3].as_ref().unwrap().view,
                             resolve_target: None,
                             ops: wgpu::Operations {
                                 load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -1098,25 +1146,49 @@ impl RendererWgpu {
                         wgpu::BindGroupEntry {
                             binding: 0,
                             resource: wgpu::BindingResource::TextureView(
-                                self.g_buffer_texture_views[0].as_ref().unwrap(),
+                                &self.g_buffer_texture_views[0].as_ref().unwrap().view,
                             ),
                         },
                         wgpu::BindGroupEntry {
                             binding: 1,
-                            resource: wgpu::BindingResource::TextureView(
-                                self.g_buffer_texture_views[1].as_ref().unwrap(),
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.g_buffer_texture_views[0].as_ref().unwrap().sampler,
                             ),
                         },
                         wgpu::BindGroupEntry {
                             binding: 2,
                             resource: wgpu::BindingResource::TextureView(
-                                self.g_buffer_texture_views[2].as_ref().unwrap(),
+                                &self.g_buffer_texture_views[1].as_ref().unwrap().view,
                             ),
                         },
                         wgpu::BindGroupEntry {
                             binding: 3,
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.g_buffer_texture_views[1].as_ref().unwrap().sampler,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 4,
                             resource: wgpu::BindingResource::TextureView(
-                                self.g_buffer_texture_views[3].as_ref().unwrap(),
+                                &self.g_buffer_texture_views[2].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 5,
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.g_buffer_texture_views[2].as_ref().unwrap().sampler,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 6,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.g_buffer_texture_views[3].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 7,
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.g_buffer_texture_views[3].as_ref().unwrap().sampler,
                             ),
                         },
                     ],

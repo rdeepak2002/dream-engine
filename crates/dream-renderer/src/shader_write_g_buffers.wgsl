@@ -120,7 +120,7 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
 
     var output : GBufferOutput;
     output.normal = vec4(normal_map_texture);
-    output.albedo = vec4(base_color.r, base_color.g, base_color.b, alpha);
+    output.albedo = vec4(base_color.r, base_color.g, base_color.b, 1.0);
     output.emissive = vec4(emissive.r, emissive.g, emissive.b, 1.0);
     output.ao_roughness_metallic = vec4(ao.r, roughness.g, metallic.b, 1.0);
 
