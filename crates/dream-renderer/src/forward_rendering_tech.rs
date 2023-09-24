@@ -2,7 +2,7 @@ use wgpu::BindGroup;
 
 use crate::instance::InstanceRaw;
 use crate::model::{DrawModel, ModelVertex, Vertex};
-use crate::renderer::RenderStorage;
+use crate::render_storage::RenderStorage;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -85,10 +85,6 @@ impl ForwardRenderingTech {
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
         camera_bind_group: &BindGroup,
-        // TODO: combine below 3 things
-        // render_map: &HashMap<RenderMapKey, Vec<Instance>>,
-        // model_guids: &HashMap<String, Box<Model>>,
-        // instance_buffer_map: &HashMap<RenderMapKey, wgpu::Buffer>,
         render_storage: &RenderStorage,
     ) {
         // define render pass

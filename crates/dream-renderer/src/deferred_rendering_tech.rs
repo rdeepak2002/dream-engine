@@ -2,7 +2,7 @@ use wgpu::BindGroup;
 
 use crate::instance::InstanceRaw;
 use crate::model::{DrawModel, ModelVertex, Vertex};
-use crate::renderer::RenderStorage;
+use crate::render_storage::RenderStorage;
 use crate::texture;
 
 pub struct DeferredRenderingTech {
@@ -327,10 +327,6 @@ impl DeferredRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         depth_texture: &texture::Texture,
         camera_bind_group: &BindGroup,
-        // TODO: combine below 3 things
-        // render_map: &HashMap<RenderMapKey, Vec<Instance>>,
-        // model_guids: &HashMap<String, Box<Model>>,
-        // instance_buffer_map: &HashMap<RenderMapKey, Buffer>,
         render_storage: &RenderStorage,
     ) {
         // render to gbuffers
@@ -548,7 +544,7 @@ impl DeferredRenderingTech {
         render_pass_render_lights_for_deferred.draw(0..6, 0..1);
     }
 
-    pub fn resize(&mut self, device: wgpu::Device, width: u32, height: u32) {
+    pub fn resize(&mut self, device: &wgpu::Device, width: u32, height: u32) {
         // update gbuffers
         let texture_g_buffer_normal = texture::Texture::create_frame_texture(
             &device,

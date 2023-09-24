@@ -27,10 +27,10 @@ use crate::camera_uniform::CameraUniform;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
-use crate::model::Model;
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
-use crate::{camera, gltf_loader, texture};
+use crate::render_storage::RenderStorage;
+use crate::{camera, texture};
 
 #[cfg(not(feature = "wgpu/webgl"))]
 pub fn is_webgpu_enabled() -> bool {
@@ -40,18 +40,6 @@ pub fn is_webgpu_enabled() -> bool {
 #[cfg(feature = "wgpu/webgl")]
 pub fn is_webgpu_enabled() -> bool {
     false
-}
-
-#[derive(Hash, PartialEq, Eq, Clone)]
-pub struct RenderMapKey {
-    pub model_guid: String,
-    pub mesh_index: i32,
-}
-
-pub struct RenderStorage {
-    pub model_guids: std::collections::HashMap<String, Box<Model>>,
-    pub render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
-    pub instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
 }
 
 pub struct RendererWgpu {
@@ -232,13 +220,6 @@ impl RendererWgpu {
             label: Some("camera_bind_group"),
         });
 
-        let depth_texture = texture::Texture::create_depth_texture(
-            &device,
-            config.width,
-            config.height,
-            "depth_texture",
-        );
-
         let frame_texture = texture::Texture::create_frame_texture(
             &device,
             config.width,
@@ -247,41 +228,52 @@ impl RendererWgpu {
             preferred_texture_format.unwrap(),
         );
 
-        let pbr_rendering_tech = PbrBindGroupsAndLayouts::new(&device, &camera_bind_group_layout);
+        let depth_texture = texture::Texture::create_depth_texture(
+            &device,
+            config.width,
+            config.height,
+            "depth_texture",
+        );
+
+        let pbr_bind_groups_and_layouts =
+            PbrBindGroupsAndLayouts::new(&device, &camera_bind_group_layout);
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
-            &pbr_rendering_tech.render_pipeline_pbr_layout,
+            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
             config.width,
             config.height,
         );
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
-            &pbr_rendering_tech.render_pipeline_pbr_layout,
+            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
         );
 
+        let render_storage = RenderStorage {
+            model_guids: Default::default(),
+            render_map: Default::default(),
+            instance_buffer_map: Default::default(),
+        };
+
         Self {
+            frame_texture_view: None,
             surface,
             device,
             queue,
             config,
             depth_texture,
             frame_texture,
-            frame_texture_view: None,
+            render_storage,
+            // TODO: combine below four variables
             camera,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
-            render_storage: RenderStorage {
-                model_guids: Default::default(),
-                render_map: Default::default(),
-                instance_buffer_map: Default::default(),
-            },
             preferred_texture_format,
+            pbr_bind_groups_and_layouts,
             deferred_rendering_tech,
             forward_rendering_tech,
-            pbr_bind_groups_and_layouts: pbr_rendering_tech,
         }
     }
 
@@ -299,12 +291,14 @@ impl RendererWgpu {
     }
 
     pub fn resize(&mut self, new_size: Option<PhysicalSize<u32>>) {
+        // update config width and height
         if let Some(new_size) = new_size {
             if new_size.width > 0 && new_size.height > 0 {
                 self.config.width = new_size.width;
                 self.config.height = new_size.height;
             }
         }
+        // update surface using new config
         if self.surface.is_some() {
             self.surface
                 .as_mut()
@@ -326,33 +320,18 @@ impl RendererWgpu {
             self.config.height,
             "depth_texture",
         );
+        // resize gbuffers for deferred rendering
+        self.deferred_rendering_tech
+            .resize(&self.device, self.config.width, self.config.height);
     }
 
     pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
-        let key = RenderMapKey {
-            model_guid: model_guid.parse().unwrap(),
-            mesh_index,
-        };
-        {
-            if let std::collections::hash_map::Entry::Vacant(e) =
-                self.render_storage.render_map.entry(key)
-            {
-                // create new array
-                e.insert(vec![model_mat]);
-            } else {
-                let key = RenderMapKey {
-                    model_guid: model_guid.parse().unwrap(),
-                    mesh_index,
-                };
-                // add to existing array
-                let current_vec = &mut self.render_storage.render_map.get_mut(&key).unwrap();
-                current_vec.push(model_mat);
-            }
-        }
+        self.render_storage
+            .queue_for_drawing(model_guid, mesh_index, model_mat);
     }
 
     pub fn is_model_stored(&self, model_guid: &str) -> bool {
-        self.render_storage.model_guids.contains_key(model_guid)
+        self.render_storage.is_model_stored(model_guid)
     }
 
     pub fn store_model(
@@ -360,99 +339,32 @@ impl RendererWgpu {
         model_guid_in: Option<&str>,
         model_path: &str,
     ) -> Result<String, PathNotFoundError> {
-        let model_guid;
-        if model_guid_in.is_some() {
-            model_guid = model_guid_in.unwrap();
-        } else {
-            // TODO: auto-generate guid
-            todo!();
-        }
-        log::debug!("Storing model {} with guid {}", model_path, model_guid);
-        let model = gltf_loader::read_gltf(
+        self.render_storage.store_model(
+            model_guid_in,
             model_path,
             &self.device,
             &self
                 .pbr_bind_groups_and_layouts
                 .pbr_material_factors_bind_group_layout,
-        );
-        self.render_storage
-            .model_guids
-            .insert(model_guid.parse().unwrap(), Box::new(model));
-        log::debug!("Model with guid {} stored", model_guid);
-        Ok(str::parse(model_guid).unwrap())
-    }
-
-    pub fn update_mesh_instance_buffer_and_materials(&mut self) {
-        // update internal meshes and materials
-        // setup instance buffer for meshes
-        for (render_map_key, transforms) in &self.render_storage.render_map {
-            // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
-            {
-                let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
-                let instance_buffer =
-                    self.device
-                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                            label: Some("Instance Buffer"),
-                            contents: bytemuck::cast_slice(&instance_data),
-                            usage: wgpu::BufferUsages::VERTEX,
-                        });
-                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                self.render_storage
-                    .instance_buffer_map
-                    .insert(render_map_key.clone(), instance_buffer);
-            }
-        }
-
-        // TODO: combine this with loop below to make things more concise
-        // update materials
-        for (render_map_key, _transforms) in &self.render_storage.render_map {
-            let model_map = &mut self.render_storage.model_guids;
-            // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-            let model_guid = render_map_key.model_guid.clone();
-            let model = model_map
-                .get_mut(&*model_guid)
-                .unwrap_or_else(|| panic!("no model loaded in renderer with guid {}", model_guid));
-            let mesh_index = render_map_key.mesh_index;
-            let mesh = model
-                .meshes
-                .get_mut(mesh_index as usize)
-                .unwrap_or_else(|| {
-                    panic!("no mesh at index {mesh_index} for model with guid {model_guid}",)
-                });
-            let material = model
-                .materials
-                .get_mut(mesh.material)
-                .expect("No material at index");
-            if !material.loaded() {
-                material.update_images();
-                material.update_textures(
-                    &self.device,
-                    &self.queue,
-                    &self
-                        .pbr_bind_groups_and_layouts
-                        .pbr_material_textures_bind_group_layout,
-                );
-                // log::debug!(
-                //     "material loading progress: {:.2}%",
-                //     material.get_progress() * 100.0
-                // );
-            }
-        }
+        )
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let texture_view = self
-            .frame_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
 
-        self.update_mesh_instance_buffer_and_materials();
+        // create instance buffers for mesh positions and update loading of textures for materials
+        self.render_storage
+            .update_mesh_instance_buffer_and_materials(
+                &self.device,
+                &self.queue,
+                &self
+                    .pbr_bind_groups_and_layouts
+                    .pbr_material_textures_bind_group_layout,
+            );
 
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
@@ -480,6 +392,7 @@ impl RendererWgpu {
 
         self.queue.submit(iter::once(encoder.finish()));
 
+        // update the output texture view, so editor can display it in a panel
         let output_texture_view = self
             .frame_texture
             .texture
