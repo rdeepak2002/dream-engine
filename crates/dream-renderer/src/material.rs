@@ -245,7 +245,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Metallic roughness texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8Unorm),
         )
         .expect("Unable to load metallic roughness texture");
 
@@ -284,7 +284,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Occlusion texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8Unorm),
         )
         .expect("Unable to load occlusion texture");
 
