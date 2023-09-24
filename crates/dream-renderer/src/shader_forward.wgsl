@@ -90,9 +90,6 @@ var sampler_occlusion: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    // TODO: use this to compute actual normal for normal mapping
-    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
-
     // base color
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
@@ -109,6 +106,13 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if (alpha <= material_factors.alpha_cutoff) {
         alpha = 0.0;
     }
+    // compute normal using normal map
+    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
+    let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
+    var normal = normalize(normal_map_texture.rgb * 2.0 - 1.0);
+    normal = normalize(tbn * normal);
+    // TODO: remove this last line
+    normal = in.normal;
     return vec4(final_color_rgb, alpha);
 }
 

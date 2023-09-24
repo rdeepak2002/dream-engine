@@ -96,16 +96,17 @@ var sampler_occlusion: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> GBufferOutput {
-    // TODO: use this to compute actual normal then store that in gbuffer
-    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
-
     // base color
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let base_color = base_color_texture * base_color_factor;
-    // normal map
-    // TODO: compute actual normal mapping equation
+    // compute normal using normal map
+    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
     let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
+    var normal = normalize(normal_map_texture.rgb * 2.0 - 1.0);
+    normal = normalize(tbn * normal);
+    // TODO: remove this last line
+    normal = in.normal;
     // emissive
     let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
     let emissive_factor = vec4(material_factors.emissive, 1.0);
@@ -127,7 +128,7 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     }
 
     var output : GBufferOutput;
-    output.normal = vec4(normal_map_texture);
+    output.normal = vec4(normal, 1.0);
     output.albedo = vec4(base_color.r, base_color.g, base_color.b, 1.0);
     output.emissive = vec4(emissive.r, emissive.g, emissive.b, 1.0);
     output.ao_roughness_metallic = vec4(ao.r, roughness.g, metallic.b, 1.0);

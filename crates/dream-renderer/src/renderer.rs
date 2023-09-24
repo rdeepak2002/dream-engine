@@ -51,7 +51,7 @@ pub struct RendererWgpu {
     camera: camera::Camera,
     frame_texture: texture::Texture,
     depth_texture: texture::Texture,
-    deferred_rendering_tech: DeferredRenderingTech,
+    pub deferred_rendering_tech: DeferredRenderingTech,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
 }
