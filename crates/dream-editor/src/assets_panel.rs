@@ -26,6 +26,7 @@ impl AssetsPanel {
             rgba.dimensions(),
             None,
             Some(wgpu::FilterMode::Nearest),
+            None,
         )
         .expect("Unable to load file icon texture");
 
@@ -44,6 +45,7 @@ impl AssetsPanel {
             rgba.dimensions(),
             None,
             Some(wgpu::FilterMode::Nearest),
+            None,
         )
         .expect("Unable to load directory icon texture");
 

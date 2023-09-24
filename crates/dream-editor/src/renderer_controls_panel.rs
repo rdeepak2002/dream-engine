@@ -26,6 +26,7 @@ impl RendererControlsPanel {
             rgba.dimensions(),
             None,
             Some(wgpu::FilterMode::Nearest),
+            None,
         )
         .expect("Unable to load play icon texture");
 
