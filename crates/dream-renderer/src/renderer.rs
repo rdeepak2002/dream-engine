@@ -45,13 +45,12 @@ pub struct RendererWgpu {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    pub frame_texture_view: Option<wgpu::TextureView>,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
+    pub frame_texture: texture::Texture,
+    pub deferred_rendering_tech: DeferredRenderingTech,
     render_storage: RenderStorage,
     camera: camera::Camera,
-    frame_texture: texture::Texture,
     depth_texture: texture::Texture,
-    pub deferred_rendering_tech: DeferredRenderingTech,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
 }
@@ -230,7 +229,6 @@ impl RendererWgpu {
         };
 
         Self {
-            frame_texture_view: None,
             surface,
             device,
             queue,
@@ -334,11 +332,9 @@ impl RendererWgpu {
         self.queue.submit(iter::once(encoder.finish()));
 
         // update the output texture view, so editor can display it in a panel
-        let output_texture_view = self
-            .frame_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        self.frame_texture_view = Some(output_texture_view);
+        // let output_texture_view = &self
+        //     .frame_texture.view;
+        // self.frame_texture_view = Some(output_texture_view);
 
         Ok(())
     }

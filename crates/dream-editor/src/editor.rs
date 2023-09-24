@@ -128,6 +128,7 @@ impl EditorEguiWgpu {
             .as_ref()
             .expect("No surface available for editor to draw to")
             .get_current_texture()?;
+        // TODO: should we really be creating a view every time?
         let view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());

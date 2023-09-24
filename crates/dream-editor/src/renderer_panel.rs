@@ -14,20 +14,16 @@ impl RendererPanel {
         egui_wgpu_renderer: &mut Renderer,
     ) {
         // show final render
-        if state.frame_texture_view.is_some() {
-            if self.render_output_epaint_texture_id.is_some() {
-                // free old texture to prevent memory leak
-                egui_wgpu_renderer
-                    .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
-            }
-
-            self.render_output_epaint_texture_id =
-                Some(egui_wgpu_renderer.register_native_texture(
-                    &state.device,
-                    state.frame_texture_view.as_ref().unwrap(),
-                    wgpu::FilterMode::default(),
-                ));
+        if self.render_output_epaint_texture_id.is_some() {
+            // free old texture to prevent memory leak
+            egui_wgpu_renderer.free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
         }
+
+        self.render_output_epaint_texture_id = Some(egui_wgpu_renderer.register_native_texture(
+            &state.device,
+            &state.frame_texture.view,
+            wgpu::FilterMode::default(),
+        ));
 
         // show deferred result
         // let i = 0;
