@@ -123,6 +123,15 @@ checksum = "8c6f84b74db2535ebae81eede2f39b947dcbf01d093ae5f791e5dd414a1bf289"
 
 [[package]]
 name = "approx"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f2a05fd1bd10b2527e20a2cd32d8873d115b8b39fe219ee25f42a8aca6ba278"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
@@ -758,7 +767,7 @@ dependencies = [
  "dream-tasks",
  "gc",
  "log",
- "nalgebra",
+ "nalgebra 0.32.3",
  "rayon",
  "rustpython-common",
  "rustpython-derive",
@@ -779,7 +788,7 @@ dependencies = [
  "dream-math",
  "dream-resource",
  "gltf",
- "nalgebra",
+ "nalgebra 0.32.3",
  "once_cell",
  "shipyard",
 ]
@@ -798,7 +807,7 @@ dependencies = [
  "egui-wgpu",
  "egui-winit",
  "log",
- "nalgebra",
+ "nalgebra 0.32.3",
  "wgpu",
  "winit",
 ]
@@ -819,7 +828,7 @@ dependencies = [
 name = "dream-math"
 version = "0.1.0"
 dependencies = [
- "nalgebra",
+ "nalgebra 0.32.3",
  "nalgebra-glm",
 ]
 
@@ -838,7 +847,8 @@ dependencies = [
  "gltf",
  "image",
  "log",
- "nalgebra",
+ "mikktspace",
+ "nalgebra 0.32.3",
  "nalgebra-glm",
  "rayon",
  "wasm-bindgen",
@@ -1511,7 +1521,7 @@ dependencies = [
  "byteorder",
  "color_quant",
  "jpeg-decoder",
- "num-rational",
+ "num-rational 0.4.1",
  "num-traits",
  "png",
 ]
@@ -1945,6 +1955,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mikktspace"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d0b56b403871a8f992ca626d52cc0a690d4841baea8955dc4af6304ac62f8b0"
+dependencies = [
+ "nalgebra 0.26.2",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2003,17 +2022,32 @@ dependencies = [
 
 [[package]]
 name = "nalgebra"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "476d1d59fe02fe54c86356e91650cd892f392782a1cb9fc524ec84f7aa9e1d06"
+dependencies = [
+ "approx 0.4.0",
+ "matrixmultiply",
+ "num-complex 0.3.1",
+ "num-rational 0.3.2",
+ "num-traits",
+ "simba 0.4.0",
+ "typenum",
+]
+
+[[package]]
+name = "nalgebra"
 version = "0.32.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "307ed9b18cc2423f29e83f84fd23a8e73628727990181f18641a8b5dc2ab1caa"
 dependencies = [
- "approx",
+ "approx 0.5.1",
  "matrixmultiply",
  "nalgebra-macros",
- "num-complex",
- "num-rational",
+ "num-complex 0.4.4",
+ "num-rational 0.4.1",
  "num-traits",
- "simba",
+ "simba 0.8.1",
  "typenum",
 ]
 
@@ -2023,10 +2057,10 @@ version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e68879ff227a94627e63bbd518b4f82b8f0cc56bb01a498251507de6d1c412d6"
 dependencies = [
- "approx",
- "nalgebra",
+ "approx 0.5.1",
+ "nalgebra 0.32.3",
  "num-traits",
- "simba",
+ "simba 0.8.1",
 ]
 
 [[package]]
@@ -2148,6 +2182,15 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "747d632c0c558b87dbabbe6a82f3b4ae03720d0646ac5b7b4dae89394be5f2c5"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "num-complex"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ba157ca0885411de85d6ca030ba7e2a83a28636056c7c699b07c8b6f7383214"
@@ -2162,6 +2205,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12ac428b1cb17fce6f731001d307d351ec70a6d202fc2e60f7d4c5e42d8f4f07"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
@@ -2800,7 +2854,7 @@ dependencies = [
  "indexmap 1.9.3",
  "itertools 0.10.5",
  "log",
- "num-complex",
+ "num-complex 0.4.4",
  "num-traits",
  "rustpython-ast",
  "rustpython-compiler-core",
@@ -2822,7 +2876,7 @@ dependencies = [
  "malachite-base",
  "malachite-bigint",
  "malachite-q",
- "num-complex",
+ "num-complex 0.4.4",
  "num-traits",
  "once_cell",
  "radium",
@@ -2852,7 +2906,7 @@ dependencies = [
  "itertools 0.10.5",
  "lz4_flex",
  "malachite-bigint",
- "num-complex",
+ "num-complex 0.4.4",
  "rustpython-parser-core",
 ]
 
@@ -2990,7 +3044,7 @@ dependencies = [
  "memmap2",
  "mt19937",
  "nix 0.26.2",
- "num-complex",
+ "num-complex 0.4.4",
  "num-integer",
  "num-traits",
  "num_enum 0.5.11",
@@ -3054,7 +3108,7 @@ dependencies = [
  "memchr",
  "memoffset 0.6.5",
  "nix 0.26.2",
- "num-complex",
+ "num-complex 0.4.4",
  "num-integer",
  "num-traits",
  "num_cpus",
@@ -3305,12 +3359,24 @@ dependencies = [
 
 [[package]]
 name = "simba"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5132a955559188f3d13c9ba831e77c802ddc8782783f050ed0c52f5988b95f4c"
+dependencies = [
+ "approx 0.4.0",
+ "num-complex 0.3.1",
+ "num-traits",
+ "paste",
+]
+
+[[package]]
+name = "simba"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "061507c94fc6ab4ba1c9a0305018408e312e17c041eb63bef8aa726fa33aceae"
 dependencies = [
- "approx",
- "num-complex",
+ "approx 0.5.1",
+ "num-complex 0.4.4",
  "num-traits",
  "paste",
  "wide",

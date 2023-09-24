@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use gltf::buffer::Source;
 use gltf::Mesh;
+use nalgebra::Vector3;
 use wgpu::util::DeviceExt;
 
 use dream_fs::fs::read_binary;
 
 use crate::material::Material;
-use crate::model::Model;
+use crate::model::{Model, ModelVertex};
 
 pub fn read_gltf<'a>(
     path: &str,
@@ -85,6 +86,47 @@ fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &mut Vec<M
     }
 }
 
+// logic for using MikkTSpace algorithm for computing tangents
+// not being used due to how long it takes to run
+pub type Face = [u32; 3];
+
+struct MkktSpaceMesh {
+    faces: Vec<Face>,
+    vertices: Vec<ModelVertex>,
+}
+
+fn vertex(mesh: &MkktSpaceMesh, face: usize, vert: usize) -> &ModelVertex {
+    let vs: &[u32; 3] = &mesh.faces[face];
+    &mesh.vertices[vs[vert] as usize]
+}
+
+impl mikktspace::Geometry for MkktSpaceMesh {
+    fn num_faces(&self) -> usize {
+        self.faces.len()
+    }
+
+    fn num_vertices_of_face(&self, _face: usize) -> usize {
+        3
+    }
+
+    fn position(&self, face: usize, vert: usize) -> [f32; 3] {
+        vertex(self, face, vert).position.into()
+    }
+
+    fn normal(&self, face: usize, vert: usize) -> [f32; 3] {
+        vertex(self, face, vert).normal.into()
+    }
+
+    fn tex_coord(&self, face: usize, vert: usize) -> [f32; 2] {
+        vertex(self, face, vert).tex_coords.into()
+    }
+
+    fn set_tangent_encoded(&mut self, tangent: [f32; 4], face: usize, vert: usize) {
+        let vs: Face = self.faces[face];
+        self.vertices[vs[vert] as usize].tangent = tangent;
+    }
+}
+
 fn get_dream_meshes_from_gltf_mesh(
     device: &wgpu::Device,
     mesh: Mesh,
@@ -102,10 +144,11 @@ fn get_dream_meshes_from_gltf_mesh(
                     position: vertex,
                     tex_coords: Default::default(),
                     normal: Default::default(),
-                    tangent: Default::default(),
+                    tangent: [0.0, 0.0, 0.0, 0.0],
                 })
             });
         }
+        let mut manually_compute_tangents = false;
         if let Some(tangent_attribute) = reader.read_tangents() {
             let mut tangent_index = 0;
             tangent_attribute.for_each(|tangent| {
@@ -113,6 +156,8 @@ fn get_dream_meshes_from_gltf_mesh(
 
                 tangent_index += 1;
             });
+        } else {
+            manually_compute_tangents = true;
         }
         if let Some(normal_attribute) = reader.read_normals() {
             let mut normal_index = 0;
@@ -139,7 +184,45 @@ fn get_dream_meshes_from_gltf_mesh(
             indices.append(&mut indices_raw.into_u32().collect::<Vec<u32>>());
         }
 
-        // mesh_info.push(MeshInfo::new(vertices, indices));
+        if manually_compute_tangents {
+            // commented-out example of how to use MikkTSpace algorithm
+            // let mut faces = Vec::<Face>::new();
+            // for i in (0..indices.len()).step_by(3) {
+            //     faces.push([indices[i], indices[i + 1], indices[i + 2]]);
+            // }
+            // let mut m = MkktSpaceMesh {
+            //     vertices: vertices.clone(),
+            //     faces: faces.clone(),
+            // };
+            // let ret = mikktspace::generate_tangents(&mut m);
+            // assert!(ret);
+            // vertices = m.vertices;
+            for i in (0..indices.len()).step_by(3) {
+                let v0 = vertices[indices[i] as usize];
+                let v1 = vertices[indices[i + 1] as usize];
+                let v2 = vertices[indices[i + 2] as usize];
+
+                let edge1 = Vector3::from(v1.position) - Vector3::from(v0.position);
+                let edge2 = Vector3::from(v2.position) - Vector3::from(v0.position);
+
+                let delta_u1 = v1.tex_coords[0] - v0.tex_coords[0];
+                let delta_v1 = v1.tex_coords[1] - v0.tex_coords[1];
+                let delta_u2 = v2.tex_coords[0] - v0.tex_coords[0];
+                let delta_v2 = v2.tex_coords[1] - v0.tex_coords[1];
+
+                let f = 1.0 / (delta_u1 * delta_v2 - delta_u2 * delta_v1);
+
+                let mut tangent = Vector3::new(0., 0., 0.);
+
+                tangent.x = f * (delta_v2 * edge1.x - delta_v1 * edge2.x);
+                tangent.y = f * (delta_v2 * edge1.y - delta_v1 * edge2.y);
+                tangent.z = f * (delta_v2 * edge1.z - delta_v1 * edge2.z);
+
+                vertices[indices[i] as usize].tangent = [tangent.x, tangent.y, tangent.z, 1.0];
+                vertices[indices[i + 1] as usize].tangent = [tangent.x, tangent.y, tangent.z, 1.0];
+                vertices[indices[i + 2] as usize].tangent = [tangent.x, tangent.y, tangent.z, 1.0];
+            }
+        }
 
         let mesh_name = mesh.name().expect("No mesh name found");
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {

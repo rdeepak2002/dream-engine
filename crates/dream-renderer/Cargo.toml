@@ -23,6 +23,8 @@ dream-resource = { workspace = true }
 dream-tasks = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
+# compute tangents using mikktspace algorithm
+mikktspace = "0.3.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true }

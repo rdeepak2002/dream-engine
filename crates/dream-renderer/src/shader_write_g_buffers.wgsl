@@ -42,9 +42,16 @@ fn vs_main(
     var out: VertexOutput;
     out.tex_coords = model.tex_coords;
     out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
-    out.normal = normalize(model.normal);
-    out.tangent = normalize(model.tangent.xyz);
-    out.bitangent = normalize(cross(model.normal, model.tangent.xyz) * model.tangent.w);
+//    var T = normalize((model_matrix * vec4(normalize(model.tangent.xyz), 0.0)).xyz);
+//    let N = normalize((model_matrix * vec4(normalize(model.normal), 0.0)).xyz);
+//    T = normalize(T - dot(T, N) * N);
+//    let B = cross(N, T);
+//    out.normal = N;
+//    out.tangent = T;
+//    out.bitangent = B;
+    out.normal = normalize((model_matrix * vec4(model.normal, 0.0)).xyz);
+    out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
+    out.bitangent = normalize(cross(out.tangent, out.normal));
     return out;
 }
 
@@ -101,12 +108,10 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let base_color = base_color_texture * base_color_factor;
     // compute normal using normal map
-    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
+    let TBN = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
     let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
-    var normal = normalize(normal_map_texture.rgb * 2.0 - 1.0);
-    normal = normalize(tbn * normal);
-    // TODO: remove this last line
-    normal = in.normal;
+    var normal = normal_map_texture.rgb * 2.0 - vec3(1.0, 1.0, 1.0);
+    normal = normalize(TBN * normal);
     // emissive
     let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
     let emissive_factor = vec4(material_factors.emissive, 1.0);
