@@ -18,12 +18,15 @@
 
 pub mod camera;
 pub mod camera_uniform;
+pub mod deferred_rendering_tech;
+pub mod forward_rendering_tech;
 pub mod gltf_loader;
 pub mod image;
 pub mod instance;
 pub mod material;
 pub mod model;
 pub mod path_not_found_error;
+pub mod pbr_bind_groups_and_layouts;
 pub mod render_map_key;
 pub mod renderer;
 pub mod texture;
