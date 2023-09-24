@@ -1,10 +1,8 @@
-use std::collections::HashMap;
+use wgpu::BindGroup;
 
-use wgpu::{BindGroup, Buffer};
-
-use crate::instance::{Instance, InstanceRaw};
-use crate::model::{DrawModel, Model, ModelVertex, Vertex};
-use crate::renderer::RenderMapKey;
+use crate::instance::InstanceRaw;
+use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::renderer::RenderStorage;
 use crate::texture;
 
 pub struct DeferredRenderingTech {
@@ -330,9 +328,10 @@ impl DeferredRenderingTech {
         depth_texture: &texture::Texture,
         camera_bind_group: &BindGroup,
         // TODO: combine below 3 things
-        render_map: &HashMap<RenderMapKey, Vec<Instance>>,
-        model_guids: &HashMap<String, Box<Model>>,
-        instance_buffer_map: &HashMap<RenderMapKey, Buffer>,
+        // render_map: &HashMap<RenderMapKey, Vec<Instance>>,
+        // model_guids: &HashMap<String, Box<Model>>,
+        // instance_buffer_map: &HashMap<RenderMapKey, Buffer>,
+        render_storage: &RenderStorage,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -412,8 +411,8 @@ impl DeferredRenderingTech {
         render_pass_write_g_buffers.set_bind_group(0, &camera_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
-        for (render_map_key, transforms) in render_map.iter() {
-            let model_map = &model_guids;
+        for (render_map_key, transforms) in render_storage.render_map.iter() {
+            let model_map = &render_storage.model_guids;
             // get the mesh to be instance drawn
             let model_guid = render_map_key.model_guid.clone();
             if model_map.get(&*model_guid).is_none() {
@@ -428,7 +427,8 @@ impl DeferredRenderingTech {
                 panic!("no mesh at index {mesh_index} for model with guid {model_guid}",)
             });
             // setup instancing buffer
-            let instance_buffer = instance_buffer_map
+            let instance_buffer = render_storage
+                .instance_buffer_map
                 .get(render_map_key)
                 .expect("No instance buffer found in map");
             render_pass_write_g_buffers.set_vertex_buffer(1, instance_buffer.slice(..));

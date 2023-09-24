@@ -48,6 +48,12 @@ pub struct RenderMapKey {
     pub mesh_index: i32,
 }
 
+pub struct RenderStorage {
+    pub model_guids: std::collections::HashMap<String, Box<Model>>,
+    pub render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
+    pub instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
+}
+
 pub struct RendererWgpu {
     pub surface: Option<wgpu::Surface>,
     pub device: wgpu::Device,
@@ -55,15 +61,14 @@ pub struct RendererWgpu {
     pub config: wgpu::SurfaceConfiguration,
     pub frame_texture_view: Option<wgpu::TextureView>,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
+    // TODO: combine below 4 camera variables
+    render_storage: RenderStorage,
     camera: camera::Camera,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
-    depth_texture: texture::Texture,
-    frame_texture: texture::Texture,
     camera_bind_group: wgpu::BindGroup,
-    model_guids: std::collections::HashMap<String, Box<Model>>,
-    render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
-    instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
+    frame_texture: texture::Texture,
+    depth_texture: texture::Texture,
     deferred_rendering_tech: DeferredRenderingTech,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
@@ -268,9 +273,11 @@ impl RendererWgpu {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
-            model_guids: Default::default(),
-            render_map: Default::default(),
-            instance_buffer_map: Default::default(),
+            render_storage: RenderStorage {
+                model_guids: Default::default(),
+                render_map: Default::default(),
+                instance_buffer_map: Default::default(),
+            },
             preferred_texture_format,
             deferred_rendering_tech,
             forward_rendering_tech,
@@ -327,7 +334,9 @@ impl RendererWgpu {
             mesh_index,
         };
         {
-            if let std::collections::hash_map::Entry::Vacant(e) = self.render_map.entry(key) {
+            if let std::collections::hash_map::Entry::Vacant(e) =
+                self.render_storage.render_map.entry(key)
+            {
                 // create new array
                 e.insert(vec![model_mat]);
             } else {
@@ -336,14 +345,14 @@ impl RendererWgpu {
                     mesh_index,
                 };
                 // add to existing array
-                let current_vec = &mut self.render_map.get_mut(&key).unwrap();
+                let current_vec = &mut self.render_storage.render_map.get_mut(&key).unwrap();
                 current_vec.push(model_mat);
             }
         }
     }
 
     pub fn is_model_stored(&self, model_guid: &str) -> bool {
-        self.model_guids.contains_key(model_guid)
+        self.render_storage.model_guids.contains_key(model_guid)
     }
 
     pub fn store_model(
@@ -366,7 +375,8 @@ impl RendererWgpu {
                 .pbr_bind_groups_and_layouts
                 .pbr_material_factors_bind_group_layout,
         );
-        self.model_guids
+        self.render_storage
+            .model_guids
             .insert(model_guid.parse().unwrap(), Box::new(model));
         log::debug!("Model with guid {} stored", model_guid);
         Ok(str::parse(model_guid).unwrap())
@@ -374,62 +384,58 @@ impl RendererWgpu {
 
     pub fn update_mesh_instance_buffer_and_materials(&mut self) {
         // update internal meshes and materials
-        {
-            // setup instance buffer for meshes
-            for (render_map_key, transforms) in &self.render_map {
-                // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
-                {
-                    let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
-                    let instance_buffer =
-                        self.device
-                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                                label: Some("Instance Buffer"),
-                                contents: bytemuck::cast_slice(&instance_data),
-                                usage: wgpu::BufferUsages::VERTEX,
-                            });
-                    // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                    self.instance_buffer_map
-                        .insert(render_map_key.clone(), instance_buffer);
-                }
-            }
-
-            // TODO: combine this with loop below to make things more concise
-            // update materials
-            for (render_map_key, _transforms) in &self.render_map {
-                let model_map = &mut self.model_guids;
+        // setup instance buffer for meshes
+        for (render_map_key, transforms) in &self.render_storage.render_map {
+            // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
+            {
+                let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
+                let instance_buffer =
+                    self.device
+                        .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                            label: Some("Instance Buffer"),
+                            contents: bytemuck::cast_slice(&instance_data),
+                            usage: wgpu::BufferUsages::VERTEX,
+                        });
                 // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                let model_guid = render_map_key.model_guid.clone();
-                let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
-                    panic!("no model loaded in renderer with guid {}", model_guid)
+                self.render_storage
+                    .instance_buffer_map
+                    .insert(render_map_key.clone(), instance_buffer);
+            }
+        }
+
+        // TODO: combine this with loop below to make things more concise
+        // update materials
+        for (render_map_key, _transforms) in &self.render_storage.render_map {
+            let model_map = &mut self.render_storage.model_guids;
+            // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
+            let model_guid = render_map_key.model_guid.clone();
+            let model = model_map
+                .get_mut(&*model_guid)
+                .unwrap_or_else(|| panic!("no model loaded in renderer with guid {}", model_guid));
+            let mesh_index = render_map_key.mesh_index;
+            let mesh = model
+                .meshes
+                .get_mut(mesh_index as usize)
+                .unwrap_or_else(|| {
+                    panic!("no mesh at index {mesh_index} for model with guid {model_guid}",)
                 });
-                let mesh_index = render_map_key.mesh_index;
-                let mesh = model
-                    .meshes
-                    .get_mut(mesh_index as usize)
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "no mesh at index {} for model with guid {}",
-                            mesh_index, model_guid
-                        )
-                    });
-                let material = model
-                    .materials
-                    .get_mut(mesh.material)
-                    .expect("No material at index");
-                if !material.loaded() {
-                    material.update_images();
-                    material.update_textures(
-                        &self.device,
-                        &self.queue,
-                        &self
-                            .pbr_bind_groups_and_layouts
-                            .pbr_material_textures_bind_group_layout,
-                    );
-                    // log::debug!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                }
+            let material = model
+                .materials
+                .get_mut(mesh.material)
+                .expect("No material at index");
+            if !material.loaded() {
+                material.update_images();
+                material.update_textures(
+                    &self.device,
+                    &self.queue,
+                    &self
+                        .pbr_bind_groups_and_layouts
+                        .pbr_material_textures_bind_group_layout,
+                );
+                // log::debug!(
+                //     "material loading progress: {:.2}%",
+                //     material.get_progress() * 100.0
+                // );
             }
         }
     }
@@ -453,9 +459,7 @@ impl RendererWgpu {
             &mut encoder,
             &self.depth_texture,
             &self.camera_bind_group,
-            &self.render_map,
-            &self.model_guids,
-            &self.instance_buffer_map,
+            &self.render_storage,
         );
 
         // combine gbuffers into one final texture result
@@ -471,9 +475,7 @@ impl RendererWgpu {
             &mut self.frame_texture,
             &mut self.depth_texture,
             &self.camera_bind_group,
-            &self.render_map,
-            &self.model_guids,
-            &self.instance_buffer_map,
+            &self.render_storage,
         );
 
         self.queue.submit(iter::once(encoder.finish()));
@@ -488,7 +490,7 @@ impl RendererWgpu {
     }
 
     pub fn clear(&mut self) {
-        self.render_map.clear();
-        self.instance_buffer_map.clear();
+        self.render_storage.render_map.clear();
+        self.render_storage.instance_buffer_map.clear();
     }
 }
