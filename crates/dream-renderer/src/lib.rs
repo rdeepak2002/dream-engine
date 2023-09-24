@@ -17,7 +17,6 @@
  **********************************************************************************/
 
 pub mod camera;
-pub mod camera_uniform;
 pub mod deferred_rendering_tech;
 pub mod forward_rendering_tech;
 pub mod gltf_loader;

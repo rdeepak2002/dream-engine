@@ -1,3 +1,5 @@
+use crate::camera::Camera;
+
 pub struct PbrBindGroupsAndLayouts {
     pub render_pipeline_pbr_layout: wgpu::PipelineLayout,
     pub pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
@@ -5,7 +7,7 @@ pub struct PbrBindGroupsAndLayouts {
 }
 
 impl PbrBindGroupsAndLayouts {
-    pub fn new(device: &wgpu::Device, camera_bind_group_layout: &wgpu::BindGroupLayout) -> Self {
+    pub fn new(device: &wgpu::Device, camera: &Camera) -> Self {
         let pbr_material_factors_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -117,7 +119,7 @@ impl PbrBindGroupsAndLayouts {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    camera_bind_group_layout,
+                    &camera.camera_bind_group_layout,
                     &pbr_material_factors_bind_group_layout,
                     &pbr_material_textures_bind_group_layout,
                 ],

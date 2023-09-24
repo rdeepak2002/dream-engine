@@ -1,5 +1,4 @@
-use wgpu::BindGroup;
-
+use crate::camera::Camera;
 use crate::instance::InstanceRaw;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
@@ -84,7 +83,7 @@ impl ForwardRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
-        camera_bind_group: &BindGroup,
+        camera: &Camera,
         render_storage: &RenderStorage,
     ) {
         // define render pass
@@ -112,7 +111,7 @@ impl ForwardRenderingTech {
             .set_pipeline(&self.render_pipeline_forward_render_translucent_objects);
 
         // camera bind group
-        render_pass_forward_rendering.set_bind_group(0, &camera_bind_group, &[]);
+        render_pass_forward_rendering.set_bind_group(0, &camera.camera_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {

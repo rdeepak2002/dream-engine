@@ -1,6 +1,6 @@
 /**********************************************************************************
  *  Dream is a software for developing real-time 3D experiences.
- *  Copyright (C) 2023 Deepak Ramalignam
+ *  Copyright (C) 2023 Deepak Ramalingam
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -19,11 +19,9 @@
 use std::iter;
 
 use nalgebra::{Point3, Vector3};
-use wgpu::util::DeviceExt;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use crate::camera_uniform::CameraUniform;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
@@ -49,12 +47,8 @@ pub struct RendererWgpu {
     pub config: wgpu::SurfaceConfiguration,
     pub frame_texture_view: Option<wgpu::TextureView>,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
-    // TODO: combine below 4 camera variables
     render_storage: RenderStorage,
     camera: camera::Camera,
-    camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
-    camera_bind_group: wgpu::BindGroup,
     frame_texture: texture::Texture,
     depth_texture: texture::Texture,
     deferred_rendering_tech: DeferredRenderingTech,
@@ -63,19 +57,17 @@ pub struct RendererWgpu {
 }
 
 impl RendererWgpu {
-    pub async fn default(window: Option<&winit::window::Window>) -> Self {
-        let preferred_texture_format;
-
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
+    pub async fn new(window: Option<&winit::window::Window>) -> Self {
+        // instance is a handle to our GPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             dx12_shader_compiler: Default::default(),
         });
 
+        // size is the dimensions of the window
         let size;
+        // surface is the surface of our window
         let surface;
-
         if window.is_some() {
             size = window.as_ref().unwrap().inner_size();
             // # Safety
@@ -88,6 +80,7 @@ impl RendererWgpu {
             surface = None;
         }
 
+        // adapter is the physical gpu driver
         let adapter;
         if surface.is_some() {
             adapter = instance
@@ -109,6 +102,8 @@ impl RendererWgpu {
                 .expect("(2) Unable to request for adapter to initialize renderer");
         }
 
+        // device is an open connection to a gpu device
+        // queue is for writing to buffers and textures by executing command buffers
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
@@ -122,13 +117,15 @@ impl RendererWgpu {
             .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
             .unwrap();
 
+        // preferred texture format is the format of the surface we draw to
+        let preferred_texture_format;
+        // surface configuration describes a surface like its dimensions
         let config;
-
         if surface.is_some() {
             let surface_caps = surface.as_ref().unwrap().get_capabilities(&adapter);
 
             // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-            // one will result all the colors comming out darker. If you want to support non
+            // one will result all the colors coming out darker. If you want to support non
             // Srgb surfaces, you'll need to account for that when drawing to the frame.
             let surface_format = surface_caps
                 .formats
@@ -177,6 +174,7 @@ impl RendererWgpu {
             }
         }
 
+        // main camera
         let camera = camera::Camera::new(
             Point3::new(5.0, 5.0, 5.0),
             Point3::new(0.0, 0.0, 0.0),
@@ -185,41 +183,10 @@ impl RendererWgpu {
             std::f32::consts::FRAC_PI_4,
             0.01,
             1000.0,
+            &device,
         );
 
-        let mut camera_uniform = CameraUniform::default();
-        camera_uniform.update_view_proj(&camera);
-
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let camera_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("camera_bind_group_layout"),
-            });
-
-        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &camera_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }],
-            label: Some("camera_bind_group"),
-        });
-
+        // texture we draw our final result to
         let frame_texture = texture::Texture::create_frame_texture(
             &device,
             config.width,
@@ -228,6 +195,7 @@ impl RendererWgpu {
             preferred_texture_format.unwrap(),
         );
 
+        // texture to keep track of depth buffer
         let depth_texture = texture::Texture::create_depth_texture(
             &device,
             config.width,
@@ -235,8 +203,10 @@ impl RendererWgpu {
             "depth_texture",
         );
 
-        let pbr_bind_groups_and_layouts =
-            PbrBindGroupsAndLayouts::new(&device, &camera_bind_group_layout);
+        // bind groups and layouts for physically based rendering textures
+        let pbr_bind_groups_and_layouts = PbrBindGroupsAndLayouts::new(&device, &camera);
+
+        // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
             &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
@@ -244,12 +214,15 @@ impl RendererWgpu {
             config.width,
             config.height,
         );
+
+        // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
             &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
         );
 
+        // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
             model_guids: Default::default(),
             render_map: Default::default(),
@@ -262,34 +235,24 @@ impl RendererWgpu {
             device,
             queue,
             config,
-            depth_texture,
-            frame_texture,
-            render_storage,
-            // TODO: combine below four variables
-            camera,
-            camera_uniform,
-            camera_buffer,
-            camera_bind_group,
             preferred_texture_format,
-            pbr_bind_groups_and_layouts,
+            render_storage,
+            camera,
+            frame_texture,
+            depth_texture,
             deferred_rendering_tech,
             forward_rendering_tech,
+            pbr_bind_groups_and_layouts,
         }
     }
 
+    /// User-facing API to set the aspect ratio of the main camera. This is primarily used by the
+    /// editor to change the aspect ratio of the camera when the renderer panel is resized.
     pub fn set_camera_aspect_ratio(&mut self, new_aspect_ratio: f32) {
-        if self.camera.aspect != new_aspect_ratio {
-            self.camera.aspect = new_aspect_ratio;
-            self.camera.build_view_projection_matrix();
-            self.camera_uniform.update_view_proj(&self.camera);
-            self.queue.write_buffer(
-                &self.camera_buffer,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform]),
-            );
-        }
+        self.camera.set_aspect_ratio(&self.queue, new_aspect_ratio);
     }
 
+    /// User-facing API to resize all textures and surface configuration
     pub fn resize(&mut self, new_size: Option<PhysicalSize<u32>>) {
         // update config width and height
         if let Some(new_size) = new_size {
@@ -325,30 +288,7 @@ impl RendererWgpu {
             .resize(&self.device, self.config.width, self.config.height);
     }
 
-    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
-        self.render_storage
-            .queue_for_drawing(model_guid, mesh_index, model_mat);
-    }
-
-    pub fn is_model_stored(&self, model_guid: &str) -> bool {
-        self.render_storage.is_model_stored(model_guid)
-    }
-
-    pub fn store_model(
-        &mut self,
-        model_guid_in: Option<&str>,
-        model_path: &str,
-    ) -> Result<String, PathNotFoundError> {
-        self.render_storage.store_model(
-            model_guid_in,
-            model_path,
-            &self.device,
-            &self
-                .pbr_bind_groups_and_layouts
-                .pbr_material_factors_bind_group_layout,
-        )
-    }
-
+    /// User-facing API to invoke render loop once
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let mut encoder = self
             .device
@@ -370,7 +310,7 @@ impl RendererWgpu {
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
             &self.depth_texture,
-            &self.camera_bind_group,
+            &self.camera,
             &self.render_storage,
         );
 
@@ -386,10 +326,11 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera_bind_group,
+            &self.camera,
             &self.render_storage,
         );
 
+        // submit all drawing commands to gpu
         self.queue.submit(iter::once(encoder.finish()));
 
         // update the output texture view, so editor can display it in a panel
@@ -402,7 +343,51 @@ impl RendererWgpu {
         Ok(())
     }
 
+    /// User-facing API to specify what should be drawn and where
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    /// * `mesh_index`
+    /// * `model_mat`
+    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
+        self.render_storage
+            .queue_for_drawing(model_guid, mesh_index, model_mat);
+    }
+
+    /// User-facing API to store a model and associate it with a guid
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    /// * `path`
+    pub fn store_model(
+        &mut self,
+        model_guid_in: Option<&str>,
+        model_path: &str,
+    ) -> Result<String, PathNotFoundError> {
+        self.render_storage.store_model(
+            model_guid_in,
+            model_path,
+            &self.device,
+            &self
+                .pbr_bind_groups_and_layouts
+                .pbr_material_factors_bind_group_layout,
+        )
+    }
+
+    /// User-facing API to verify if a model is stored
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    pub fn is_model_stored(&self, model_guid: &str) -> bool {
+        self.render_storage.is_model_stored(model_guid)
+    }
+
+    /// User-facing API to remove all models, meshes, and instance buffers
     pub fn clear(&mut self) {
+        //
         self.render_storage.render_map.clear();
         self.render_storage.instance_buffer_map.clear();
     }

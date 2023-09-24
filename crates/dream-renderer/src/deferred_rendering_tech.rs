@@ -1,5 +1,4 @@
-use wgpu::BindGroup;
-
+use crate::camera::Camera;
 use crate::instance::InstanceRaw;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
@@ -326,7 +325,7 @@ impl DeferredRenderingTech {
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         depth_texture: &texture::Texture,
-        camera_bind_group: &BindGroup,
+        camera: &Camera,
         render_storage: &RenderStorage,
     ) {
         // render to gbuffers
@@ -404,7 +403,7 @@ impl DeferredRenderingTech {
         render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
 
         // camera bind group
-        render_pass_write_g_buffers.set_bind_group(0, &camera_bind_group, &[]);
+        render_pass_write_g_buffers.set_bind_group(0, &camera.camera_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
