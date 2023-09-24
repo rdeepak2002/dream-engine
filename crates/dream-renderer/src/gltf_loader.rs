@@ -102,7 +102,16 @@ fn get_dream_meshes_from_gltf_mesh(
                     position: vertex,
                     tex_coords: Default::default(),
                     normal: Default::default(),
+                    tangent: Default::default(),
                 })
+            });
+        }
+        if let Some(tangent_attribute) = reader.read_tangents() {
+            let mut tangent_index = 0;
+            tangent_attribute.for_each(|tangent| {
+                vertices[tangent_index].tangent = tangent;
+
+                tangent_index += 1;
             });
         }
         if let Some(normal_attribute) = reader.read_normals() {
