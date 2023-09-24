@@ -23,6 +23,9 @@ struct InstanceInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) tex_coords: vec2<f32>,
+    @location(1) normal: vec3<f32>,
+    @location(2) tangent: vec3<f32>,
+    @location(3) bitangent: vec3<f32>,
 }
 
 @vertex
@@ -38,7 +41,10 @@ fn vs_main(
     );
     var out: VertexOutput;
     out.tex_coords = model.tex_coords;
-    out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0); // 2.
+    out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
+    out.normal = normalize(model.normal);
+    out.tangent = normalize(model.tangent.xyz);
+    out.bitangent = normalize(cross(model.normal, model.tangent.xyz) * model.tangent.w);
     return out;
 }
 
@@ -84,6 +90,9 @@ var sampler_occlusion: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // TODO: use this to compute actual normal for normal mapping
+    let tbn = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
+
     // base color
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
