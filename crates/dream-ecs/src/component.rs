@@ -11,7 +11,7 @@ use crate::scene::Scene;
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vector3<f32>,
-    pub rotation: Quaternion,
+    pub rotation: Quaternion<f32>,
     pub scale: Vector3<f32>,
 }
 
@@ -19,14 +19,14 @@ impl Default for Transform {
     fn default() -> Self {
         Self {
             position: Vector3::default(),
-            rotation: Quaternion::default(),
+            rotation: Quaternion::identity(),
             scale: Vector3::new(1.0, 1.0, 1.0),
         }
     }
 }
 
 impl Transform {
-    pub fn new(position: Vector3<f32>, rotation: Quaternion, scale: Vector3<f32>) -> Self {
+    pub fn new(position: Vector3<f32>, rotation: Quaternion<f32>, scale: Vector3<f32>) -> Self {
         Self {
             position,
             rotation,

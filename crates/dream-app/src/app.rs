@@ -71,7 +71,7 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     dream_math::Vector3::new(0., -1.1, 0.),
-                    dream_math::Quaternion::default(),
+                    dream_math::Quaternion::identity(),
                     dream_math::Vector3::new(1., 1., 1.),
                 ),
             );

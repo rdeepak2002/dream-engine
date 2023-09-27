@@ -270,9 +270,9 @@ impl Scene {
                 gltf_translation[1],
                 gltf_translation[2],
             );
-            let rotation = dream_math::Quaternion::new(
-                dream_math::Vector3::new(gltf_rotation[0], gltf_rotation[1], gltf_rotation[2]),
+            let rotation = dream_math::Quaternion::from_parts(
                 gltf_rotation[3],
+                dream_math::Vector3::new(gltf_rotation[0], gltf_rotation[1], gltf_rotation[2]),
             );
             let scale = dream_math::Vector3::new(gltf_scale[0], gltf_scale[1], gltf_scale[2]);
             Transform::new(position, rotation, scale)
