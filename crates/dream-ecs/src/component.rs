@@ -10,9 +10,9 @@ use crate::scene::Scene;
 
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
-    pub position: Vector3,
+    pub position: Vector3<f32>,
     pub rotation: Quaternion,
-    pub scale: Vector3,
+    pub scale: Vector3<f32>,
 }
 
 impl Default for Transform {
@@ -26,7 +26,7 @@ impl Default for Transform {
 }
 
 impl Transform {
-    pub fn new(position: Vector3, rotation: Quaternion, scale: Vector3) -> Self {
+    pub fn new(position: Vector3<f32>, rotation: Quaternion, scale: Vector3<f32>) -> Self {
         Self {
             position,
             rotation,
@@ -38,6 +38,24 @@ impl Transform {
 impl std::fmt::Display for Transform {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Transform({})", self.position)
+    }
+}
+
+#[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
+pub struct Light {
+    pub position: Vector3<f32>,
+    pub color: Vector3<f32>,
+}
+
+impl Light {
+    pub fn new(position: Vector3<f32>, color: Vector3<f32>) -> Light {
+        Light { position, color }
+    }
+}
+
+impl std::fmt::Display for Light {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Light({}, {})", self.position, self.color)
     }
 }
 

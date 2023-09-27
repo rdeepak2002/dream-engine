@@ -350,18 +350,14 @@ pub(crate) mod dream_py {
         }
     }
 
-    impl From<Vector3Internal> for dream_math::Vector3 {
+    impl From<Vector3Internal> for dream_math::Vector3<f32> {
         fn from(vec3: Vector3Internal) -> Self {
-            dream_math::Vector3 {
-                x: vec3.x as f32,
-                y: vec3.y as f32,
-                z: vec3.z as f32,
-            }
+            dream_math::Vector3::new(vec3.x as f32, vec3.y as f32, vec3.z as f32)
         }
     }
 
-    impl From<dream_math::Vector3> for Vector3Internal {
-        fn from(vec3: dream_math::Vector3) -> Self {
+    impl From<dream_math::Vector3<f32>> for Vector3Internal {
+        fn from(vec3: dream_math::Vector3<f32>) -> Self {
             Vector3Internal {
                 x: vec3.x as f64,
                 y: vec3.y as f64,
