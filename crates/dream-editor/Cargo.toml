@@ -12,7 +12,6 @@ egui-wgpu = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
 crossbeam-channel = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }
-nalgebra = { workspace = true }
 wgpu = { workspace = true }
 egui = { workspace = true }
 log = { workspace = true }

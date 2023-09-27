@@ -11,8 +11,6 @@ gltf = { workspace = true }
 image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 crossbeam-channel = { workspace = true }
 anyhow = { workspace = true }
-nalgebra = { workspace = true }
-nalgebra-glm = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }
 wgpu = { workspace = true }
@@ -21,6 +19,7 @@ bytemuck = { workspace = true }
 dream-fs = { workspace = true }
 dream-resource = { workspace = true }
 dream-tasks = { workspace = true }
+dream-math = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
 # compute tangents using mikktspace algorithm

@@ -1,4 +1,4 @@
-use nalgebra::Matrix4;
+use dream_math::Matrix4;
 
 pub struct Instance {
     pub mat: Matrix4<f32>,

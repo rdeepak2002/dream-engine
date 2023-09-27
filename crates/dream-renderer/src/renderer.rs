@@ -18,9 +18,10 @@
 
 use std::iter;
 
-use nalgebra::{Point3, Vector3};
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
+
+use dream_math::{Point3, Vector3};
 
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;

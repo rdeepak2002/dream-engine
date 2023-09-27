@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use gltf::buffer::Source;
 use gltf::Mesh;
-use nalgebra::Vector3;
 use wgpu::util::DeviceExt;
 
 use dream_fs::fs::read_binary;
+use dream_math::Vector3;
 
 use crate::material::Material;
 use crate::model::{Model, ModelVertex};

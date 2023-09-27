@@ -59,8 +59,8 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 pub struct Material {
     pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
-    pub factor_base_color: nalgebra::Vector3<f32>,
-    pub factor_emissive: nalgebra::Vector3<f32>,
+    pub factor_base_color: dream_math::Vector3<f32>,
+    pub factor_emissive: dream_math::Vector3<f32>,
     pub factor_metallic: f32,
     pub factor_roughness: f32,
     pub factor_alpha: f32,

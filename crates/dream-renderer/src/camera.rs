@@ -1,5 +1,6 @@
-use nalgebra::{Matrix4, Point3, Vector3};
 use wgpu::util::DeviceExt;
+
+use dream_math::{Matrix4, Point3, Vector3};
 
 // #[rustfmt::skip]
 // pub const OPENGL_TO_WGPU_MATRIX: Matrix4<f32> = Matrix4::new(

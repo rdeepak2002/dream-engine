@@ -17,11 +17,10 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use nalgebra::{Matrix4, Quaternion, UnitQuaternion, Vector3};
-
 use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
+use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
