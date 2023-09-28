@@ -17,7 +17,7 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use dream_ecs::component::{MeshRenderer, PythonScript, Transform};
+use dream_ecs::component::{Light, MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
@@ -69,9 +69,32 @@ impl Default for App {
             );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    dream_math::Vector3::new(0., -1.1, 0.),
-                    dream_math::Quaternion::identity(),
-                    dream_math::Vector3::new(1., 1., 1.),
+                    Vector3::new(0., -1.1, 0.),
+                    Quaternion::identity(),
+                    Vector3::new(1., 1., 1.),
+                ),
+            );
+        }
+        {
+            let cube_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Light".into()), None, None)
+                    .expect("Unable to create cube entity");
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene))
+                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0)));
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(0., 1.5, 2.5),
+                    Quaternion::identity(),
+                    Vector3::new(0.1, 0.1, 0.1),
                 ),
             );
         }

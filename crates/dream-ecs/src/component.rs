@@ -43,19 +43,18 @@ impl std::fmt::Display for Transform {
 
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
 pub struct Light {
-    pub position: Vector3<f32>,
     pub color: Vector3<f32>,
 }
 
 impl Light {
-    pub fn new(position: Vector3<f32>, color: Vector3<f32>) -> Light {
-        Light { position, color }
+    pub fn new(color: Vector3<f32>) -> Light {
+        Light { color }
     }
 }
 
 impl std::fmt::Display for Light {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Light({}, {})", self.position, self.color)
+        write!(f, "Light({})", self.color)
     }
 }
 

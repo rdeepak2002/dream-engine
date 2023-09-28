@@ -839,7 +839,7 @@ dependencies = [
  "cfg-if",
  "crossbeam-channel",
  "dream-fs",
-    "dream-math",
+ "dream-math",
  "dream-resource",
  "dream-tasks",
  "gltf",
