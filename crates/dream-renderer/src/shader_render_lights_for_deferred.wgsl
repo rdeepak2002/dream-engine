@@ -34,6 +34,20 @@ var texture_g_buffer_ao_roughness_metallic: texture_2d<f32>;
 @group(0) @binding(7)
 var sampler_g_buffer_ao_roughness_metallic: sampler;
 
+struct Light {
+  position: vec3<f32>,
+  _padding1: u32,
+  color: vec3<f32>,
+  _padding2: u32,
+}
+
+struct LightsUniform {
+  lights: array<Light, 4>
+};
+
+@group(1) @binding(0)
+var<uniform> lightsBuffer: LightsUniform;
+
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let albedo = textureLoad(
@@ -44,7 +58,10 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     if (albedo.a <= 0.0) {
         discard;
     }
-    return vec4(albedo.rgb, 1.0);
+
+    let light = lightsBuffer.lights[0];
+
+    return vec4(albedo.rgb * light.color, 1.0);
 
 //    let albedo = textureSample(texture_g_buffer_albedo, sampler_g_buffer_albedo, coord.xy * vec2(1.0/2000.0, 1.0/1000.0)).rgb;
 //    return vec4(albedo, 1.0);

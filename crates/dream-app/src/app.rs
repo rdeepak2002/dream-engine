@@ -175,9 +175,9 @@ impl App {
             let mut mat: Matrix4<f32> = Matrix4::identity();
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
-                mat = Matrix4::new_translation(&Vector3::from(transform.position))
-                    * Matrix4::new_nonuniform_scaling(&Vector3::from(transform.scale))
-                    * UnitQuaternion::from_quaternion(transform.rotation.into()).to_homogeneous();
+                mat = Matrix4::new_translation(&transform.position)
+                    * Matrix4::new_nonuniform_scaling(&transform.scale)
+                    * UnitQuaternion::from_quaternion(transform.rotation).to_homogeneous();
             }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
@@ -200,9 +200,9 @@ impl App {
                 // TODO: create cache of mat4 that is map of maps
                 // so basically to invalidate caches for all children
                 // all we have to do is remove the element from the map
-                let position = Vector3::from(transform.position);
-                let rotation = Quaternion::from(transform.rotation);
-                let scale = Vector3::from(transform.scale);
+                let position = transform.position;
+                let rotation = transform.rotation;
+                let scale = transform.scale;
                 mat = Matrix4::new_translation(&position)
                     * Matrix4::new_nonuniform_scaling(&scale)
                     * UnitQuaternion::from_quaternion(rotation).to_homogeneous();

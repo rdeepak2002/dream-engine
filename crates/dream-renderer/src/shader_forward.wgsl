@@ -95,6 +95,20 @@ var texture_occlusion: texture_2d<f32>;
 @group(2) @binding(9)
 var sampler_occlusion: sampler;
 
+struct Light {
+  position: vec3<f32>,
+  _padding1: u32,
+  color: vec3<f32>,
+  _padding2: u32,
+}
+
+struct LightsUniform {
+  lights: array<Light, 4>
+};
+
+@group(3) @binding(0)
+var<uniform> lightsBuffer: LightsUniform;
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // base color

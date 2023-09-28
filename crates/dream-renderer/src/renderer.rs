@@ -26,6 +26,7 @@ use dream_math::{Point3, Vector3};
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
+use crate::lights::Lights;
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
 use crate::render_storage::RenderStorage;
@@ -59,7 +60,8 @@ pub struct RendererWgpu {
     depth_texture: texture::Texture,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
-    lights: Vec<RendererLight>,
+    lights: Lights,
+    renderer_lights: Vec<RendererLight>,
 }
 
 impl RendererWgpu {
@@ -209,14 +211,18 @@ impl RendererWgpu {
             "depth_texture",
         );
 
+        // lights storage
+        let lights = Lights::new(&device);
+
         // bind groups and layouts for physically based rendering textures
-        let pbr_bind_groups_and_layouts = PbrBindGroupsAndLayouts::new(&device, &camera);
+        let pbr_bind_groups_and_layouts = PbrBindGroupsAndLayouts::new(&device, &camera, &lights);
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
             &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
+            &lights,
             config.width,
             config.height,
         );
@@ -248,7 +254,8 @@ impl RendererWgpu {
             deferred_rendering_tech,
             forward_rendering_tech,
             pbr_bind_groups_and_layouts,
-            lights: Vec::default(),
+            lights,
+            renderer_lights: Vec::default(),
         }
     }
 
@@ -317,6 +324,7 @@ impl RendererWgpu {
             &mut encoder,
             &self.depth_texture,
             &self.camera,
+            &self.lights,
             &self.render_storage,
         );
 
@@ -325,6 +333,7 @@ impl RendererWgpu {
             &self.device,
             &mut encoder,
             &mut self.frame_texture,
+            &self.lights,
         );
 
         // forward render translucent objects
@@ -333,6 +342,7 @@ impl RendererWgpu {
             &mut self.frame_texture,
             &mut self.depth_texture,
             &self.camera,
+            &self.lights,
             &self.render_storage,
         );
 
@@ -366,7 +376,7 @@ impl RendererWgpu {
     /// * `position`
     /// * `color`
     pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>) {
-        self.lights.push(RendererLight { position, color });
+        self.renderer_lights.push(RendererLight { position, color });
     }
 
     /// User-facing API to store a model and associate it with a guid
@@ -403,6 +413,6 @@ impl RendererWgpu {
     pub fn clear(&mut self) {
         self.render_storage.render_map.clear();
         self.render_storage.instance_buffer_map.clear();
-        self.lights.clear();
+        self.renderer_lights.clear();
     }
 }

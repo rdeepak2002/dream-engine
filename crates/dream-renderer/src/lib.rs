@@ -22,6 +22,7 @@ pub mod forward_rendering_tech;
 pub mod gltf_loader;
 pub mod image;
 pub mod instance;
+pub mod lights;
 pub mod material;
 pub mod model;
 pub mod path_not_found_error;

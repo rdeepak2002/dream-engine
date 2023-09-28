@@ -1,5 +1,6 @@
 use crate::camera::Camera;
 use crate::instance::InstanceRaw;
+use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::texture;
@@ -84,6 +85,7 @@ impl ForwardRenderingTech {
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
         camera: &Camera,
+        lights: &Lights,
         render_storage: &RenderStorage,
     ) {
         // define render pass
@@ -112,6 +114,9 @@ impl ForwardRenderingTech {
 
         // camera bind group
         render_pass_forward_rendering.set_bind_group(0, &camera.camera_bind_group, &[]);
+
+        // lights bind group
+        render_pass_forward_rendering.set_bind_group(3, &lights.lights_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {

@@ -1,5 +1,6 @@
 use crate::camera::Camera;
 use crate::instance::InstanceRaw;
+use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::texture;
@@ -17,6 +18,7 @@ impl DeferredRenderingTech {
         device: &wgpu::Device,
         render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
+        lights: &Lights,
         width: u32,
         height: u32,
     ) -> Self {
@@ -265,7 +267,10 @@ impl DeferredRenderingTech {
         let quad_render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Quad Render Pipeline Layout"),
-                bind_group_layouts: &[&render_lights_for_deferred_gbuffers_bind_group_layout],
+                bind_group_layouts: &[
+                    &render_lights_for_deferred_gbuffers_bind_group_layout,
+                    &lights.lights_bind_group_layout,
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -326,6 +331,7 @@ impl DeferredRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         depth_texture: &texture::Texture,
         camera: &Camera,
+        lights: &Lights,
         render_storage: &RenderStorage,
     ) {
         // render to gbuffers
@@ -405,6 +411,9 @@ impl DeferredRenderingTech {
         // camera bind group
         render_pass_write_g_buffers.set_bind_group(0, &camera.camera_bind_group, &[]);
 
+        // lights bind group
+        render_pass_write_g_buffers.set_bind_group(3, &lights.lights_bind_group, &[]);
+
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
             let model_map = &render_storage.model_guids;
@@ -455,6 +464,7 @@ impl DeferredRenderingTech {
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
+        lights: &Lights,
     ) {
         // define render pass
         let mut render_pass_render_lights_for_deferred =
@@ -532,11 +542,16 @@ impl DeferredRenderingTech {
                 label: Some("deferred_rendering_gbuffers_bind_group"),
             });
 
+        // gbuffers bind group
         render_pass_render_lights_for_deferred.set_bind_group(
             0,
             &self.render_lights_for_deferred_gbuffers_bind_group,
             &[],
         );
+
+        // lights bind group
+        render_pass_render_lights_for_deferred.set_bind_group(1, &lights.lights_bind_group, &[]);
+
         render_pass_render_lights_for_deferred
             .set_pipeline(&self.render_pipeline_render_deferred_result);
         // draw quad (2 triangles defined by 6 vertices)
