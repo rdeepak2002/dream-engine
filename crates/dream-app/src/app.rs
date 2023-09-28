@@ -209,7 +209,7 @@ impl App {
                 mat = parent_mat * mat;
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
-                    renderer.draw_light(light_component.color, position);
+                    renderer.draw_light(position, light_component.color);
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {

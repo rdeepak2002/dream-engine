@@ -26,7 +26,7 @@ use dream_math::{Point3, Vector3};
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
-use crate::lights::Lights;
+use crate::lights::{Lights, RendererLight};
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
 use crate::render_storage::RenderStorage;
@@ -40,11 +40,6 @@ pub fn is_webgpu_enabled() -> bool {
 #[cfg(feature = "wgpu/webgl")]
 pub fn is_webgpu_enabled() -> bool {
     false
-}
-
-pub struct RendererLight {
-    position: Vector3<f32>,
-    color: Vector3<f32>,
 }
 
 pub struct RendererWgpu {
@@ -61,7 +56,6 @@ pub struct RendererWgpu {
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
     lights: Lights,
-    renderer_lights: Vec<RendererLight>,
 }
 
 impl RendererWgpu {
@@ -255,7 +249,6 @@ impl RendererWgpu {
             forward_rendering_tech,
             pbr_bind_groups_and_layouts,
             lights,
-            renderer_lights: Vec::default(),
         }
     }
 
@@ -319,6 +312,9 @@ impl RendererWgpu {
                     .pbr_material_textures_bind_group_layout,
             );
 
+        // update light buffers
+        self.lights.update_light_buffer(&self.device);
+
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
@@ -376,7 +372,9 @@ impl RendererWgpu {
     /// * `position`
     /// * `color`
     pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>) {
-        self.renderer_lights.push(RendererLight { position, color });
+        self.lights
+            .renderer_lights
+            .push(RendererLight { position, color });
     }
 
     /// User-facing API to store a model and associate it with a guid
@@ -413,6 +411,6 @@ impl RendererWgpu {
     pub fn clear(&mut self) {
         self.render_storage.render_map.clear();
         self.render_storage.instance_buffer_map.clear();
-        self.renderer_lights.clear();
+        self.lights.renderer_lights.clear();
     }
 }
