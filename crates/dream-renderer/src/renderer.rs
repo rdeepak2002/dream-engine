@@ -41,6 +41,11 @@ pub fn is_webgpu_enabled() -> bool {
     false
 }
 
+pub struct RendererLight {
+    position: Vector3<f32>,
+    color: Vector3<f32>,
+}
+
 pub struct RendererWgpu {
     pub surface: Option<wgpu::Surface>,
     pub device: wgpu::Device,
@@ -54,6 +59,7 @@ pub struct RendererWgpu {
     depth_texture: texture::Texture,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
+    lights: Vec<RendererLight>,
 }
 
 impl RendererWgpu {
@@ -242,6 +248,7 @@ impl RendererWgpu {
             deferred_rendering_tech,
             forward_rendering_tech,
             pbr_bind_groups_and_layouts,
+            lights: Vec::default(),
         }
     }
 
@@ -352,6 +359,16 @@ impl RendererWgpu {
             .queue_for_drawing(model_guid, mesh_index, model_mat);
     }
 
+    /// User-facing API to draw a light at a specific position and color
+    ///
+    /// # Arguments
+    ///
+    /// * `position`
+    /// * `color`
+    pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>) {
+        self.lights.push(RendererLight { position, color });
+    }
+
     /// User-facing API to store a model and associate it with a guid
     ///
     /// # Arguments
@@ -384,8 +401,8 @@ impl RendererWgpu {
 
     /// User-facing API to remove all models, meshes, and instance buffers
     pub fn clear(&mut self) {
-        //
         self.render_storage.render_map.clear();
         self.render_storage.instance_buffer_map.clear();
+        self.lights.clear();
     }
 }
