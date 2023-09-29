@@ -191,7 +191,9 @@ fn get_dream_meshes_from_gltf_mesh(
 
         if manually_compute_tangents {
             if use_mikktspace_algorithm {
-                let ret = mikktspace::generate_tangents(&mut mesh_vertices_and_indices);
+                assert!(mikktspace::generate_tangents(
+                    &mut mesh_vertices_and_indices
+                ));
             } else {
                 for i in (0..mesh_vertices_and_indices.indices.len()).step_by(3) {
                     let v0 = mesh_vertices_and_indices.vertices

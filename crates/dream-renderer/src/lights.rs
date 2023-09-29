@@ -17,7 +17,7 @@ pub struct Lights {
 
 impl Lights {
     pub fn new(device: &wgpu::Device) -> Self {
-        let mut lights_uniform = LightsUniform::default();
+        let lights_uniform = LightsUniform::default();
 
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Lights Buffer"),

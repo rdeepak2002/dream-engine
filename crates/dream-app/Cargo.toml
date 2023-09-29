@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-gc = "0.4.1"
 cfg-if = { workspace = true }
 winit = { workspace = true }
 log = { workspace = true }
