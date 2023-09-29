@@ -33,6 +33,10 @@ var sampler_g_buffer_emissive: sampler;
 var texture_g_buffer_ao_roughness_metallic: texture_2d<f32>;
 @group(0) @binding(7)
 var sampler_g_buffer_ao_roughness_metallic: sampler;
+@group(0) @binding(8)
+var texture_g_buffer_depth: texture_depth_2d;
+//@group(0) @binding(9)
+//var sampler_g_buffer_depth: sampler;
 
 struct Light {
   position: vec3<f32>,
@@ -48,16 +52,31 @@ struct LightsUniform {
 @group(1) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
 
+//fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
+//    // reconstruct world-space position from the screen coordinate
+//    let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
+//    let posWorldW = camera.invViewProjectionMatrix * posClip;
+//    let posWorld = posWorldW.xyz / posWorldW.www;
+//    return posWorld;
+//}
+
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
+    let depth = textureLoad(
+        texture_g_buffer_depth,
+        vec2<i32>(floor(coord.xy)),
+        0
+    );
+
+    if (depth >= 1.0) {
+        discard;
+    }
+
     let albedo = textureLoad(
         texture_g_buffer_albedo,
         vec2<i32>(floor(coord.xy)),
         0
     ).rgba;
-    if (albedo.a <= 0.0) {
-        discard;
-    }
 
     let light = lightsBuffer.lights[0];
 

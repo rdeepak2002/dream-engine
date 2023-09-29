@@ -26,7 +26,7 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+    pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth24Plus;
 
     pub fn create_frame_texture(
         device: &wgpu::Device,

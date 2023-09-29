@@ -4,6 +4,7 @@ use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::texture;
+use crate::texture::Texture;
 
 pub struct DeferredRenderingTech {
     pub g_buffer_texture_views: [Option<texture::Texture>; 4],
@@ -21,6 +22,7 @@ impl DeferredRenderingTech {
         lights: &Lights,
         width: u32,
         height: u32,
+        depth_texture: &Texture,
     ) -> Self {
         let shader_write_g_buffers = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader Write G Buffers"),
@@ -137,6 +139,17 @@ impl DeferredRenderingTech {
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
+                    // depth
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 8,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Depth,
+                        },
+                        count: None,
+                    },
                 ],
                 label: Some("deferred_gbuffers_bind_group_layout"),
             });
@@ -192,6 +205,10 @@ impl DeferredRenderingTech {
                         resource: wgpu::BindingResource::Sampler(
                             &g_buffer_texture_views[3].as_ref().unwrap().sampler,
                         ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 8,
+                        resource: wgpu::BindingResource::TextureView(&depth_texture.view),
                     },
                 ],
                 label: Some("deferred_rendering_gbuffers_bind_group"),
@@ -464,6 +481,7 @@ impl DeferredRenderingTech {
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
+        depth_texture: &mut texture::Texture,
         lights: &Lights,
     ) {
         // define render pass
@@ -537,6 +555,10 @@ impl DeferredRenderingTech {
                         resource: wgpu::BindingResource::Sampler(
                             &self.g_buffer_texture_views[3].as_ref().unwrap().sampler,
                         ),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 8,
+                        resource: wgpu::BindingResource::TextureView(&depth_texture.view),
                     },
                 ],
                 label: Some("deferred_rendering_gbuffers_bind_group"),

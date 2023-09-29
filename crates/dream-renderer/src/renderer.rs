@@ -219,6 +219,7 @@ impl RendererWgpu {
             &lights,
             config.width,
             config.height,
+            &depth_texture,
         );
 
         // algorithms for forward rendering
@@ -267,6 +268,11 @@ impl RendererWgpu {
                 self.config.height = new_size.height;
             }
         }
+        log::warn!(
+            "New config size {} {}",
+            self.config.width,
+            self.config.height
+        );
         // update surface using new config
         if self.surface.is_some() {
             self.surface
@@ -329,6 +335,7 @@ impl RendererWgpu {
             &self.device,
             &mut encoder,
             &mut self.frame_texture,
+            &mut self.depth_texture,
             &self.lights,
         );
 

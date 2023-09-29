@@ -19,7 +19,7 @@ wgpu = { version = "0.17.0" }
 gltf = "1.1.0"
 
 # windowing
-winit = "0.28"
+winit = "0.28.7"
 
 # logging
 log = "0.4"
