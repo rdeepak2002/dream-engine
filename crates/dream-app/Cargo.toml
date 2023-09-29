@@ -20,10 +20,10 @@ wasm-bindgen = { workspace = true }
 anyhow = { workspace = true }
 
 # python interpreter
-rustpython-common = { git = "https://github.com/RustPython/RustPython" }
-rustpython-derive = { git = "https://github.com/RustPython/RustPython" }
-rustpython-pylib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true }
-rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true }
-rustpython-vm = { git = "https://github.com/RustPython/RustPython", default-features = false, features = ["compiler"] }
+rustpython-common = { git = "https://github.com/RustPython/RustPython", tag = "0.3.0" }
+rustpython-derive = { git = "https://github.com/RustPython/RustPython", tag = "0.3.0" }
+rustpython-pylib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true, tag = "0.3.0" }
+rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true, tag = "0.3.0" }
+rustpython-vm = { git = "https://github.com/RustPython/RustPython", default-features = false, features = ["compiler"], tag = "0.3.0" }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { workspace = true }
