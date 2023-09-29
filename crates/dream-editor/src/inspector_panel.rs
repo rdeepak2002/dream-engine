@@ -46,8 +46,6 @@ impl Panel for InspectorPanel {
                     }
                 }
 
-                egui::trace!(ui);
-
                 if let Some(entity_id) = self.selected_entity_id {
                     let entity = Entity::from_handle(entity_id, self.scene.clone());
 

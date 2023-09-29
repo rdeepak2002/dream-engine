@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-egui-winit = { version = "0.22.0", git = "https://github.com/emilk/egui.git", default-features = false, features = ["links", "wayland"] }
-egui-wgpu = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
+egui-winit = { version = "0.23.0", default-features = false, features = ["links", "wayland"] }
+egui-wgpu = { version = "0.23.0" }
 crossbeam-channel = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }

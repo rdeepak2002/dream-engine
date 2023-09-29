@@ -28,7 +28,6 @@ impl Panel for SceneHierarchyPanel {
             .max_width(200.0)
             .min_width(200.0)
             .show(egui_context, |ui| {
-                egui::trace!(ui);
                 let scene = self.scene.upgrade().unwrap();
                 let scene = scene.lock().unwrap();
                 let root_entity_id = scene.root_entity_runtime_id;

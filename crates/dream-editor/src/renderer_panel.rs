@@ -1,3 +1,4 @@
+use egui::load::SizedTexture;
 use egui_wgpu::Renderer;
 
 use crate::editor::Panel;
@@ -139,7 +140,11 @@ impl Panel for RendererPanel {
                     if new_aspect_ratio > 0.0 {
                         self.aspect_ratio = new_aspect_ratio;
                     }
-                    ui.image(self.render_output_epaint_texture_id.unwrap(), panel_size);
+                    let image = SizedTexture {
+                        id: self.render_output_epaint_texture_id.unwrap(),
+                        size: panel_size,
+                    };
+                    ui.image(image);
                 }
             }
         });

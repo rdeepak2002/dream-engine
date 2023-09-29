@@ -1,3 +1,4 @@
+use egui::load::SizedTexture;
 use egui_wgpu::Renderer;
 
 use dream_renderer::image::Image;
@@ -76,20 +77,27 @@ impl Panel for AssetsPanel {
             .max_height(200.0)
             .min_height(200.0)
             .show(egui_context, |ui| {
-                egui::trace!(ui);
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                     ui.style_mut().spacing.item_spacing = egui::vec2(20.0, 1.0);
 
                     {
                         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                            ui.image(self.file_epaint_texture_id, egui::vec2(40.0, 40.0));
+                            let image = SizedTexture {
+                                id: self.file_epaint_texture_id,
+                                size: egui::vec2(40., 40.),
+                            };
+                            ui.image(image);
                             ui.strong("main.scene");
                         });
                     }
 
                     {
                         ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
-                            ui.image(self.directory_epaint_texture_id, egui::vec2(40.0, 40.0));
+                            let image = SizedTexture {
+                                id: self.directory_epaint_texture_id,
+                                size: egui::vec2(40., 40.),
+                            };
+                            ui.image(image);
                             ui.strong("textures");
                         });
                     }
