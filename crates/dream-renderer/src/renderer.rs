@@ -220,6 +220,7 @@ impl RendererWgpu {
             config.width,
             config.height,
             &depth_texture,
+            &camera,
         );
 
         // algorithms for forward rendering
@@ -336,6 +337,7 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
+            &self.camera,
             &self.lights,
         );
 

@@ -23,6 +23,7 @@ impl DeferredRenderingTech {
         width: u32,
         height: u32,
         depth_texture: &Texture,
+        camera: &Camera,
     ) -> Self {
         let shader_write_g_buffers = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader Write G Buffers"),
@@ -82,13 +83,18 @@ impl DeferredRenderingTech {
                         },
                         count: None,
                     },
+                    // albedo
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
                         visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
                         count: None,
                     },
-                    // albedo
+                    // emissive
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
                         visibility: wgpu::ShaderStages::FRAGMENT,
@@ -99,49 +105,20 @@ impl DeferredRenderingTech {
                         },
                         count: None,
                     },
+                    // ao roughness metallic
                     wgpu::BindGroupLayoutEntry {
                         binding: 3,
                         visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // emissive
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 4,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
                             sample_type: wgpu::TextureSampleType::Float { filterable: true },
                         },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 5,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // ao roughness metallic
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 6,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 7,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
                     },
                     // depth
                     wgpu::BindGroupLayoutEntry {
-                        binding: 8,
+                        binding: 4,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
@@ -166,48 +143,24 @@ impl DeferredRenderingTech {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::Sampler(
-                            &g_buffer_texture_views[0].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
                         resource: wgpu::BindingResource::TextureView(
                             &g_buffer_texture_views[1].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 3,
-                        resource: wgpu::BindingResource::Sampler(
-                            &g_buffer_texture_views[1].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 4,
+                        binding: 2,
                         resource: wgpu::BindingResource::TextureView(
                             &g_buffer_texture_views[2].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 5,
-                        resource: wgpu::BindingResource::Sampler(
-                            &g_buffer_texture_views[2].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 6,
+                        binding: 3,
                         resource: wgpu::BindingResource::TextureView(
                             &g_buffer_texture_views[3].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 7,
-                        resource: wgpu::BindingResource::Sampler(
-                            &g_buffer_texture_views[3].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 8,
+                        binding: 4,
                         resource: wgpu::BindingResource::TextureView(&depth_texture.view),
                     },
                 ],
@@ -285,6 +238,7 @@ impl DeferredRenderingTech {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Quad Render Pipeline Layout"),
                 bind_group_layouts: &[
+                    &camera.camera_bind_group_layout,
                     &render_lights_for_deferred_gbuffers_bind_group_layout,
                     &lights.lights_bind_group_layout,
                 ],
@@ -482,6 +436,7 @@ impl DeferredRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
+        camera: &Camera,
         lights: &Lights,
     ) {
         // define render pass
@@ -516,63 +471,42 @@ impl DeferredRenderingTech {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.g_buffer_texture_views[0].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
                         resource: wgpu::BindingResource::TextureView(
                             &self.g_buffer_texture_views[1].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 3,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.g_buffer_texture_views[1].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 4,
+                        binding: 2,
                         resource: wgpu::BindingResource::TextureView(
                             &self.g_buffer_texture_views[2].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 5,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.g_buffer_texture_views[2].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 6,
+                        binding: 3,
                         resource: wgpu::BindingResource::TextureView(
                             &self.g_buffer_texture_views[3].as_ref().unwrap().view,
                         ),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 7,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.g_buffer_texture_views[3].as_ref().unwrap().sampler,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 8,
+                        binding: 4,
                         resource: wgpu::BindingResource::TextureView(&depth_texture.view),
                     },
                 ],
-                label: Some("deferred_rendering_gbuffers_bind_group"),
+                label: Some("render_lights_for_deferred_gbuffers_bind_group"),
             });
+
+        // camera bind group
+        render_pass_render_lights_for_deferred.set_bind_group(0, &camera.camera_bind_group, &[]);
 
         // gbuffers bind group
         render_pass_render_lights_for_deferred.set_bind_group(
-            0,
+            1,
             &self.render_lights_for_deferred_gbuffers_bind_group,
             &[],
         );
 
         // lights bind group
-        render_pass_render_lights_for_deferred.set_bind_group(1, &lights.lights_bind_group, &[]);
+        render_pass_render_lights_for_deferred.set_bind_group(2, &lights.lights_bind_group, &[]);
 
         render_pass_render_lights_for_deferred
             .set_pipeline(&self.render_pipeline_render_deferred_result);

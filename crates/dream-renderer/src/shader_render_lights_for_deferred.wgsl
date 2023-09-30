@@ -1,3 +1,10 @@
+struct CameraUniform {
+    view_proj: mat4x4<f32>,
+};
+
+@group(0) @binding(0)
+var<uniform> camera: CameraUniform;
+
 @vertex
 fn vs_main(
   @builtin(vertex_index) in_vertex_index: u32,
@@ -17,26 +24,16 @@ fn vs_main(
     }
 }
 
-@group(0) @binding(0)
+@group(1) @binding(0)
 var texture_g_buffer_normal: texture_2d<f32>;
-@group(0) @binding(1)
-var sampler_g_buffer_normal: sampler;
-@group(0) @binding(2)
+@group(1) @binding(1)
 var texture_g_buffer_albedo: texture_2d<f32>;
-@group(0) @binding(3)
-var sampler_g_buffer_albedo: sampler;
-@group(0) @binding(4)
+@group(1) @binding(2)
 var texture_g_buffer_emissive: texture_2d<f32>;
-@group(0) @binding(5)
-var sampler_g_buffer_emissive: sampler;
-@group(0) @binding(6)
+@group(1) @binding(3)
 var texture_g_buffer_ao_roughness_metallic: texture_2d<f32>;
-@group(0) @binding(7)
-var sampler_g_buffer_ao_roughness_metallic: sampler;
-@group(0) @binding(8)
+@group(1) @binding(4)
 var texture_g_buffer_depth: texture_depth_2d;
-//@group(0) @binding(9)
-//var sampler_g_buffer_depth: sampler;
 
 struct Light {
   position: vec3<f32>,
@@ -49,7 +46,7 @@ struct LightsUniform {
   lights: array<Light, 4>
 };
 
-@group(1) @binding(0)
+@group(2) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
 
 //fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
