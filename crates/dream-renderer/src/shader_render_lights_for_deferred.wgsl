@@ -54,6 +54,17 @@ fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
     return pos_world;
 }
 
+fn compute_final_color(normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
+    // TODO: use num_lights uniform variable
+    var final_color_rgb = vec3(0., 0., 0.);
+    for (var i = 0u; i < 4u; i += 1u) {
+        let light = lightsBuffer.lights[i];
+        let res = (albedo + emissive).rgb * light.color;
+        final_color_rgb += res;
+    }
+    return final_color_rgb;
+}
+
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     // normal vector (after normal mapping which was computed in write to g buffers shader)
@@ -105,13 +116,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let world_position = world_from_screen_coord(coord_uv, depth);
 
     // final color
-    // TODO: use num_lights uniform variable
-    var final_color_rgb = vec3(0., 0., 0.);
-    for (var i = 0u; i < 4u; i += 1u) {
-        let light = lightsBuffer.lights[i];
-        let res = (albedo + emissive).rgb * light.color;
-        final_color_rgb += res;
-    }
+    var final_color_rgb = compute_final_color(normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, 1.0);
 }
