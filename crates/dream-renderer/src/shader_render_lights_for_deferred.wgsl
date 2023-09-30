@@ -9,19 +9,15 @@ var<uniform> camera: CameraUniform;
 fn vs_main(
   @builtin(vertex_index) in_vertex_index: u32,
 ) -> @builtin(position) vec4<f32> {
-    if (in_vertex_index == 0u) {
-        return vec4(vec2(-1.0, -1.0), 0.0, 1.0);
-    } else if (in_vertex_index == 1u) {
-        return vec4(vec2(1.0, -1.0), 0.0, 1.0);
-    } else if (in_vertex_index == 2u) {
-        return vec4(vec2(-1.0, 1.0), 0.0, 1.0);
-    } else if (in_vertex_index == 3u) {
-        return vec4(vec2(-1.0, 1.0), 0.0, 1.0);
-    } else if (in_vertex_index == 4u) {
-        return vec4(vec2(1.0, -1.0), 0.0, 1.0);
-    } else {
-        return vec4(vec2(1.0, 1.0), 0.0, 1.0);
-    }
+    var quad_verts = array(
+        vec4(-1.0, -1.0, 0.0, 1.0),
+        vec4( 1.0, -1.0, 0.0, 1.0),
+        vec4(-1.0,  1.0, 0.0, 1.0),
+        vec4(-1.0,  1.0, 0.0, 1.0),
+        vec4( 1.0, -1.0, 0.0, 1.0),
+        vec4( 1.0,  1.0, 0.0, 1.0)
+    );
+    return quad_verts[in_vertex_index];
 }
 
 @group(1) @binding(0)

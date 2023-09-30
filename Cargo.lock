@@ -992,7 +992,7 @@ dependencies = [
  "egui",
  "log",
  "raw-window-handle",
-    "web-time",
+ "web-time",
  "webbrowser",
  "winit",
 ]
@@ -2980,7 +2980,7 @@ source = "git+https://github.com/RustPython/Parser.git?tag=0.3.0#a1e4336f7043807
 dependencies = [
  "is-macro",
  "memchr",
-    "rustpython-parser-vendored",
+ "rustpython-parser-vendored",
 ]
 
 [[package]]
@@ -2988,8 +2988,8 @@ name = "rustpython-parser-vendored"
 version = "0.3.0"
 source = "git+https://github.com/RustPython/Parser.git?tag=0.3.0#a1e4336f7043807eda8a5ecb15d4115172cc4a7e"
 dependencies = [
-    "memchr",
-    "once_cell",
+ "memchr",
+ "once_cell",
 ]
 
 [[package]]
@@ -4186,9 +4186,9 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19353897b48e2c4d849a2d73cb0aeb16dc2be4e00c565abfc11eb65a806e47de"
 dependencies = [
-    "js-sys",
-    "once_cell",
-    "wasm-bindgen",
+ "js-sys",
+ "once_cell",
+ "wasm-bindgen",
 ]
 
 [[package]]
