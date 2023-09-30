@@ -92,15 +92,22 @@ pub struct LightsUniform {
 
 impl LightsUniform {
     pub fn update_lights(&mut self, renderer_lights: &Vec<RendererLight>) {
-        for (idx, renderer_light) in renderer_lights.iter().enumerate() {
-            if idx >= self.lights.len() {
-                log::error!("Lights uniform does not have enough capacity to render all lights");
-                break;
-            }
-            self.lights[idx].position = renderer_light.position.into();
-            self.lights[idx].color = renderer_light.color.into();
+        let default_light = RendererLight {
+            position: Vector3::new(0., 0., 0.),
+            color: Vector3::new(0., 0., 0.),
+        };
+        for idx in 0..self.lights.len() {
+            self.lights[idx].position = renderer_lights
+                .get(idx)
+                .unwrap_or(&default_light)
+                .position
+                .into();
+            self.lights[idx].color = renderer_lights
+                .get(idx)
+                .unwrap_or(&default_light)
+                .color
+                .into();
         }
-        // println!("{:?}", self.lights[0]);
     }
 }
 

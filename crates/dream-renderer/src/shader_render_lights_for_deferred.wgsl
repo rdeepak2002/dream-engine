@@ -56,6 +56,37 @@ fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
 
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
+    // normal vector (after normal mapping which was computed in write to g buffers shader)
+    let normal = textureLoad(
+        texture_g_buffer_normal,
+        vec2<i32>(floor(coord.xy)),
+        0
+    ).xyz;
+
+    // albedo texture
+    let albedo = textureLoad(
+        texture_g_buffer_albedo,
+        vec2<i32>(floor(coord.xy)),
+        0
+    ).rgba;
+
+    // emissive
+    let emissive = textureLoad(
+        texture_g_buffer_emissive,
+        vec2<i32>(floor(coord.xy)),
+        0
+    ).rgba;
+
+    // ao roughness metallic
+    let ao_roughness_metallic = textureLoad(
+        texture_g_buffer_ao_roughness_metallic,
+        vec2<i32>(floor(coord.xy)),
+        0
+    ).rgba;
+    let ao = ao_roughness_metallic.r;
+    let roughness = ao_roughness_metallic.g;
+    let metallic = ao_roughness_metallic.b;
+
     // sample from depth buffer
     let depth = textureLoad(
         texture_g_buffer_depth,
@@ -73,16 +104,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let coord_uv = coord.xy / vec2<f32>(depth_buffer_size);
     let world_position = world_from_screen_coord(coord_uv, depth);
 
-    let albedo = textureLoad(
-        texture_g_buffer_albedo,
-        vec2<i32>(floor(coord.xy)),
-        0
-    ).rgba;
-
     let light = lightsBuffer.lights[0];
 
     return vec4(albedo.rgb * light.color, 1.0);
-
-//    let albedo = textureSample(texture_g_buffer_albedo, sampler_g_buffer_albedo, coord.xy * vec2(1.0/2000.0, 1.0/1000.0)).rgb;
-//    return vec4(albedo, 1.0);
 }
