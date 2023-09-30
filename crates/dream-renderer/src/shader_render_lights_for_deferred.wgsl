@@ -105,8 +105,13 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let world_position = world_from_screen_coord(coord_uv, depth);
 
     // final color
-    let light = lightsBuffer.lights[0];
-    let final_color_rgb = (albedo + emissive).rgb * light.color;
+    // TODO: use num_lights uniform variable
+    var final_color_rgb = vec3(0., 0., 0.);
+    for (var i = 0u; i < 4u; i += 1u) {
+        let light = lightsBuffer.lights[i];
+        let res = (albedo + emissive).rgb * light.color;
+        final_color_rgb += res;
+    }
 
     return vec4(final_color_rgb, 1.0);
 }
