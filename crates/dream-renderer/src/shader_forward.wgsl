@@ -113,16 +113,16 @@ var<uniform> lightsBuffer: LightsUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    // base color
-    let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
-    let base_color_factor = vec4(material_factors.base_color, 1.0);
-    let base_color = base_color_texture * base_color_factor;
-
     // compute normal using normal map
     let TBN = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
     let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
     var normal = normal_map_texture.rgb * 2.0 - vec3(1.0, 1.0, 1.0);
     normal = normalize(TBN * normal);
+
+    // albedo
+    let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
+    let base_color_factor = vec4(material_factors.base_color, 1.0);
+    let albedo = base_color_texture * base_color_factor;
 
     // emissive
     let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
@@ -130,23 +130,25 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let emissive = emissive_texture * emissive_factor;
 
     // ao
-    // TODO
+    let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);
+    let ao = occlusion_texture.r;
 
     // roughness
-    // TODO
+    let metallic_roughness_texture = textureSample(texture_metallic_roughness, sampler_metallic_roughness, in.tex_coords);
+    let roughness = metallic_roughness_texture.g * material_factors.roughness;
 
     // metallic
-    // TODO
-
-    // final color
-    let final_color_no_alpha = base_color + emissive;
-    let final_color_rgb = vec3(final_color_no_alpha.r, final_color_no_alpha.g, final_color_no_alpha.b);
+    let metallic = metallic_roughness_texture.b * material_factors.metallic;
 
     // transparency
     var alpha = material_factors.alpha;
     if (alpha <= material_factors.alpha_cutoff) {
-        alpha = 0.0;
+        discard;
     }
+
+    // final color
+    let light = lightsBuffer.lights[0];
+    let final_color_rgb = (albedo + emissive).rgb * light.color;
 
     return vec4(final_color_rgb, alpha);
 }
