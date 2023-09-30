@@ -48,7 +48,7 @@ impl Camera {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -108,6 +108,7 @@ impl Camera {
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
     view_proj: [[f32; 4]; 4],
+    inv_view_proj: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
@@ -123,7 +124,12 @@ impl CameraUniform {
     ) {
         let view = Matrix4::look_at_rh(&eye, &target, &up);
         let proj = Matrix4::new_perspective(aspect, fovy, znear, zfar);
-        self.view_proj = (proj * view).into();
+        let view_proj = proj * view;
+        self.view_proj = view_proj.into();
+        self.inv_view_proj = view_proj
+            .try_inverse()
+            .expect("Unable to invert camera view projection matrix")
+            .into();
     }
 }
 
@@ -131,6 +137,7 @@ impl Default for CameraUniform {
     fn default() -> Self {
         Self {
             view_proj: Matrix4::identity().into(),
+            inv_view_proj: Matrix4::identity().into(),
         }
     }
 }

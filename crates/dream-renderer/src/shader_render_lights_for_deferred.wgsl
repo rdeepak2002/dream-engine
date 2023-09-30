@@ -1,5 +1,6 @@
 struct CameraUniform {
     view_proj: mat4x4<f32>,
+    inv_view_proj: mat4x4<f32>
 };
 
 @group(0) @binding(0)
@@ -45,25 +46,32 @@ struct LightsUniform {
 @group(2) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
 
-//fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
-//    // reconstruct world-space position from the screen coordinate
-//    let posClip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
-//    let posWorldW = camera.invViewProjectionMatrix * posClip;
-//    let posWorld = posWorldW.xyz / posWorldW.www;
-//    return posWorld;
-//}
+fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
+    // reconstruct world-space position from the screen coordinate
+    let pos_clip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
+    let pos_world_w = camera.inv_view_proj * pos_clip;
+    let pos_world = pos_world_w.xyz / pos_world_w.www;
+    return pos_world;
+}
 
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
+    // sample from depth buffer
     let depth = textureLoad(
         texture_g_buffer_depth,
         vec2<i32>(floor(coord.xy)),
         0
     );
 
+    // depth >= 1 means nothing was there at this pixel
     if (depth >= 1.0) {
         discard;
     }
+
+    // compute world position using depth buffer
+    let depth_buffer_size = textureDimensions(texture_g_buffer_depth);
+    let coord_uv = coord.xy / vec2<f32>(depth_buffer_size);
+    let world_position = world_from_screen_coord(coord_uv, depth);
 
     let albedo = textureLoad(
         texture_g_buffer_albedo,
