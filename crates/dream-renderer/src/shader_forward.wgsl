@@ -24,10 +24,11 @@ struct InstanceInput {
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) tangent: vec3<f32>,
-    @location(3) bitangent: vec3<f32>,
+    @location(0) world_position: vec3<f32>,
+    @location(1) tex_coords: vec2<f32>,
+    @location(2) normal: vec3<f32>,
+    @location(3) tangent: vec3<f32>,
+    @location(4) bitangent: vec3<f32>,
 }
 
 @vertex
@@ -42,6 +43,7 @@ fn vs_main(
         instance.model_matrix_3,
     );
     var out: VertexOutput;
+    out.world_position = (model_matrix * vec4<f32>(model.position, 1.0)).xyz;
     out.tex_coords = model.tex_coords;
     out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
 //    var T = normalize((model_matrix * vec4(normalize(model.tangent.xyz), 0.0)).xyz);
@@ -111,7 +113,7 @@ struct LightsUniform {
 @group(3) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
 
-fn compute_final_color(normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
+fn compute_final_color(world_position: vec3<f32>, normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
     // TODO: use num_lights uniform variable
     var final_color_rgb = vec3(0., 0., 0.);
     for (var i = 0u; i < 4u; i += 1u) {
@@ -157,8 +159,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         discard;
     }
 
+    // world position
+    let world_position = in.world_position;
+
     // final color
-    var final_color_rgb = compute_final_color(normal, albedo, emissive, ao, roughness, metallic);
+    var final_color_rgb = compute_final_color(world_position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, alpha);
 }
