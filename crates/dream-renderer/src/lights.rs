@@ -79,7 +79,7 @@ impl Lights {
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct LightData {
     pub position: [f32; 3],
-    pub _padding1: u32,
+    pub radius: f32,
     pub color: [f32; 3],
     pub _padding2: u32,
 }
@@ -117,25 +117,25 @@ impl Default for LightsUniform {
             lights: [
                 LightData {
                     position: [0., 0., 0.],
-                    _padding1: 0,
+                    radius: 20.0,
                     color: [0., 0., 0.],
                     _padding2: 0,
                 },
                 LightData {
                     position: [0., 0., 0.],
-                    _padding1: 0,
+                    radius: 20.0,
                     color: [0., 0., 0.],
                     _padding2: 0,
                 },
                 LightData {
                     position: [0., 0., 0.],
-                    _padding1: 0,
+                    radius: 20.0,
                     color: [0., 0., 0.],
                     _padding2: 0,
                 },
                 LightData {
                     position: [0., 0., 0.],
-                    _padding1: 0,
+                    radius: 20.0,
                     color: [0., 0., 0.],
                     _padding2: 0,
                 },

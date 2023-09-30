@@ -34,7 +34,7 @@ var texture_g_buffer_depth: texture_depth_2d;
 
 struct Light {
   position: vec3<f32>,
-  _padding1: u32,
+  radius: f32,
   color: vec3<f32>,
   _padding2: u32,
 }
@@ -56,13 +56,21 @@ fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
 
 fn compute_final_color(world_position: vec3<f32>, normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
     // TODO: use num_lights uniform variable
-    var final_color_rgb = vec3(0., 0., 0.);
+    var result = vec3(0., 0., 0.);
     for (var i = 0u; i < 4u; i += 1u) {
         let light = lightsBuffer.lights[i];
-        let res = (albedo + emissive).rgb * light.color;
-        final_color_rgb += res;
+        let position = world_position;
+        let L = light.position.xyz - position;
+        let distance = length(L);
+        if (distance > light.radius) {
+            continue;
+        }
+        let lambert = max(dot(normal, normalize(L)), 0.0);
+        result += vec3<f32>(
+            lambert * pow(1.0 - distance / light.radius, 2.0) * light.color * albedo.rgb
+        );
     }
-    return final_color_rgb;
+    return result;
 }
 
 @fragment
