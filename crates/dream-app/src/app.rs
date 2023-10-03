@@ -92,7 +92,7 @@ impl Default for App {
             );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0., 1.5, 2.5),
+                    Vector3::new(0., 0.5, 1.5),
                     Quaternion::identity(),
                     Vector3::new(0.1, 0.1, 0.1),
                 ),

@@ -109,6 +109,8 @@ impl Camera {
 pub struct CameraUniform {
     view_proj: [[f32; 4]; 4],
     inv_view_proj: [[f32; 4]; 4],
+    position: [f32; 3],
+    _padding: f32,
 }
 
 impl CameraUniform {
@@ -130,6 +132,7 @@ impl CameraUniform {
             .try_inverse()
             .expect("Unable to invert camera view projection matrix")
             .into();
+        self.position = eye.into();
     }
 }
 
@@ -138,6 +141,8 @@ impl Default for CameraUniform {
         Self {
             view_proj: Matrix4::identity().into(),
             inv_view_proj: Matrix4::identity().into(),
+            position: [0.0, 0.0, 0.0],
+            _padding: 1.,
         }
     }
 }
