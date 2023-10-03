@@ -77,10 +77,10 @@ impl Default for App {
         }
         {
             let cube_entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Light".into()), None, None)
+                Scene::create_entity(Arc::downgrade(&scene), Some("Light 1".into()), None, None)
                     .expect("Unable to create cube entity");
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene))
-                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0)));
+                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0), 20.0));
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
@@ -93,6 +93,29 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(0., 0.5, 1.5),
+                    Quaternion::identity(),
+                    Vector3::new(0.1, 0.1, 0.1),
+                ),
+            );
+        }
+        {
+            let cube_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
+                    .expect("Unable to create cube entity");
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene))
+                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0), 20.0));
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(1.3, 0.9, 0.9),
                     Quaternion::identity(),
                     Vector3::new(0.1, 0.1, 0.1),
                 ),
@@ -209,7 +232,7 @@ impl App {
                 mat = parent_mat * mat;
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
-                    renderer.draw_light(position, light_component.color);
+                    renderer.draw_light(position, light_component.color, light_component.radius);
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {

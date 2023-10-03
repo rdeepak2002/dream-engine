@@ -211,6 +211,13 @@ impl Panel for InspectorPanel {
                                         .max_decimals(5)
                                         .clamp_range(RangeInclusive::new(0.0, 1.0))
                                 );
+                                ui.strong("radius");
+                                ui.add(
+                                    egui::DragValue::new(&mut light_component.radius)
+                                        .speed(1.0)
+                                        .max_decimals(3)
+                                        .clamp_range(RangeInclusive::new(0.0, 1000.0))
+                                );
 
                                 entity.add_component(light_component);
                             });

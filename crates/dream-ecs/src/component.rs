@@ -44,11 +44,12 @@ impl std::fmt::Display for Transform {
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
 pub struct Light {
     pub color: Vector3<f32>,
+    pub radius: f32,
 }
 
 impl Light {
-    pub fn new(color: Vector3<f32>) -> Light {
-        Light { color }
+    pub fn new(color: Vector3<f32>, radius: f32) -> Light {
+        Light { color, radius }
     }
 }
 

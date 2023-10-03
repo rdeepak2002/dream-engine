@@ -380,10 +380,12 @@ impl RendererWgpu {
     ///
     /// * `position`
     /// * `color`
-    pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>) {
-        self.lights
-            .renderer_lights
-            .push(RendererLight { position, color });
+    pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>, radius: f32) {
+        self.lights.renderer_lights.push(RendererLight {
+            position,
+            color,
+            radius,
+        });
     }
 
     /// User-facing API to store a model and associate it with a guid

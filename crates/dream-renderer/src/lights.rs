@@ -6,6 +6,7 @@ use dream_math::Vector3;
 pub struct RendererLight {
     pub(crate) position: Vector3<f32>,
     pub(crate) color: Vector3<f32>,
+    pub(crate) radius: f32,
 }
 
 pub struct Lights {
@@ -95,6 +96,7 @@ impl LightsUniform {
         let default_light = RendererLight {
             position: Vector3::new(0., 0., 0.),
             color: Vector3::new(0., 0., 0.),
+            radius: 0.000001,
         };
         for idx in 0..self.lights.len() {
             self.lights[idx].position = renderer_lights
@@ -107,6 +109,7 @@ impl LightsUniform {
                 .unwrap_or(&default_light)
                 .color
                 .into();
+            self.lights[idx].radius = renderer_lights.get(idx).unwrap_or(&default_light).radius;
         }
     }
 }

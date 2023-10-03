@@ -174,7 +174,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
         let L: vec3<f32> = normalize(lightPosition - world_position);
         let H: vec3<f32> = normalize(V + L);
         let distance: f32 = length(lightPosition - world_position);
-        let attenuation: f32 = 1.0 / (distance * distance);
+        let attenuation: f32 = 1.0 / pow(distance / light.radius + 1.0, 2.0);
         let radiance = lightColor * attenuation;
 
         // Cook-Torrance BRDF
@@ -208,7 +208,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
 
     // TODO: make ambient light a uniform or iterate through all ambient lights
 
-    let ambientIntensity = 0.3;
+    let ambientIntensity = 0.1;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
     var color = result + ambient;
 
