@@ -121,7 +121,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "bbdd8f66-c1ad-4ef8-b128-20b6b91d8f13".into(), // berserk armor: "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
+                "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(), // berserk armor: "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
                 true,
                 Default::default(),
             );

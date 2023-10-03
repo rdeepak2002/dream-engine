@@ -178,7 +178,7 @@ impl RendererWgpu {
 
         // main camera
         let camera = camera::Camera::new(
-            Point3::new(5.0, 5.0, 5.0),
+            Point3::new(3.0, 3.0, 3.0),
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
             config.width as f32 / config.height as f32,
