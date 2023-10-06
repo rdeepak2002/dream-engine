@@ -98,82 +98,80 @@ impl System for PythonScriptComponentSystem {
                     )
                     .map_err(|err| vm.new_syntax_error(&err, None))
                     .unwrap();
-                vm.run_code_obj(code_obj, scope)
-                    .map(|entity_class_obj| {
-                        let class_name_raw = entity_class_obj.get_attr("__name__", vm);
-                        let class_name_py_str = class_name_raw.expect("No class name").str(vm);
-                        let class_name = String::from(
-                            class_name_py_str
-                                .expect("Unable to convert class name to string")
-                                .as_str(),
-                        );
-                        let scope = vm.new_scope_with_builtins();
-                        let source_path;
-                        cfg_if::cfg_if! {
-                            if #[cfg(target_arch = "wasm32")] {
-                                source_path = "<wasm>"
-                            } else {
-                                source_path = "<embedded>"
-                            }
+                let _res = vm.run_code_obj(code_obj, scope).map(|entity_class_obj| {
+                    let class_name_raw = entity_class_obj.get_attr("__name__", vm);
+                    let class_name_py_str = class_name_raw.expect("No class name").str(vm);
+                    let class_name = String::from(
+                        class_name_py_str
+                            .expect("Unable to convert class name to string")
+                            .as_str(),
+                    );
+                    let scope = vm.new_scope_with_builtins();
+                    let source_path;
+                    cfg_if::cfg_if! {
+                        if #[cfg(target_arch = "wasm32")] {
+                            source_path = "<wasm>"
+                        } else {
+                            source_path = "<embedded>"
                         }
-                        // step 2: run code that creates instance of class
-                        let code_obj = vm
-                            .compile(
-                                &format!("{script}\n{class_name}({entity_id})"),
-                                compiler::Mode::BlockExpr,
-                                source_path.to_owned(),
-                            )
-                            .map_err(|err| vm.new_syntax_error(&err, None))
-                            .unwrap();
-                        vm.run_code_obj(code_obj, scope)
-                            .map(|entity_script| {
-                                // cuz this run code object only returns the class definition which we extract the class name from
-                                self.entity_script
-                                    .entry(entity_id)
-                                    .or_insert(Some(entity_script));
-                            })
-                            .expect("Error running python code");
-                        if let Ok(update) = self
-                            .entity_script
-                            .get(&entity_id)
-                            .unwrap()
-                            .as_ref()
-                            .unwrap()
-                            .get_attr("update", vm)
-                        {
-                            let args = vec![vm.ctx.new_float(dt as f64).into()];
-                            let res = update.call(args, vm);
-                            if let Err(..) = res {
-                                let e = res.unwrap_err();
-                                let py_err = e.get_arg(0).unwrap();
-                                log::error!("{}", py_err.str(vm).unwrap());
-                                let line_number = e.traceback().unwrap().lineno;
-                                log::error!("line {}", line_number);
-                            }
+                    }
+                    // step 2: run code that creates instance of class
+                    let code_obj = vm
+                        .compile(
+                            &format!("{script}\n{class_name}({entity_id})"),
+                            compiler::Mode::BlockExpr,
+                            source_path.to_owned(),
+                        )
+                        .map_err(|err| vm.new_syntax_error(&err, None))
+                        .unwrap();
+                    vm.run_code_obj(code_obj, scope)
+                        .map(|entity_script| {
+                            // cuz this run code object only returns the class definition which we extract the class name from
+                            self.entity_script
+                                .entry(entity_id)
+                                .or_insert(Some(entity_script));
+                        })
+                        .expect("Error running python code");
+                    if let Ok(update) = self
+                        .entity_script
+                        .get(&entity_id)
+                        .unwrap()
+                        .as_ref()
+                        .unwrap()
+                        .get_attr("update", vm)
+                    {
+                        let args = vec![vm.ctx.new_float(dt as f64).into()];
+                        let res = update.call(args, vm);
+                        if let Err(..) = res {
+                            let e = res.unwrap_err();
+                            let py_err = e.get_arg(0).unwrap();
+                            log::error!("{}", py_err.str(vm).unwrap());
+                            let line_number = e.traceback().unwrap().lineno;
+                            log::error!("line {}", line_number);
                         }
+                    }
 
-                        // TODO: allow other python scripts to get variables that are defined
-                        // TODO: allow inspector to view attributes (have attributes map in script component)
-                        // for attribute in attributes {
-                        //     let attribute_name = attribute.0.to_string();
-                        //     // let attribute_value = attribute.1.to_pyresult(vm);
-                        //     println!("name: {attribute_name}");
-                        //     // let attribute_name = "x";
-                        //     let attribute_value = entity_script.get_attr(attribute_name, vm);
-                        //     // let x: f64 = attribute_value.unwrap().try_float(vm).unwrap().to_f64();
-                        //     // println!("Got variable from other object {}", x);
-                        // }
+                    // TODO: allow other python scripts to get variables that are defined
+                    // TODO: allow inspector to view attributes (have attributes map in script component)
+                    // for attribute in attributes {
+                    //     let attribute_name = attribute.0.to_string();
+                    //     // let attribute_value = attribute.1.to_pyresult(vm);
+                    //     println!("name: {attribute_name}");
+                    //     // let attribute_name = "x";
+                    //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                    //     // let x: f64 = attribute_value.unwrap().try_float(vm).unwrap().to_f64();
+                    //     // println!("Got variable from other object {}", x);
+                    // }
 
-                        // TODO: this attributes map exposes methods (such as update)
-                        // TODO: this can be useful for having one script call a method for another script?
-                        // let attributes = entity_script.class().get_attributes();
-                        // for attribute in attributes {
-                        //     let attribute_name = attribute.0.to_string();
-                        //     println!("name: {attribute_name}");
-                        //     let attribute_value = entity_script.get_attr(attribute_name, vm);
-                        // }
-                    })
-                    .expect("Error running python code");
+                    // TODO: this attributes map exposes methods (such as update)
+                    // TODO: this can be useful for having one script call a method for another script?
+                    // let attributes = entity_script.class().get_attributes();
+                    // for attribute in attributes {
+                    //     let attribute_name = attribute.0.to_string();
+                    //     println!("name: {attribute_name}");
+                    //     let attribute_value = entity_script.get_attr(attribute_name, vm);
+                    // }
+                });
             })
         }
     }

@@ -30,4 +30,5 @@ pub mod pbr_bind_groups_and_layouts;
 pub mod render_map_key;
 pub mod render_storage;
 pub mod renderer;
+pub mod shader;
 pub mod texture;

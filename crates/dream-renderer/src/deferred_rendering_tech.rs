@@ -3,6 +3,7 @@ use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
+use crate::shader::Shader;
 use crate::texture;
 use crate::texture::Texture;
 
@@ -25,18 +26,19 @@ impl DeferredRenderingTech {
         depth_texture: &Texture,
         camera: &Camera,
     ) -> Self {
-        let shader_write_g_buffers = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Shader Write G Buffers"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader_write_g_buffers.wgsl").into()),
-        });
+        let shader_write_g_buffers = Shader::new(
+            device,
+            include_str!("shader_write_g_buffers.wgsl").parse().unwrap(),
+            String::from("shader_write_g_buffers"),
+        );
 
-        let shader_render_lights_for_deferred =
-            device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("Shader Render Lights for Deferred"),
-                source: wgpu::ShaderSource::Wgsl(
-                    include_str!("shader_render_lights_for_deferred.wgsl").into(),
-                ),
-            });
+        let shader_render_lights_for_deferred = Shader::new(
+            device,
+            include_str!("shader_render_lights_for_deferred.wgsl")
+                .parse()
+                .unwrap(),
+            String::from("shader_render_lights_for_deferred"),
+        );
 
         let g_buffer_texture_views = [
             Some(texture::Texture::create_frame_texture(
@@ -172,13 +174,13 @@ impl DeferredRenderingTech {
                 label: Some("Render Pipeline Write G Buffers"),
                 layout: Some(&render_pipeline_pbr_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader_write_g_buffers,
+                    module: shader_write_g_buffers.get_shader_module(),
                     entry_point: "vs_main",
                     buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader_write_g_buffers,
+                    module: shader_write_g_buffers.get_shader_module(),
                     entry_point: "fs_main",
                     targets: &[
                         // normal
@@ -250,13 +252,13 @@ impl DeferredRenderingTech {
                 label: Some("Render Pipeline Render Deferred Result"),
                 layout: Some(&quad_render_pipeline_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader_render_lights_for_deferred,
+                    module: shader_render_lights_for_deferred.get_shader_module(),
                     entry_point: "vs_main",
                     buffers: &[],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader_render_lights_for_deferred,
+                    module: shader_render_lights_for_deferred.get_shader_module(),
                     entry_point: "fs_main",
                     targets: &[
                         // final deferred result render texture

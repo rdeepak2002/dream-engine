@@ -3,6 +3,7 @@ use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
+use crate::shader::Shader;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -15,23 +16,24 @@ impl ForwardRenderingTech {
         render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
     ) -> Self {
-        let shader_forward_render = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Shader Forward"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader_forward.wgsl").into()),
-        });
+        let shader_forward_render = Shader::new(
+            device,
+            include_str!("shader_forward.wgsl").parse().unwrap(),
+            String::from("shader_forward_render"),
+        );
 
         let render_pipeline_forward_render_translucent_objects =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Forward Rendering"),
                 layout: Some(&render_pipeline_pbr_layout),
                 vertex: wgpu::VertexState {
-                    module: &shader_forward_render,
+                    module: shader_forward_render.get_shader_module(),
                     entry_point: "vs_main",
                     buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                     // buffers: &[Vertex::desc()],
                 },
                 fragment: Some(wgpu::FragmentState {
-                    module: &shader_forward_render,
+                    module: shader_forward_render.get_shader_module(),
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: target_texture_format,

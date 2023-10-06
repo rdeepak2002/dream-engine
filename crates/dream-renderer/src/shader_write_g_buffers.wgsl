@@ -1,12 +1,7 @@
+//include:pbr.wgsl
+//include:camera.wgsl
+
 // Vertex shader
-
-struct CameraUniform {
-    view_proj: mat4x4<f32>,
-    inv_view_proj: mat4x4<f32>,
-    position: vec3<f32>,
-    _padding: f32,
-};
-
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
@@ -46,13 +41,6 @@ fn vs_main(
     var out: VertexOutput;
     out.tex_coords = model.tex_coords;
     out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
-//    var T = normalize((model_matrix * vec4(normalize(model.tangent.xyz), 0.0)).xyz);
-//    let N = normalize((model_matrix * vec4(normalize(model.normal), 0.0)).xyz);
-//    T = normalize(T - dot(T, N) * N);
-//    let B = cross(N, T);
-//    out.normal = N;
-//    out.tangent = T;
-//    out.bitangent = B;
     out.normal = normalize((model_matrix * vec4(model.normal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
     out.bitangent = normalize(cross(out.tangent, out.normal));
@@ -67,16 +55,6 @@ struct GBufferOutput {
   @location(3) ao_roughness_metallic : vec4<f32>,
 }
 
-struct MaterialFactors {
-    base_color: vec3<f32>,
-    _padding1: f32,
-    emissive: vec3<f32>,
-    _padding2: f32,
-    metallic: f32,
-    roughness: f32,
-    alpha: f32,
-    alpha_cutoff: f32,
-};
 @group(1) @binding(0)
 var<uniform> material_factors: MaterialFactors;
 // base color texture
@@ -104,17 +82,6 @@ var sampler_emissive: sampler;
 var texture_occlusion: texture_2d<f32>;
 @group(2) @binding(9)
 var sampler_occlusion: sampler;
-
-struct Light {
-  position: vec3<f32>,
-  radius: f32,
-  color: vec3<f32>,
-  _padding2: u32,
-}
-
-struct LightsUniform {
-  lights: array<Light, 4>
-};
 
 @group(3) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
