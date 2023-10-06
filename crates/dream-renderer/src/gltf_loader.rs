@@ -150,6 +150,8 @@ fn get_dream_meshes_from_gltf_mesh(
                         tex_coords: Default::default(),
                         normal: Default::default(),
                         tangent: [0.0, 0.0, 0.0, 0.0],
+                        bone_ids: [0, 0, 0, 0],
+                        bone_weights: [0., 0., 0., 0.],
                     })
             });
         }
