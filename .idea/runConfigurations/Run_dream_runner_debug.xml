@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run dream-runner release" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="command" value="run --package dream-runner --bin dream-runner  --release" />
+  <configuration default="false" name="Run dream-runner debug" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
+    <option name="command" value="run --package dream-runner --bin dream-runner" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <option name="emulateTerminal" value="false" />
     <option name="channel" value="NIGHTLY" />
