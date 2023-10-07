@@ -17,7 +17,7 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use dream_ecs::component::{Light, MeshRenderer, PythonScript, Transform};
+use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
@@ -256,11 +256,12 @@ impl App {
                             .upgrade()
                             .expect("Unable to upgrade resource handle");
                         let resource_key = &upgraded_resource_handle.key;
+                        let model_guid = resource_key;
 
                         if renderer.is_model_stored(resource_key.as_str()) {
                             if let Some(mesh_idx) = mesh_renderer.mesh_idx {
                                 renderer.draw_mesh(
-                                    resource_key.as_str(),
+                                    model_guid.as_str(),
                                     mesh_idx as i32,
                                     Instance { mat },
                                 );
@@ -277,6 +278,11 @@ impl App {
                                 .expect("Unable to store model");
                         }
                     }
+                }
+                if let Some(bone_component) = entity.get_component::<Bone>() {
+                    let node_id = bone_component.node_id;
+                    let bone_mat: Matrix4<f32> = mat * bone_component.inverse_bind_pose;
+                    renderer.set_bone_transform(node_id, bone_mat);
                 }
             }
 

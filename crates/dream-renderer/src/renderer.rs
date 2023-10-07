@@ -424,4 +424,14 @@ impl RendererWgpu {
         self.render_storage.instance_buffer_map.clear();
         self.lights.renderer_lights.clear();
     }
+
+    pub fn set_bone_transform(&self, node_id: u32, mat: dream_math::Matrix4<f32>) {
+        // phase 1 (this will allow us to animate a single model)
+        // TODO: convert node_id to bone_id
+        // TODO: set transform matrix for bone_id to mat passed into this function
+        // phase 2 (this will allow u to model the same instance of a model in different ways)
+        // TODO: the entity ID of the root bone tells us which armature we are using
+        // TODO: associate bones for that armature
+        // todo!();
+    }
 }
