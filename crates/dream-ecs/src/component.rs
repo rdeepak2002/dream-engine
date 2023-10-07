@@ -41,6 +41,12 @@ impl std::fmt::Display for Transform {
     }
 }
 
+#[derive(shipyard::Component, Debug, Clone, PartialEq)]
+pub struct Bone {
+    pub is_root: bool,
+    pub id: u32,
+}
+
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
 pub struct Light {
     pub color: Vector3<f32>,

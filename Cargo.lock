@@ -791,6 +791,7 @@ dependencies = [
  "dream-math",
  "dream-resource",
  "gltf",
+ "log",
  "once_cell",
  "shipyard",
 ]

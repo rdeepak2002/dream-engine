@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::collections::HashSet;
 use std::sync::{Arc, Mutex, Weak};
 
 use anyhow::{anyhow, Result};
@@ -24,7 +25,7 @@ use shipyard::{IntoIter, IntoWithId};
 use dream_fs::fs::read_binary;
 use dream_resource::resource_manager::ResourceManager;
 
-use crate::component::{Hierarchy, MeshRenderer, Tag, Transform};
+use crate::component::{Bone, Hierarchy, MeshRenderer, Tag, Transform};
 use crate::entity::Entity;
 
 // pub(crate) static SCENE: Lazy<Mutex<Scene>> = Lazy::new(|| Mutex::new(Scene::default()));
@@ -197,6 +198,11 @@ impl Scene {
         for gltf_scene in gltf.scenes() {
             // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
             for node in gltf_scene.nodes() {
+                // keep track of which nodes are bones
+                let mut bones: HashSet<u32> = HashSet::new();
+                let mut root_bones: HashSet<u32> = HashSet::new();
+                get_bone_nodes_for_gltf(&node, &mut bones, &mut root_bones, false);
+
                 // set transform of root node of GLTF scene to this entity we are adding scene to
                 {
                     let transform = get_gltf_transform(&node);
@@ -205,6 +211,8 @@ impl Scene {
                 }
                 process_gltf_child_node(
                     node,
+                    &bones,
+                    &root_bones,
                     scene.clone(),
                     resource_manager,
                     guid.clone(),
@@ -213,8 +221,31 @@ impl Scene {
             }
         }
 
+        fn get_bone_nodes_for_gltf<'a>(
+            child_node: &'a gltf::Node,
+            bones: &'a mut HashSet<u32>,
+            root_bones: &'a mut HashSet<u32>,
+            is_skeleton_node: bool,
+        ) {
+            if is_skeleton_node {
+                bones.insert(child_node.index() as u32);
+            }
+            if let Some(skin) = child_node.skin() {
+                if let Some(skeleton) = skin.skeleton() {
+                    root_bones.insert(skeleton.index() as u32);
+                    get_bone_nodes_for_gltf(&skeleton, bones, root_bones, true);
+                }
+            } else {
+                for child in child_node.children() {
+                    get_bone_nodes_for_gltf(&child, bones, root_bones, is_skeleton_node);
+                }
+            }
+        }
+
         fn process_gltf_child_node(
             child_node: gltf::Node,
+            bones: &HashSet<u32>,
+            root_bones: &HashSet<u32>,
             scene: Weak<Mutex<Scene>>,
             resource_manager: &ResourceManager,
             guid: String,
@@ -230,8 +261,18 @@ impl Scene {
                             Some(get_gltf_transform(&child)),
                         )
                         .expect("Unable to create entity while traversing GLTF nodes");
+                        let is_bone = bones.contains(&(child.index() as u32));
+                        if is_bone {
+                            let entity = Entity::from_handle(new_entity_id, scene.clone());
+                            entity.add_component(Bone {
+                                is_root: root_bones.contains(&(child.index() as u32)),
+                                id: child_node.index() as u32,
+                            });
+                        }
                         process_gltf_child_node(
                             child,
+                            bones,
+                            root_bones,
                             scene.clone(),
                             resource_manager,
                             guid.clone(),
@@ -240,16 +281,23 @@ impl Scene {
                     }
                 }
                 Some(mesh) => {
-                    let entity_handle = Scene::create_entity(
+                    let new_entity_id = Scene::create_entity(
                         scene.clone(),
                         Some(mesh.name().unwrap_or("Mesh").into()),
                         Some(entity_id),
                         None,
                     )
                     .expect("Unable to create entity while traversing GLTF mesh nodes");
+                    // if is_bone {
+                    //     let entity = Entity::from_handle(new_entity_id, scene.clone());
+                    //     entity.add_component(Bone {
+                    //         is_root: false,
+                    //         id: child_node.index() as u32,
+                    //     });
+                    // }
                     MeshRenderer::add_to_entity(
                         scene,
-                        entity_handle,
+                        new_entity_id,
                         resource_manager,
                         guid,
                         false,

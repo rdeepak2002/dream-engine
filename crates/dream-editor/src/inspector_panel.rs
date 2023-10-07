@@ -3,7 +3,7 @@ use std::sync::{Mutex, Weak};
 
 use crossbeam_channel::Receiver;
 
-use dream_ecs::component::{Light, MeshRenderer, PythonScript, Tag, Transform};
+use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 
@@ -54,6 +54,7 @@ impl Panel for InspectorPanel {
                     let mesh_renderer_component: Option<MeshRenderer> = entity.get_component();
                     let python_script_component: Option<PythonScript> = entity.get_component();
                     let light_component: Option<Light> = entity.get_component();
+                    let bone_component: Option<Bone> = entity.get_component();
 
                     if let Some(tag_component) = tag_component {
                         ui.strong(tag_component.name);
@@ -220,6 +221,23 @@ impl Panel for InspectorPanel {
                                 );
 
                                 entity.add_component(light_component);
+                            });
+                    }
+
+                    if let Some(bone_component) = bone_component {
+                        egui::collapsing_header::CollapsingState::load_with_default_open(
+                            ui.ctx(),
+                            ui.make_persistent_id("BoneComponent"),
+                            true,
+                        )
+                            .show_header(ui, |ui| {
+                                ui.strong("Bone");
+                            })
+                            .body(|ui| {
+                                ui.strong("Armature Root");
+                                ui.label(format!("{:?}", bone_component.is_root).as_str());
+                                ui.strong("Id");
+                                ui.label(format!("{:?}", bone_component.id).as_str());
                             });
                     }
                 }

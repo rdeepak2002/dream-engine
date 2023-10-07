@@ -11,3 +11,4 @@ dream-fs = { workspace = true }
 dream-math = { workspace = true }
 dream-resource = { workspace = true }
 anyhow = { workspace = true }
+log = { workspace = true }
