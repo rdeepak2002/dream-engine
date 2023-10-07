@@ -28,11 +28,11 @@ fn main() -> anyhow::Result<()> {
     let example_folder = example_folder_path_buf
         .to_str()
         .expect("Unable to genereate string for examples folder location");
-    // println!(
-    //     "cargo:rerun-if-changed={}{}*",
-    //     example_folder,
-    //     std::path::MAIN_SEPARATOR
-    // );
+    println!(
+        "cargo:rerun-if-changed={}{}*",
+        example_folder,
+        std::path::MAIN_SEPARATOR
+    );
 
     // generate JSON file keeping track of paths of all available files (used for web build at the moment)
     let example_project_name = "blank";

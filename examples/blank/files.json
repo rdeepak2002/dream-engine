@@ -36,6 +36,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "ybot.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "main_mat_metallicRoughness.png.meta",
     "fileUrl": null
   },
@@ -69,6 +73,10 @@
   },
   {
     "filepath": "files.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "ybot.glb.meta",
     "fileUrl": null
   },
   {

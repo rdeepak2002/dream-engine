@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::sync::{Mutex, Weak};
 
-use dream_math::{Quaternion, Vector3};
+use dream_math::{Matrix4, Quaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 
@@ -44,7 +44,8 @@ impl std::fmt::Display for Transform {
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Bone {
     pub is_root: bool,
-    pub id: u32,
+    pub node_id: u32,
+    pub inverse_bind_pose: Matrix4<f32>,
 }
 
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]

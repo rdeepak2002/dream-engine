@@ -135,6 +135,22 @@ impl Default for App {
                 Default::default(),
             );
         }
+        // mixamo robot
+        // {
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("YBot".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "757729d1-7598-4b2a-b3c4-dd1c2362053e".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        // }
+        // pbr robot
         {
             let entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
@@ -144,7 +160,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(), // berserk armor: "8efa6863-27d2-43ba-b814-ee8b60d12a9b"
+                "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
                 true,
                 Default::default(),
             );

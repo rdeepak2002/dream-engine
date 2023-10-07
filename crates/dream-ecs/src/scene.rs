@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex, Weak};
 
 use anyhow::{anyhow, Result};
@@ -24,6 +24,7 @@ use gltf::buffer::Source;
 use shipyard::{IntoIter, IntoWithId};
 
 use dream_fs::fs::read_binary;
+use dream_math::Matrix4;
 use dream_resource::resource_manager::ResourceManager;
 
 use crate::component::{Bone, Hierarchy, MeshRenderer, Tag, Transform};
@@ -216,27 +217,41 @@ impl Scene {
             // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
             for node in gltf_scene.nodes() {
                 let mut skin_root_nodes = HashSet::new();
-                let skinned_mesh_inverse_bindposes: Vec<_> = gltf
-                    .skins()
-                    .map(|gltf_skin| {
-                        log::debug!("Found skin {:?}", gltf_skin.index());
-                        match gltf_skin.skeleton() {
-                            Some(skeleton) => {
-                                log::debug!("Found skeleton {:?}", skeleton.index());
-                                skin_root_nodes.insert(skeleton.index() as u32);
-                            }
-                            None => {
-                                skin_root_nodes.insert(node.index() as u32);
-                            }
+                let mut inverse_bind_poses = HashMap::new();
+                gltf.skins().for_each(|gltf_skin| {
+                    match gltf_skin.skeleton() {
+                        Some(skeleton) => {
+                            skin_root_nodes.insert(skeleton.index() as u32);
                         }
-                        let reader = gltf_skin.reader(|buffer| Some(&buffer_data[buffer.index()]));
-                        let inverse_bindposes: Vec<dream_math::Matrix4<f32>> = reader
-                            .read_inverse_bind_matrices()
-                            .unwrap()
-                            .map(|mat| mat.into())
-                            .collect();
-                    })
-                    .collect();
+                        None => {
+                            skin_root_nodes.insert(node.index() as u32);
+                        }
+                    }
+                    let reader = gltf_skin.reader(|buffer| Some(&buffer_data[buffer.index()]));
+                    let inverse_bindposes: Vec<dream_math::Matrix4<f32>> = reader
+                        .read_inverse_bind_matrices()
+                        .unwrap()
+                        .map(|mat| mat.into())
+                        .collect();
+
+                    // how to map inverse bind matrices to joints: https://stackoverflow.com/questions/64904889/what-is-the-correct-mapping-of-inverse-bind-matrices
+                    log::debug!("Number of inverse bind poses {:?}", inverse_bindposes.len());
+                    log::debug!(
+                        "Number of joint for each inverse bind pose {:?}",
+                        gltf_skin.joints().len()
+                    );
+
+                    let mut idx = 0;
+                    gltf_skin.joints().for_each(|joint| {
+                        log::debug!(
+                            "Inverse bind pose for joint {:?} is {:?}",
+                            joint.index(),
+                            inverse_bindposes[idx]
+                        );
+                        inverse_bind_poses.insert(joint.index() as u32, inverse_bindposes[idx]);
+                        idx += 1;
+                    });
+                });
 
                 // set transform of root node of GLTF scene to this entity we are adding scene to
                 {
@@ -248,6 +263,7 @@ impl Scene {
                 process_gltf_child_node(
                     node,
                     &skin_root_nodes,
+                    &inverse_bind_poses,
                     scene.clone(),
                     resource_manager,
                     guid.clone(),
@@ -255,6 +271,14 @@ impl Scene {
                     skin_root_nodes.contains(node_idx),
                 );
             }
+        }
+
+        fn count_number_of_gltf_node_descendents<'a>(child_node: &'a gltf::Node) -> i32 {
+            let mut count = 1;
+            for child in child_node.children() {
+                count += count_number_of_gltf_node_descendents(&child);
+            }
+            count
         }
 
         fn collect_gltf_nodes_as_set<'a>(child_node: &'a gltf::Node, nodes: &'a mut HashSet<u32>) {
@@ -267,6 +291,7 @@ impl Scene {
         fn process_gltf_child_node(
             child_node: gltf::Node,
             skin_root_nodes: &HashSet<u32>,
+            inverse_bind_poses: &HashMap<u32, dream_math::Matrix4<f32>>,
             scene: Weak<Mutex<Scene>>,
             resource_manager: &ResourceManager,
             guid: String,
@@ -289,12 +314,16 @@ impl Scene {
                             let entity = Entity::from_handle(new_entity_id, scene.clone());
                             entity.add_component(Bone {
                                 is_root: is_skin_root,
-                                id: child.index() as u32,
+                                node_id: child.index() as u32,
+                                inverse_bind_pose: *inverse_bind_poses
+                                    .get(&(child.index() as u32))
+                                    .unwrap_or(&Matrix4::<f32>::identity()),
                             });
                         }
                         process_gltf_child_node(
                             child,
                             skin_root_nodes,
+                            inverse_bind_poses,
                             scene.clone(),
                             resource_manager,
                             guid.clone(),
@@ -341,6 +370,16 @@ impl Scene {
             let scale = dream_math::Vector3::new(gltf_scale[0], gltf_scale[1], gltf_scale[2]);
             Transform::new(position, rotation, scale)
         }
+    }
+}
+
+pub trait ToEntity {
+    fn to_entity(&self, scene: Weak<Mutex<Scene>>) -> Entity;
+}
+
+impl ToEntity for u64 {
+    fn to_entity(&self, scene: Weak<Mutex<Scene>>) -> Entity {
+        Entity::from_handle(*self, scene)
     }
 }
 

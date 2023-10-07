@@ -237,7 +237,7 @@ impl Panel for InspectorPanel {
                                 ui.strong("Armature Root");
                                 ui.label(format!("{:?}", bone_component.is_root).as_str());
                                 ui.strong("Id");
-                                ui.label(format!("{:?}", bone_component.id).as_str());
+                                ui.label(format!("{:?}", bone_component.node_id).as_str());
                             });
                     }
                 }
