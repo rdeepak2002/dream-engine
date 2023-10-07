@@ -60,7 +60,6 @@ impl RenderStorage {
             gltf_loader::read_gltf(model_path, device, pbr_material_factors_bind_group_layout);
         self.model_guids
             .insert(model_guid.parse().unwrap(), Box::new(model));
-        log::debug!("Model with guid {} stored", model_guid);
         Ok(str::parse(model_guid).unwrap())
     }
 
