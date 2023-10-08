@@ -392,11 +392,18 @@ impl RendererWgpu {
     ///
     /// * `position`
     /// * `color`
-    pub fn draw_light(&mut self, position: Vector3<f32>, color: Vector3<f32>, radius: f32) {
+    pub fn draw_light(
+        &mut self,
+        light_type: u32,
+        position: Vector3<f32>,
+        color: Vector3<f32>,
+        radius: f32,
+    ) {
         self.lights.renderer_lights.push(RendererLight {
             position,
             color,
             radius,
+            light_type,
         });
     }
 

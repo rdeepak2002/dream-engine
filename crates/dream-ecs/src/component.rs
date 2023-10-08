@@ -5,6 +5,7 @@ use dream_math::{Matrix4, Quaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 
+use crate::component::LightType::POINT;
 use crate::entity::Entity;
 use crate::scene::Scene;
 
@@ -49,15 +50,32 @@ pub struct Bone {
     pub inverse_bind_pose: Matrix4<f32>,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum LightType {
+    POINT = 0,
+    DIRECTIONAL = 1,
+}
+
+impl Default for LightType {
+    fn default() -> Self {
+        POINT
+    }
+}
+
 #[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
 pub struct Light {
+    pub light_type: LightType,
     pub color: Vector3<f32>,
     pub radius: f32,
 }
 
 impl Light {
-    pub fn new(color: Vector3<f32>, radius: f32) -> Light {
-        Light { color, radius }
+    pub fn new(light_type: LightType, color: Vector3<f32>, radius: f32) -> Light {
+        Light {
+            light_type,
+            color,
+            radius,
+        }
     }
 }
 

@@ -7,6 +7,7 @@ pub struct RendererLight {
     pub(crate) position: Vector3<f32>,
     pub(crate) color: Vector3<f32>,
     pub(crate) radius: f32,
+    pub(crate) light_type: u32,
 }
 
 pub struct Lights {
@@ -82,7 +83,7 @@ pub struct LightData {
     pub position: [f32; 3],
     pub radius: f32,
     pub color: [f32; 3],
-    pub _padding2: u32,
+    pub light_type: u32,
 }
 
 #[repr(C)]
@@ -97,6 +98,7 @@ impl LightsUniform {
             position: Vector3::new(0., 0., 0.),
             color: Vector3::new(0., 0., 0.),
             radius: 0.000001,
+            light_type: 0,
         };
         for idx in 0..self.lights.len() {
             self.lights[idx].position = renderer_lights
@@ -119,28 +121,28 @@ impl Default for LightsUniform {
         Self {
             lights: [
                 LightData {
+                    light_type: 0,
                     position: [0., 0., 0.],
                     radius: 20.0,
                     color: [0., 0., 0.],
-                    _padding2: 0,
                 },
                 LightData {
+                    light_type: 0,
                     position: [0., 0., 0.],
                     radius: 20.0,
                     color: [0., 0., 0.],
-                    _padding2: 0,
                 },
                 LightData {
+                    light_type: 0,
                     position: [0., 0., 0.],
                     radius: 20.0,
                     color: [0., 0., 0.],
-                    _padding2: 0,
                 },
                 LightData {
+                    light_type: 0,
                     position: [0., 0., 0.],
                     radius: 20.0,
                     color: [0., 0., 0.],
-                    _padding2: 0,
                 },
             ],
         }

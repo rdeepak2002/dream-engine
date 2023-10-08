@@ -1,4 +1,6 @@
 const PI: f32 = 3.14159265359;
+const LIGHT_TYPE_POINT: u32 = 0u;
+const LIGHT_TYPE_DIRECTIONAL: u32 = 1u;
 
 struct MaterialFactors {
     base_color: vec3<f32>,
@@ -15,7 +17,7 @@ struct Light {
   position: vec3<f32>,
   radius: f32,
   color: vec3<f32>,
-  _padding2: u32,
+  light_type: u32,
 }
 
 struct LightsUniform {

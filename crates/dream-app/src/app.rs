@@ -17,7 +17,7 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Transform};
+use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, PythonScript, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
 use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
@@ -79,8 +79,9 @@ impl Default for App {
             let cube_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Light 1".into()), None, None)
                     .expect("Unable to create cube entity");
-            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene))
-                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0), 20.0));
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 20.0),
+            );
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
@@ -102,8 +103,9 @@ impl Default for App {
             let cube_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
                     .expect("Unable to create cube entity");
-            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene))
-                .add_component(Light::new(Vector3::new(1.0, 1.0, 1.0), 20.0));
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 20.0),
+            );
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
@@ -240,7 +242,7 @@ impl App {
         // get children for root entity and render them
         if let Some(root_entity_id) = root_entity_id {
             let mut mat: Matrix4<f32> = Matrix4::identity();
-            let mut mat_from_root_bone: Matrix4<f32> = Matrix4::identity();
+            let mat_from_root_bone: Matrix4<f32> = Matrix4::identity();
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
                 mat = Matrix4::new_translation(&transform.position)
@@ -285,7 +287,12 @@ impl App {
                 mat = parent_mat * model_mat;
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
-                    renderer.draw_light(position, light_component.color, light_component.radius);
+                    renderer.draw_light(
+                        light_component.light_type as u32,
+                        position,
+                        light_component.color,
+                        light_component.radius,
+                    );
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
                     if let Some(resource_handle) = mesh_renderer.resource_handle {
