@@ -30,8 +30,12 @@ fn vs_main(
         instance.model_matrix_2,
         instance.model_matrix_3,
     );
+
     var pos = vec4<f32>(model.position, 1.0);
+    var nrm = model.normal;
+
     var totalPosition = vec4<f32>(0.0);
+    var totalNormal = vec3<f32>(0.0);
 
     var boneIds = model.bone_ids;
     var weights = model.weights;
@@ -43,17 +47,21 @@ fn vs_main(
             totalPosition = pos;
             break;
         }
+
         var localPosition: vec4<f32> = finalBonesMatrices[boneIds[i]] * vec4(model.position, 1.0f);
         totalPosition += localPosition * weights[i];
-        // TODO: use local normal for out.normal
-//        var localNormal: vec3<f32> = mat3(finalBonesMatrices[boneIds[i]]) * model.normal;
+
+        var localNormal: vec3<f32> = (finalBonesMatrices[boneIds[i]] * vec4(model.normal, 0.0f)).xyz * weights[i];
+        totalNormal += localNormal;
     }
+
+    totalNormal = normalize(totalNormal);
 
     var out: VertexOutput;
     out.world_position = (model_matrix * totalPosition).xyz;
     out.tex_coords = model.tex_coords;
     out.clip_position = camera.view_proj * model_matrix * totalPosition;
-    out.normal = normalize((model_matrix * vec4(model.normal, 0.0)).xyz);
+    out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
     out.bitangent = normalize(cross(out.tangent, out.normal));
     return out;
