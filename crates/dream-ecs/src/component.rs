@@ -45,6 +45,7 @@ impl std::fmt::Display for Transform {
 pub struct Bone {
     pub is_root: bool,
     pub node_id: u32,
+    pub bone_id: u32,
     pub inverse_bind_pose: Matrix4<f32>,
 }
 

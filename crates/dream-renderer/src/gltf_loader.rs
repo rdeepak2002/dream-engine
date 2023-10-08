@@ -191,7 +191,8 @@ fn get_dream_meshes_from_gltf_mesh(
         }
 
         // joints and weights for vertex skinning / skeletal animation
-        if let Some(joints) = reader.read_joints(mesh.index() as u32) {
+        // TODO: I'm passing wrong thing as index / set field of read_
+        if let Some(joints) = reader.read_joints(0) {
             let mut joint_index = 0;
             joints.into_u16().for_each(|joint| {
                 mesh_vertices_and_indices.vertices[joint_index].bone_ids = [
@@ -204,13 +205,14 @@ fn get_dream_meshes_from_gltf_mesh(
             });
         }
 
-        if let Some(weights) = reader.read_weights(mesh.index() as u32) {
+        // TODO: I'm passing wrong thing as index / set field of read_
+        if let Some(weights) = reader.read_weights(0) {
             let mut weight_index = 0;
-            weights.into_u16().for_each(|weight| {
-                let w1 = weight[0] as f32;
-                let w2 = weight[1] as f32;
-                let w3 = weight[2] as f32;
-                let w4 = weight[3] as f32;
+            weights.into_f32().for_each(|weight| {
+                let w1 = weight[0];
+                let w2 = weight[1];
+                let w3 = weight[2];
+                let w4 = weight[3];
                 let w_sum = w1 + w2 + w3 + w4;
                 if w_sum > 0.0 {
                     mesh_vertices_and_indices.vertices[weight_index].bone_weights =

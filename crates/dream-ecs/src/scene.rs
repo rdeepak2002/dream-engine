@@ -218,6 +218,7 @@ impl Scene {
             for node in gltf_scene.nodes() {
                 let mut skin_root_nodes = HashSet::new();
                 let mut inverse_bind_poses = HashMap::new();
+                let mut joint_node_id_to_joint_id = HashMap::new();
                 gltf.skins().for_each(|gltf_skin| {
                     match gltf_skin.skeleton() {
                         Some(skeleton) => {
@@ -241,13 +242,16 @@ impl Scene {
                         gltf_skin.joints().len()
                     );
 
+                    // TODO: associate the index of the joint node and its index in the joints array - this is what we should use
                     let mut idx = 0;
                     gltf_skin.joints().for_each(|joint| {
-                        log::debug!(
-                            "Inverse bind pose for joint {:?} is {:?}",
-                            joint.index(),
-                            inverse_bindposes[idx]
-                        );
+                        // log::debug!(
+                        //     "Inverse bind pose for idx {:?} joint {:?} is {:?}",
+                        //     idx,
+                        //     joint.index(),
+                        //     inverse_bindposes[idx]
+                        // );
+                        joint_node_id_to_joint_id.insert(joint.index() as u32, idx as u32);
                         inverse_bind_poses.insert(joint.index() as u32, inverse_bindposes[idx]);
                         idx += 1;
                     });
@@ -264,6 +268,7 @@ impl Scene {
                     node,
                     &skin_root_nodes,
                     &inverse_bind_poses,
+                    &joint_node_id_to_joint_id,
                     scene.clone(),
                     resource_manager,
                     guid.clone(),
@@ -291,7 +296,8 @@ impl Scene {
         fn process_gltf_child_node(
             child_node: gltf::Node,
             skin_root_nodes: &HashSet<u32>,
-            inverse_bind_poses: &HashMap<u32, dream_math::Matrix4<f32>>,
+            inverse_bind_poses: &HashMap<u32, Matrix4<f32>>,
+            joint_node_id_to_joint_id: &HashMap<u32, u32>,
             scene: Weak<Mutex<Scene>>,
             resource_manager: &ResourceManager,
             guid: String,
@@ -315,6 +321,9 @@ impl Scene {
                             entity.add_component(Bone {
                                 is_root: is_skin_root,
                                 node_id: child.index() as u32,
+                                bone_id: *joint_node_id_to_joint_id
+                                    .get(&(child.index() as u32))
+                                    .unwrap_or(&1),
                                 inverse_bind_pose: *inverse_bind_poses
                                     .get(&(child.index() as u32))
                                     .unwrap_or(&Matrix4::<f32>::identity()),
@@ -324,6 +333,7 @@ impl Scene {
                             child,
                             skin_root_nodes,
                             inverse_bind_poses,
+                            joint_node_id_to_joint_id,
                             scene.clone(),
                             resource_manager,
                             guid.clone(),
@@ -382,170 +392,3 @@ impl ToEntity for u64 {
         Entity::from_handle(*self, scene)
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::component::Hierarchy;
-//     use crate::scene::Scene;
-//
-//     #[test]
-//     /// Test adding and removing entities and verifying the hierarchy is correct
-//     fn test_hierarchy_empty() {
-//         let scene = Scene::new();
-//         assert_eq!(scene.root_entity_runtime_id, None);
-//     }
-//
-//     #[test]
-//     /// Test adding and removing entities and verifying the hierarchy is correct
-//     fn test_hierarchy_one_level() {
-//         let root_entity = get_current_scene().create_entity();
-//         let root_entity_child_1 = get_current_scene().create_entity();
-//         let root_entity_child_2 = get_current_scene().create_entity();
-//         let root_entity_child_3 = get_current_scene().create_entity();
-//         // check scene is referring to root entity as the root entity
-//         assert_eq!(
-//             get_current_scene().root_entity_runtime_id.unwrap(),
-//             root_entity.get_runtime_id()
-//         );
-//         // check hierarchy for root entity
-//         assert_eq!(
-//             root_entity.get_component::<Hierarchy>().unwrap(),
-//             Hierarchy {
-//                 num_children: 3,
-//                 parent_runtime_id: 0,
-//                 first_child_runtime_id: root_entity_child_1.handle,
-//                 prev_sibling_runtime_id: 0,
-//                 next_sibling_runtime_id: 0,
-//             }
-//         );
-//         // check hierarchy for root_entity_child_1
-//         assert_eq!(
-//             root_entity_child_1.get_component::<Hierarchy>().unwrap(),
-//             Hierarchy {
-//                 num_children: 0,
-//                 parent_runtime_id: root_entity.handle,
-//                 first_child_runtime_id: 0,
-//                 prev_sibling_runtime_id: 0,
-//                 next_sibling_runtime_id: root_entity_child_2.handle,
-//             }
-//         );
-//         // check hierarchy for root_entity_child_2
-//         assert_eq!(
-//             root_entity_child_2.get_component::<Hierarchy>().unwrap(),
-//             Hierarchy {
-//                 num_children: 0,
-//                 parent_runtime_id: root_entity.handle,
-//                 first_child_runtime_id: 0,
-//                 prev_sibling_runtime_id: root_entity_child_1.handle,
-//                 next_sibling_runtime_id: root_entity_child_3.handle,
-//             }
-//         );
-//         // check hierarchy for root_entity_child_3
-//         assert_eq!(
-//             root_entity_child_3.get_component::<Hierarchy>().unwrap(),
-//             Hierarchy {
-//                 num_children: 0,
-//                 parent_runtime_id: root_entity.handle,
-//                 first_child_runtime_id: 0,
-//                 prev_sibling_runtime_id: root_entity_child_2.handle,
-//                 next_sibling_runtime_id: 0,
-//             }
-//         );
-//     }
-//
-//     // #[test]
-//     // Test adding and removing entities and verifying the hierarchy is correct
-//     // fn test_hierarchy_three_levels() {
-//     //     let level_0 = get_current_scene().create_entity();
-//     //     let level_1_a = get_current_scene().create_entity_with_parent(level_0.handle);
-//     //     let level_2_a = get_current_scene().create_entity_with_parent(level_1_a.handle);
-//     //     let level_2_b = get_current_scene().create_entity_with_parent(level_1_a.handle);
-//     //     let level_2_c = get_current_scene().create_entity_with_parent(level_1_a.handle);
-//     //     let level_1_b = get_current_scene().create_entity_with_parent(level_0.handle);
-//     //     let level_2_d = get_current_scene().create_entity_with_parent(level_1_b.handle);
-//     //     // check scene is referring to root entity as the root entity
-//     //     assert_eq!(
-//     //         get_current_scene().root_entity_runtime_id.unwrap(),
-//     //         level_0.get_runtime_id()
-//     //     );
-//     //     // check hierarchy for root entity
-//     //     assert_eq!(
-//     //         level_0.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 2,
-//     //             parent_runtime_id: 0,
-//     //             first_child_runtime_id: level_1_a.handle,
-//     //             prev_sibling_runtime_id: 0,
-//     //             next_sibling_runtime_id: 0,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_1_a entity
-//     //     assert_eq!(
-//     //         level_1_a.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 3,
-//     //             parent_runtime_id: level_0.handle,
-//     //             first_child_runtime_id: level_2_a.handle,
-//     //             prev_sibling_runtime_id: 0,
-//     //             next_sibling_runtime_id: level_1_b.handle,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_1_b entity
-//     //     assert_eq!(
-//     //         level_1_b.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 1,
-//     //             parent_runtime_id: level_0.handle,
-//     //             first_child_runtime_id: level_2_d.handle,
-//     //             prev_sibling_runtime_id: level_1_a.handle,
-//     //             next_sibling_runtime_id: 0,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_2_a entity
-//     //     assert_eq!(
-//     //         level_2_a.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 0,
-//     //             parent_runtime_id: level_1_a.handle,
-//     //             first_child_runtime_id: 0,
-//     //             prev_sibling_runtime_id: 0,
-//     //             next_sibling_runtime_id: level_2_b.handle,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_2_b entity
-//     //     assert_eq!(
-//     //         level_2_b.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 0,
-//     //             parent_runtime_id: level_1_a.handle,
-//     //             first_child_runtime_id: 0,
-//     //             prev_sibling_runtime_id: level_2_a.handle,
-//     //             next_sibling_runtime_id: level_2_c.handle,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_2_c entity
-//     //     assert_eq!(
-//     //         level_2_c.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 0,
-//     //             parent_runtime_id: level_1_a.handle,
-//     //             first_child_runtime_id: 0,
-//     //             prev_sibling_runtime_id: level_2_b.handle,
-//     //             next_sibling_runtime_id: 0,
-//     //         }
-//     //     );
-//     //     // check hierarchy for level_2_d entity
-//     //     assert_eq!(
-//     //         level_2_d.get_component::<Hierarchy>().unwrap(),
-//     //         Hierarchy {
-//     //             num_children: 0,
-//     //             parent_runtime_id: level_1_b.handle,
-//     //             first_child_runtime_id: 0,
-//     //             prev_sibling_runtime_id: 0,
-//     //             next_sibling_runtime_id: 0,
-//     //         }
-//     //     );
-//     // }
-//
-//     // TODO: test removing entities
-// }

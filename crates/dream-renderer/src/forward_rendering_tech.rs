@@ -4,6 +4,7 @@ use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
+use crate::skinning::SkinningTech;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -89,6 +90,7 @@ impl ForwardRenderingTech {
         camera: &Camera,
         lights: &Lights,
         render_storage: &RenderStorage,
+        skinning_tech: &SkinningTech,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -119,6 +121,9 @@ impl ForwardRenderingTech {
 
         // lights bind group
         render_pass_forward_rendering.set_bind_group(3, &lights.lights_bind_group, &[]);
+
+        // skinning bind group
+        render_pass_forward_rendering.set_bind_group(4, &skinning_tech.skinning_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {

@@ -212,6 +212,7 @@ impl App {
         // get children for root entity and render them
         if let Some(root_entity_id) = root_entity_id {
             let mut mat: Matrix4<f32> = Matrix4::identity();
+            let mut mat_from_root_bone: Matrix4<f32> = Matrix4::identity();
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
                 mat = Matrix4::new_translation(&transform.position)
@@ -221,7 +222,13 @@ impl App {
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene_weak_ref.clone(), mat);
+                draw_entity_and_children(
+                    renderer,
+                    child_id,
+                    scene_weak_ref.clone(),
+                    mat,
+                    mat_from_root_bone,
+                );
             }
         }
 
@@ -231,9 +238,11 @@ impl App {
             entity_id: u64,
             scene: Weak<Mutex<Scene>>,
             parent_mat: Matrix4<f32>,
+            mat_from_root_bone: Matrix4<f32>,
         ) {
             let entity = Entity::from_handle(entity_id, scene.clone());
             let mut mat = Matrix4::identity();
+            let mut new_bone_mat = mat_from_root_bone;
 
             if let Some(transform) = entity.get_component::<Transform>() {
                 // TODO: create cache of mat4 that is map of maps
@@ -242,10 +251,10 @@ impl App {
                 let position = transform.position;
                 let rotation = transform.rotation;
                 let scale = transform.scale;
-                mat = Matrix4::new_translation(&position)
+                let model_mat = Matrix4::new_translation(&position)
                     * Matrix4::new_nonuniform_scaling(&scale)
                     * UnitQuaternion::from_quaternion(rotation).to_homogeneous();
-                mat = parent_mat * mat;
+                mat = parent_mat * model_mat;
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
                     renderer.draw_light(position, light_component.color, light_component.radius);
@@ -280,15 +289,15 @@ impl App {
                     }
                 }
                 if let Some(bone_component) = entity.get_component::<Bone>() {
-                    let node_id = bone_component.node_id;
-                    let bone_mat: Matrix4<f32> = mat * bone_component.inverse_bind_pose;
-                    renderer.set_bone_transform(node_id, bone_mat);
+                    new_bone_mat *= model_mat;
+                    let bone_mat: Matrix4<f32> = new_bone_mat;
+                    renderer.set_bone_transform(bone_component.bone_id, bone_mat);
                 }
             }
 
             let children_ids = Scene::get_children_for_entity(scene.clone(), entity_id);
             for child_id in children_ids {
-                draw_entity_and_children(renderer, child_id, scene.clone(), mat);
+                draw_entity_and_children(renderer, child_id, scene.clone(), mat, new_bone_mat);
             }
         }
     }

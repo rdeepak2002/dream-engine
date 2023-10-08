@@ -19,6 +19,10 @@ impl Shader {
             source = source.replace("//include:model.wgsl", include_str!("model.wgsl"));
         }
 
+        if source.contains("//include:skinning.wgsl") {
+            source = source.replace("//include:skinning.wgsl", include_str!("skinning.wgsl"));
+        }
+
         let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some(label.as_str()),
             source: wgpu::ShaderSource::Wgsl(source.clone().into()),

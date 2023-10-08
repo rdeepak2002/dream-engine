@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+use std::cmp::max;
 use std::iter;
 
 use wgpu::{CompositeAlphaMode, PresentMode};
@@ -30,6 +31,7 @@ use crate::lights::{Lights, RendererLight};
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
 use crate::render_storage::RenderStorage;
+use crate::skinning::SkinningTech;
 use crate::{camera, texture};
 
 #[cfg(not(feature = "wgpu/webgl"))]
@@ -55,6 +57,7 @@ pub struct RendererWgpu {
     depth_texture: texture::Texture,
     forward_rendering_tech: ForwardRenderingTech,
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
+    skinning_tech: SkinningTech,
     lights: Lights,
 }
 
@@ -106,12 +109,15 @@ impl RendererWgpu {
 
         // device is an open connection to a gpu device
         // queue is for writing to buffers and textures by executing command buffers
+        let mut limits = wgpu::Limits::default();
+        // TODO: reduce bind groups to 4 by combining the pbr ones
+        limits.max_bind_groups = max(limits.max_bind_groups, 5);
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
+                    limits,
                 },
                 None,
             )
@@ -208,8 +214,12 @@ impl RendererWgpu {
         // lights storage
         let lights = Lights::new(&device);
 
+        // skinning tech
+        let skinning_tech = SkinningTech::new(&device);
+
         // bind groups and layouts for physically based rendering textures
-        let pbr_bind_groups_and_layouts = PbrBindGroupsAndLayouts::new(&device, &camera, &lights);
+        let pbr_bind_groups_and_layouts =
+            PbrBindGroupsAndLayouts::new(&device, &camera, &lights, &skinning_tech);
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
@@ -251,6 +261,7 @@ impl RendererWgpu {
             forward_rendering_tech,
             pbr_bind_groups_and_layouts,
             lights,
+            skinning_tech,
         }
     }
 
@@ -322,6 +333,9 @@ impl RendererWgpu {
         // update light buffers
         self.lights.update_light_buffer(&self.device);
 
+        // update bones buffer
+        self.skinning_tech.update_all_bones_buffer(&self.queue);
+
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
@@ -329,6 +343,7 @@ impl RendererWgpu {
             &self.camera,
             &self.lights,
             &self.render_storage,
+            &self.skinning_tech,
         );
 
         // combine gbuffers into one final texture result
@@ -349,6 +364,7 @@ impl RendererWgpu {
             &self.camera,
             &self.lights,
             &self.render_storage,
+            &self.skinning_tech,
         );
 
         // submit all drawing commands to gpu
@@ -425,13 +441,11 @@ impl RendererWgpu {
         self.lights.renderer_lights.clear();
     }
 
-    pub fn set_bone_transform(&self, node_id: u32, mat: dream_math::Matrix4<f32>) {
-        // phase 1 (this will allow us to animate a single model)
-        // TODO: convert node_id to bone_id
-        // TODO: set transform matrix for bone_id to mat passed into this function
+    pub fn set_bone_transform(&mut self, bone_id: u32, mat: dream_math::Matrix4<f32>) {
         // phase 2 (this will allow u to model the same instance of a model in different ways)
         // TODO: the entity ID of the root bone tells us which armature we are using
         // TODO: associate bones for that armature
         // todo!();
+        self.skinning_tech.update_bone(bone_id, mat);
     }
 }

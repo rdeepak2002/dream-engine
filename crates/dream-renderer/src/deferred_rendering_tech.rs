@@ -4,6 +4,7 @@ use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
+use crate::skinning::SkinningTech;
 use crate::texture;
 use crate::texture::Texture;
 
@@ -306,6 +307,7 @@ impl DeferredRenderingTech {
         camera: &Camera,
         lights: &Lights,
         render_storage: &RenderStorage,
+        skinning_tech: &SkinningTech,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -386,6 +388,9 @@ impl DeferredRenderingTech {
 
         // lights bind group
         render_pass_write_g_buffers.set_bind_group(3, &lights.lights_bind_group, &[]);
+
+        // skinning bind group
+        render_pass_write_g_buffers.set_bind_group(4, &skinning_tech.skinning_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
