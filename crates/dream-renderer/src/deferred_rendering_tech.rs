@@ -78,7 +78,7 @@ impl DeferredRenderingTech {
                     // normal
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::all(),
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -89,7 +89,7 @@ impl DeferredRenderingTech {
                     // albedo
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::all(),
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -100,7 +100,7 @@ impl DeferredRenderingTech {
                     // emissive
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::all(),
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -111,7 +111,7 @@ impl DeferredRenderingTech {
                     // ao roughness metallic
                     wgpu::BindGroupLayoutEntry {
                         binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::all(),
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -122,7 +122,7 @@ impl DeferredRenderingTech {
                     // depth
                     wgpu::BindGroupLayoutEntry {
                         binding: 4,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: wgpu::ShaderStages::all(),
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -386,11 +386,11 @@ impl DeferredRenderingTech {
         // camera bind group
         render_pass_write_g_buffers.set_bind_group(0, &camera.camera_bind_group, &[]);
 
+        // skinning bind group
+        render_pass_write_g_buffers.set_bind_group(1, &skinning_tech.skinning_bind_group, &[]);
+
         // lights bind group
         render_pass_write_g_buffers.set_bind_group(3, &lights.lights_bind_group, &[]);
-
-        // skinning bind group
-        render_pass_write_g_buffers.set_bind_group(4, &skinning_tech.skinning_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -421,11 +421,11 @@ impl DeferredRenderingTech {
                 .expect("No material at index");
             let is_opaque = material.factor_alpha >= 1.0;
             if is_opaque && material.pbr_material_textures_bind_group.is_some() {
-                render_pass_write_g_buffers.set_bind_group(
-                    1,
-                    &material.pbr_material_factors_bind_group,
-                    &[],
-                );
+                // render_pass_write_g_buffers.set_bind_group(
+                //     1,
+                //     &material.pbr_material_factors_bind_group,
+                //     &[],
+                // );
                 render_pass_write_g_buffers.set_bind_group(
                     2,
                     material.pbr_material_textures_bind_group.as_ref().unwrap(),

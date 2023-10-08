@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
-use std::cmp::max;
 use std::iter;
 
 use wgpu::{CompositeAlphaMode, PresentMode};
@@ -109,15 +108,12 @@ impl RendererWgpu {
 
         // device is an open connection to a gpu device
         // queue is for writing to buffers and textures by executing command buffers
-        let mut limits = wgpu::Limits::default();
-        // TODO: reduce bind groups to 4 by combining the pbr ones
-        limits.max_bind_groups = max(limits.max_bind_groups, 5);
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    limits,
+                    limits: wgpu::Limits::default(),
                 },
                 None,
             )
@@ -421,7 +417,7 @@ impl RendererWgpu {
             &self.device,
             &self
                 .pbr_bind_groups_and_layouts
-                .pbr_material_factors_bind_group_layout,
+                .pbr_material_textures_bind_group_layout,
         )
     }
 

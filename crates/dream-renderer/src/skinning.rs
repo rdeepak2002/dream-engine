@@ -23,7 +23,7 @@ impl SkinningTech {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                    visibility: wgpu::ShaderStages::all(),
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -69,13 +69,13 @@ impl SkinningTech {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SkinningUniform {
-    bone_transforms: [[[f32; 4]; 4]; 256],
+    bone_transforms: [[[f32; 4]; 4]; 128],
 }
 
 impl Default for SkinningUniform {
     fn default() -> Self {
         Self {
-            bone_transforms: [Matrix4::identity().into(); 256],
+            bone_transforms: [Matrix4::identity().into(); 128],
         }
     }
 }

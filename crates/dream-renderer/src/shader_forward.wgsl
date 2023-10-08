@@ -7,7 +7,7 @@
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(4) @binding(0)
+@group(1) @binding(0)
 var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 struct VertexOutput {
@@ -68,8 +68,6 @@ fn vs_main(
 }
 
 // Fragment shader
-@group(1) @binding(0)
-var<uniform> material_factors: MaterialFactors;
 // base color texture
 @group(2) @binding(0)
 var texture_base_color: texture_2d<f32>;
@@ -95,6 +93,8 @@ var sampler_emissive: sampler;
 var texture_occlusion: texture_2d<f32>;
 @group(2) @binding(9)
 var sampler_occlusion: sampler;
+@group(2) @binding(10)
+var<uniform> material_factors: MaterialFactors;
 
 @group(3) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;

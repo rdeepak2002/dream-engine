@@ -57,7 +57,7 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 }
 
 pub struct Material {
-    pub pbr_material_factors_bind_group: wgpu::BindGroup,
+    // pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
     pub factor_base_color: dream_math::Vector3<f32>,
     pub factor_emissive: dream_math::Vector3<f32>,
@@ -72,6 +72,7 @@ pub struct Material {
     pub normal_map_image: Image,
     pub emissive_image: Image,
     pub occlusion_image: Image,
+    pub pbr_mat_buffer: wgpu::Buffer,
 }
 
 impl Material {
@@ -163,19 +164,18 @@ impl Material {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let pbr_material_factors_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: pbr_material_factors_bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: pbr_mat_buffer.as_entire_binding(),
-                }],
-                label: None,
-            });
+        // let pbr_material_factors_bind_group =
+        //     device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //         layout: pbr_material_factors_bind_group_layout,
+        //         entries: &[wgpu::BindGroupEntry {
+        //             binding: 10,
+        //             resource: pbr_mat_buffer.as_entire_binding(),
+        //         }],
+        //         label: None,
+        //     });
 
         // define this struct
         Self {
-            pbr_material_factors_bind_group,
             pbr_material_textures_bind_group: None,
             factor_base_color: material_factors_uniform.base_color.into(),
             factor_emissive: material_factors_uniform.emissive.into(),
@@ -190,6 +190,7 @@ impl Material {
             normal_map_image,
             emissive_image,
             occlusion_image,
+            pbr_mat_buffer,
         }
     }
 
@@ -335,6 +336,10 @@ impl Material {
                     wgpu::BindGroupEntry {
                         binding: 9,
                         resource: wgpu::BindingResource::Sampler(&occlusion_texture.sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 10,
+                        resource: self.pbr_mat_buffer.as_entire_binding(),
                     },
                 ],
                 label: Some("pbr_textures_bind_group"),

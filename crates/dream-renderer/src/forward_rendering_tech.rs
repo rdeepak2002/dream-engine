@@ -119,11 +119,11 @@ impl ForwardRenderingTech {
         // camera bind group
         render_pass_forward_rendering.set_bind_group(0, &camera.camera_bind_group, &[]);
 
+        // skinning bind group
+        render_pass_forward_rendering.set_bind_group(1, &skinning_tech.skinning_bind_group, &[]);
+
         // lights bind group
         render_pass_forward_rendering.set_bind_group(3, &lights.lights_bind_group, &[]);
-
-        // skinning bind group
-        render_pass_forward_rendering.set_bind_group(4, &skinning_tech.skinning_bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -155,11 +155,11 @@ impl ForwardRenderingTech {
             // only draw transparent objects
             let is_translucent = material.factor_alpha < 1.0;
             if is_translucent && material.pbr_material_textures_bind_group.is_some() {
-                render_pass_forward_rendering.set_bind_group(
-                    1,
-                    &material.pbr_material_factors_bind_group,
-                    &[],
-                );
+                // render_pass_forward_rendering.set_bind_group(
+                //     1,
+                //     &material.pbr_material_factors_bind_group,
+                //     &[],
+                // );
                 render_pass_forward_rendering.set_bind_group(
                     2,
                     material.pbr_material_textures_bind_group.as_ref().unwrap(),
