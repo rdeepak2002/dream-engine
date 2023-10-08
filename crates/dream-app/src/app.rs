@@ -121,6 +121,27 @@ impl Default for App {
                 ),
             );
         }
+        // {
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Link".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "e958661a-ec5e-4282-86cc-09e6c3b1f8ae".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(0.7, 0.4, 1.0),
+        //             Quaternion::new(1.0, 0.2, 8.5, 7.0),
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //         ),
+        //     );
+        // }
         {
             let entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
