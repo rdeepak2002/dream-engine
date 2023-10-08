@@ -76,19 +76,45 @@ impl Panel for InspectorPanel {
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.position.x)
                                     .speed(0.1)
-                                    .max_decimals(3),
+                                    .max_decimals(10),
                             );
                             ui.strong("y");
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.position.y)
                                     .speed(0.1)
-                                    .max_decimals(3),
+                                    .max_decimals(10),
                             );
                             ui.strong("z");
                             ui.add(
                                 egui::DragValue::new(&mut transform_component.position.z)
                                     .speed(0.1)
-                                    .max_decimals(3),
+                                    .max_decimals(10),
+                            );
+
+                            ui.strong("Rotation");
+                            ui.strong("w");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.rotation.w)
+                                    .speed(0.1)
+                                    .max_decimals(10),
+                            );
+                            ui.strong("i");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.rotation.i)
+                                    .speed(0.1)
+                                    .max_decimals(10),
+                            );
+                            ui.strong("j");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.rotation.j)
+                                    .speed(0.1)
+                                    .max_decimals(10),
+                            );
+                            ui.strong("k");
+                            ui.add(
+                                egui::DragValue::new(&mut transform_component.rotation.k)
+                                    .speed(0.1)
+                                    .max_decimals(10),
                             );
 
                             ui.strong("Scale");
@@ -236,8 +262,10 @@ impl Panel for InspectorPanel {
                             .body(|ui| {
                                 ui.strong("Armature Root");
                                 ui.label(format!("{:?}", bone_component.is_root).as_str());
-                                ui.strong("Id");
+                                ui.strong("Node ID");
                                 ui.label(format!("{:?}", bone_component.node_id).as_str());
+                                ui.strong("Bone ID");
+                                ui.label(format!("{:?}", bone_component.bone_id).as_str());
                             });
                     }
                 }

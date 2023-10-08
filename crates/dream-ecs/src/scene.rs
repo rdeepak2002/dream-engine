@@ -151,7 +151,7 @@ impl Scene {
             let new_root_entity = scene_mutex_lock
                 .handle
                 .add_entity((
-                    transform.unwrap_or(Transform::default()),
+                    Transform::default(),
                     Hierarchy::default(),
                     Tag::new("Root".into()),
                 ))
@@ -162,7 +162,7 @@ impl Scene {
         let new_entity_id = scene_mutex_lock
             .handle
             .add_entity((
-                Transform::default(),
+                transform.unwrap_or(Transform::default()),
                 Hierarchy::default(),
                 Tag::new(name.unwrap_or(String::from("Entity"))),
             ))

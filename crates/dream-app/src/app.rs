@@ -290,7 +290,7 @@ impl App {
                 }
                 if let Some(bone_component) = entity.get_component::<Bone>() {
                     new_bone_mat *= model_mat;
-                    let bone_mat: Matrix4<f32> = new_bone_mat;
+                    let bone_mat: Matrix4<f32> = new_bone_mat * bone_component.inverse_bind_pose;
                     renderer.set_bone_transform(bone_component.bone_id, bone_mat);
                 }
             }
