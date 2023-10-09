@@ -117,8 +117,13 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     var normal = normal_map_texture.rgb * 2.0 - vec3(1.0, 1.0, 1.0);
     normal = normalize(TBN * normal);
     // emissive
-    let emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
+    var emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
     let emissive_factor = vec4(material_factors.emissive, 1.0);
+    if (emissive_texture.r == 0.0 && emissive_texture.g == 0.0 && emissive_texture.b == 0.0) {
+        if (emissive_factor.r > 0.0 || emissive_factor.g > 0.0 || emissive_factor.b > 0.0) {
+            emissive_texture = vec4(1.0);
+        }
+    }
     let emissive = emissive_texture * emissive_factor;
     // ambient occlusion
     let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);
