@@ -80,7 +80,7 @@ impl Default for App {
                 Scene::create_entity(Arc::downgrade(&scene), Some("Light 1".into()), None, None)
                     .expect("Unable to create cube entity");
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 20.0),
+                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 4.0),
             );
             // add mesh renderer component
             MeshRenderer::add_to_entity(
@@ -104,7 +104,7 @@ impl Default for App {
                 Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
                     .expect("Unable to create cube entity");
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 20.0),
+                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 4.0),
             );
             // add mesh renderer component
             MeshRenderer::add_to_entity(

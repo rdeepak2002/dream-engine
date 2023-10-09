@@ -115,7 +115,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
 
     // TODO: make ambient light a uniform or iterate through all ambient lights
 
-    let ambientIntensity = 0.1;
+    let ambientIntensity = 0.01;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
     var color = result + ambient;
 
@@ -124,9 +124,11 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
     }
 
     // HDR tonemapping
-    color = color / (color + vec3(1.0));
+    let exposure: f32 = 4.0f;
+    color = vec3(1.0) - exp(-color * exposure);
     // gamma correct
-//    color = pow(color, vec3(1.0/2.2));
+    let gamma: f32 = 1.0;
+    color = pow(color, vec3(1.0 / gamma));
 
     return color;
 }
