@@ -106,8 +106,8 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Light::new(
                     LightType::POINT,
-                    Vector3::new(1.0, 0.18, 0.18),
-                    15.0,
+                    Vector3::new(1.0, 0.76, 0.45),
+                    20.0,
                     Vector3::new(1.0, 0.0, 0.0),
                     false,
                 ),
