@@ -67,14 +67,21 @@ pub struct Light {
     pub light_type: LightType,
     pub color: Vector3<f32>,
     pub radius: f32,
+    pub direction: Vector3<f32>,
 }
 
 impl Light {
-    pub fn new(light_type: LightType, color: Vector3<f32>, radius: f32) -> Light {
+    pub fn new(
+        light_type: LightType,
+        color: Vector3<f32>,
+        radius: f32,
+        direction: Vector3<f32>,
+    ) -> Light {
         Light {
             light_type,
             color,
             radius,
+            direction,
         }
     }
 }

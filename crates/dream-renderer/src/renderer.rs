@@ -398,12 +398,14 @@ impl RendererWgpu {
         position: Vector3<f32>,
         color: Vector3<f32>,
         radius: f32,
+        direction: Vector3<f32>,
     ) {
         self.lights.renderer_lights.push(RendererLight {
             position,
             color,
             radius,
             light_type,
+            direction,
         });
     }
 

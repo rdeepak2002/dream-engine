@@ -77,52 +77,78 @@ impl Default for App {
         }
         {
             let cube_entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Light 1".into()), None, None)
-                    .expect("Unable to create cube entity");
+                Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
+                    .expect("Unable to create sun entity");
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 4.0),
-            );
-            // add mesh renderer component
-            MeshRenderer::add_to_entity(
-                Arc::downgrade(&scene),
-                cube_entity_handle,
-                &resource_manager,
-                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
-                true,
-                Default::default(),
+                Light::new(
+                    LightType::DIRECTIONAL,
+                    Vector3::new(0.25, 0.62, 0.99),
+                    4.0,
+                    Vector3::new(1.0, 0.12, 0.18),
+                ),
             );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0., 0.5, 1.5),
+                    Vector3::new(0., 0.0, 1.0),
                     Quaternion::identity(),
-                    Vector3::new(0.1, 0.1, 0.1),
+                    Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
         }
         {
-            let cube_entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
-                    .expect("Unable to create cube entity");
+            let cube_entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Point Light".into()),
+                None,
+                None,
+            )
+            .expect("Unable to create point light entity");
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(LightType::POINT, Vector3::new(1.0, 1.0, 1.0), 4.0),
+                Light::new(
+                    LightType::POINT,
+                    Vector3::new(1.0, 0.18, 0.39),
+                    4.0,
+                    Vector3::new(1.0, 0.0, 0.0),
+                ),
             );
             // add mesh renderer component
-            MeshRenderer::add_to_entity(
-                Arc::downgrade(&scene),
-                cube_entity_handle,
-                &resource_manager,
-                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
-                true,
-                Default::default(),
-            );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(1.3, 0.9, 0.9),
+                    Vector3::new(0., 0.5, 1.5),
                     Quaternion::identity(),
-                    Vector3::new(0.1, 0.1, 0.1),
+                    Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
         }
+        // {
+        //     let cube_entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
+        //             .expect("Unable to create cube entity");
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Light::new(
+        //             LightType::POINT,
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //             4.0,
+        //             Vector3::new(1.0, 0.0, 0.0),
+        //         ),
+        //     );
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         cube_entity_handle,
+        //         &resource_manager,
+        //         "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(1.3, 0.9, 0.9),
+        //             Quaternion::identity(),
+        //             Vector3::new(0.1, 0.1, 0.1),
+        //         ),
+        //     );
+        // }
         // {
         //     let entity_handle =
         //         Scene::create_entity(Arc::downgrade(&scene), Some("Link".into()), None, None)
@@ -292,6 +318,7 @@ impl App {
                         position,
                         light_component.color,
                         light_component.radius,
+                        light_component.direction,
                     );
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {

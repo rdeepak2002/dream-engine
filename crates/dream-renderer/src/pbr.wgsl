@@ -14,10 +14,12 @@ struct MaterialFactors {
 };
 
 struct Light {
-  position: vec3<f32>,
-  radius: f32,
-  color: vec3<f32>,
-  light_type: u32,
+    position: vec3<f32>,
+    radius: f32,
+    color: vec3<f32>,
+    _padding: u32,
+    direction: vec3<f32>,
+    light_type: u32,
 }
 
 struct LightsUniform {
@@ -78,11 +80,26 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
 
         // calculate per-light radiance
         let V: vec3<f32> = normalize(camera_position - world_position);
-        let L: vec3<f32> = normalize(lightPosition - world_position);
+        var L: vec3<f32> = vec3(0.0);
+        if (light.light_type == LIGHT_TYPE_POINT) {
+            L = normalize(lightPosition - world_position);
+        }
+        if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
+            // TODO: verify
+            L = normalize(light.direction);
+        }
         let H: vec3<f32> = normalize(V + L);
-        let distance: f32 = length(lightPosition - world_position);
-        let attenuation: f32 = 1.0 / pow(distance / light.radius + 1.0, 2.0);
-        let radiance = lightColor * attenuation;
+        var radiance: vec3<f32> = vec3(0.0);
+        if (light.light_type == LIGHT_TYPE_POINT) {
+            let distance: f32 = length(lightPosition - world_position);
+            let attenuation: f32 = 1.0 / pow(distance / light.radius + 1.0, 2.0);
+            radiance = lightColor * attenuation;
+        }
+        if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
+            // TODO: verify
+            let attenuation: f32 = 1.0;
+            radiance = lightColor * attenuation;
+        }
 
         // Cook-Torrance BRDF
         let NDF: f32 = DistributionGGX(N, H, roughness);

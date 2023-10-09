@@ -8,6 +8,7 @@ pub struct RendererLight {
     pub(crate) color: Vector3<f32>,
     pub(crate) radius: f32,
     pub(crate) light_type: u32,
+    pub(crate) direction: Vector3<f32>,
 }
 
 pub struct Lights {
@@ -83,6 +84,8 @@ pub struct LightData {
     pub position: [f32; 3],
     pub radius: f32,
     pub color: [f32; 3],
+    pub _padding: u32,
+    pub direction: [f32; 3],
     pub light_type: u32,
 }
 
@@ -97,10 +100,15 @@ impl LightsUniform {
         let default_light = RendererLight {
             position: Vector3::new(0., 0., 0.),
             color: Vector3::new(0., 0., 0.),
-            radius: 0.000001,
+            radius: 1.0,
             light_type: 0,
+            direction: Vector3::new(1.0, 0.0, 0.0),
         };
         for idx in 0..self.lights.len() {
+            self.lights[idx].light_type = renderer_lights
+                .get(idx)
+                .unwrap_or(&default_light)
+                .light_type;
             self.lights[idx].position = renderer_lights
                 .get(idx)
                 .unwrap_or(&default_light)
@@ -112,6 +120,11 @@ impl LightsUniform {
                 .color
                 .into();
             self.lights[idx].radius = renderer_lights.get(idx).unwrap_or(&default_light).radius;
+            self.lights[idx].direction = renderer_lights
+                .get(idx)
+                .unwrap_or(&default_light)
+                .direction
+                .into();
         }
     }
 }
@@ -123,26 +136,34 @@ impl Default for LightsUniform {
                 LightData {
                     light_type: 0,
                     position: [0., 0., 0.],
-                    radius: 20.0,
+                    radius: 1.0,
                     color: [0., 0., 0.],
+                    direction: [1., 0., 0.],
+                    _padding: 0,
                 },
                 LightData {
                     light_type: 0,
                     position: [0., 0., 0.],
-                    radius: 20.0,
+                    radius: 1.0,
                     color: [0., 0., 0.],
+                    direction: [1., 0., 0.],
+                    _padding: 0,
                 },
                 LightData {
                     light_type: 0,
                     position: [0., 0., 0.],
-                    radius: 20.0,
+                    radius: 1.0,
                     color: [0., 0., 0.],
+                    direction: [1., 0., 0.],
+                    _padding: 0,
                 },
                 LightData {
                     light_type: 0,
                     position: [0., 0., 0.],
-                    radius: 20.0,
+                    radius: 1.0,
                     color: [0., 0., 0.],
+                    direction: [1., 0., 0.],
+                    _padding: 0,
                 },
             ],
         }
