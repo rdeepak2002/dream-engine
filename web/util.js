@@ -192,14 +192,49 @@ const fetchResourceFiles = async (showDownloadLogs = false) => {
     // });
 }
 
+function isChromeBrowser() {
+    const isChromium = window.chrome;
+    const winNav = window.navigator;
+    const vendorName = winNav.vendor;
+    const isOpera = typeof window.opr !== "undefined";
+    const isIEedge = winNav.userAgent.indexOf("Edg") > -1;
+    const isIOSChrome = winNav.userAgent.match("CriOS");
+
+    if (isIOSChrome) {
+        return true;
+    } else return isChromium !== null &&
+        typeof isChromium !== "undefined" &&
+        vendorName === "Google Inc." &&
+        isOpera === false &&
+        isIEedge === false;
+}
+
 const startApplication = (showDownloadLogs = false) => {
+    const isChrome = isChromeBrowser();
+    console.debug("Is chrome: ", isChrome);
+
+    if (!isChrome) {
+        alert("Unsupported browser. Please use the latest version of Desktop Google Chrome.");
+        return;
+    }
+
+    const enableWebGpu = navigator?.gpu !== undefined;
+    console.debug("Web GPU enabled: ", enableWebGpu);
+
+    if (!enableWebGpu) {
+        alert("Browser does not support WebGPU. Please use the latest version of Chrome on a modern computer.");
+        return;
+    }
+
+    const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
+    console.debug("Multi-threading enabled: ", enableMultiThreading);
+
+    if (!enableMultiThreading) {
+        alert("Multi-threading / web workers is not supported on this platform. Please use a modern computer.");
+        return;
+    }
+
     fetchResourceFiles(showDownloadLogs).then(async () => {
-        const enableWebGpu = navigator?.gpu !== undefined;
-        console.debug("Web GPU enabled: ", enableWebGpu);
-
-        const enableMultiThreading = (typeof (Worker) !== "undefined") && navigator?.hardwareConcurrency > 1;
-        console.debug("Multi-threading enabled: ", enableMultiThreading);
-
         const importPath = enableWebGpu ? './build/dream_runner.js' : './build-webgl/dream_runner.js';
         const dreamApp = await import(importPath);
         console.log(dreamApp);
