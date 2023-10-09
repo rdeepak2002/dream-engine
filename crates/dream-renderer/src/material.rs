@@ -127,7 +127,7 @@ impl Material {
         let mut emissive_image = Image::default();
         match material.emissive_texture() {
             None => {
-                let bytes = include_bytes!("black.png");
+                let bytes = include_bytes!("white.png");
                 emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
