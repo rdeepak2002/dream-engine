@@ -1,50 +1,6 @@
 [
   {
-    "filepath": "main_mat_normal.png",
-    "fileUrl": null
-  },
-  {
-    "filepath": "shadow.glb.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "textures.meta",
-    "fileUrl": null
-  },
-  {
     "filepath": ".DS_Store",
-    "fileUrl": null
-  },
-  {
-    "filepath": "robot.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "main_mat_normal.png.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "robot.glb.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "scene.gltf.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "link.glb.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "ybot.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "main_mat_metallicRoughness.png.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "shadow.glb",
     "fileUrl": null
   },
   {
@@ -52,59 +8,47 @@
     "fileUrl": null
   },
   {
-    "filepath": "scene.bin.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "scene.gltf",
-    "fileUrl": null
-  },
-  {
-    "filepath": "berserk_armor.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "main_mat_baseColor.png.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "berserk_armor.glb.meta",
-    "fileUrl": null
-  },
-  {
     "filepath": "files.json",
     "fileUrl": null
   },
   {
-    "filepath": "ybot.glb.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "cube.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "main_mat_baseColor.png",
-    "fileUrl": null
-  },
-  {
-    "filepath": "link.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "scene.bin",
-    "fileUrl": null
-  },
-  {
-    "filepath": "main_mat_metallicRoughness.png",
-    "fileUrl": null
-  },
-  {
-    "filepath": "cube.glb.meta",
-    "fileUrl": null
-  },
-  {
     "filepath": "script.py",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/robot.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/robot.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/link.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/berserk_armor.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/berserk_armor.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/cube.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/link.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/cube.glb.meta",
     "fileUrl": null
   }
 ]

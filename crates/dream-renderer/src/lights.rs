@@ -9,6 +9,7 @@ pub struct RendererLight {
     pub(crate) radius: f32,
     pub(crate) light_type: u32,
     pub(crate) direction: Vector3<f32>,
+    pub(crate) cast_shadow: bool,
 }
 
 pub struct Lights {
@@ -103,6 +104,7 @@ impl LightsUniform {
             radius: 1.0,
             light_type: 0,
             direction: Vector3::new(1.0, 0.0, 0.0),
+            cast_shadow: false,
         };
         for idx in 0..self.lights.len() {
             self.lights[idx].light_type = renderer_lights

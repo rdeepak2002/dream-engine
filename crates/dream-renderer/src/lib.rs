@@ -31,5 +31,6 @@ pub mod render_map_key;
 pub mod render_storage;
 pub mod renderer;
 pub mod shader;
+pub mod shadow_tech;
 pub mod skinning;
 pub mod texture;

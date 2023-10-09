@@ -85,6 +85,7 @@ impl Default for App {
                     Vector3::new(0.25, 0.62, 0.99),
                     4.0,
                     Vector3::new(1.0, 0.12, 0.18),
+                    true,
                 ),
             );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
@@ -109,6 +110,7 @@ impl Default for App {
                     Vector3::new(1.0, 0.18, 0.39),
                     4.0,
                     Vector3::new(1.0, 0.0, 0.0),
+                    false,
                 ),
             );
             // add mesh renderer component
@@ -319,6 +321,7 @@ impl App {
                         light_component.color,
                         light_component.radius,
                         light_component.direction,
+                        light_component.cast_shadow,
                     );
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {

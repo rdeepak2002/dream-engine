@@ -30,6 +30,7 @@ use crate::lights::{Lights, RendererLight};
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
 use crate::render_storage::RenderStorage;
+use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
 use crate::{camera, texture};
 
@@ -58,6 +59,7 @@ pub struct RendererWgpu {
     pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
     skinning_tech: SkinningTech,
     lights: Lights,
+    shadow_tech: ShadowTech,
 }
 
 impl RendererWgpu {
@@ -236,6 +238,9 @@ impl RendererWgpu {
             config.format,
         );
 
+        // shadow tech
+        let shadow_tech = ShadowTech::new();
+
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
             model_guids: Default::default(),
@@ -258,6 +263,7 @@ impl RendererWgpu {
             pbr_bind_groups_and_layouts,
             lights,
             skinning_tech,
+            shadow_tech,
         }
     }
 
@@ -332,6 +338,9 @@ impl RendererWgpu {
         // update bones buffer
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
+        // figure out shadows
+        self.shadow_tech.render_shadow_depth_buffers(&self.lights);
+
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
@@ -399,6 +408,7 @@ impl RendererWgpu {
         color: Vector3<f32>,
         radius: f32,
         direction: Vector3<f32>,
+        cast_shadow: bool,
     ) {
         self.lights.renderer_lights.push(RendererLight {
             position,
@@ -406,6 +416,7 @@ impl RendererWgpu {
             radius,
             light_type,
             direction,
+            cast_shadow,
         });
     }
 
