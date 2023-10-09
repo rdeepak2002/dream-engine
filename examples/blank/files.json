@@ -32,6 +32,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/campfire.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/berserk_armor.glb",
     "fileUrl": null
   },
@@ -45,6 +49,10 @@
   },
   {
     "filepath": "models/link.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/campfire.glb",
     "fileUrl": null
   },
   {
