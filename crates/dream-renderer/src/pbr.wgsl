@@ -144,7 +144,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
     let exposure: f32 = 4.0f;
     color = vec3(1.0) - exp(-color * exposure);
     // gamma correct
-    let gamma: f32 = 1.0;
+    let gamma: f32 = 1.2;
     color = pow(color, vec3(1.0 / gamma));
 
     return color;
