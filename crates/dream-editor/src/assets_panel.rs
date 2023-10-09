@@ -4,6 +4,7 @@ use egui::load::SizedTexture;
 use egui::Widget;
 use egui_wgpu::Renderer;
 
+use dream_fs::fs::ReadDir;
 use dream_renderer::image::Image;
 use dream_renderer::texture;
 
@@ -13,6 +14,7 @@ pub struct AssetsPanel {
     file_epaint_texture_id: egui::epaint::TextureId,
     directory_epaint_texture_id: egui::epaint::TextureId,
     current_directory: PathBuf,
+    cached_directory_result: Option<Vec<ReadDir>>,
 }
 
 impl AssetsPanel {
@@ -70,6 +72,7 @@ impl AssetsPanel {
             file_epaint_texture_id,
             directory_epaint_texture_id,
             current_directory: dream_fs::fs::get_fs_root(),
+            cached_directory_result: None,
         }
     }
 }
@@ -95,6 +98,7 @@ impl Panel for AssetsPanel {
                             .clicked()
                         {
                             self.current_directory = root_dir.clone();
+                            self.cached_directory_result = None;
                         }
                         if !path_diff.to_str().unwrap().is_empty() {
                             let mut tmp_path = root_dir.to_path_buf();
@@ -102,6 +106,7 @@ impl Panel for AssetsPanel {
                                 if ui.add(egui::Button::new(path)).clicked() {
                                     tmp_path.push(path);
                                     self.current_directory = tmp_path.clone();
+                                    self.cached_directory_result = None;
                                 }
                             }
                         }
@@ -117,50 +122,60 @@ impl Panel for AssetsPanel {
                     .min_col_width(size + extra_size)
                     .max_col_width(size + extra_size)
                     .show(ui, |ui| {
-                        // TODO: only call read_dir() once or whenever current directory changes
-                        let mut idx = 0;
-                        for file in dream_fs::fs::read_dir(self.current_directory.clone())
-                            .expect("Unable to read current directory")
-                        {
-                            let excluded_files = vec![".DS_Store", "files.json"];
-                            let file_name = file.get_name();
-                            let is_excluded_file = excluded_files.contains(&&*file_name);
-                            let is_meta_file =
-                                file.get_path().extension().unwrap_or("".as_ref()) == "meta";
-                            if file.is_dir() || (!is_excluded_file && !is_meta_file) {
-                                if file.is_dir() {
-                                    ui.with_layout(
-                                        egui::Layout::top_down(egui::Align::LEFT),
-                                        |ui| {
-                                            let image = SizedTexture {
-                                                id: self.directory_epaint_texture_id,
-                                                size: egui::vec2(size, size),
-                                            };
-                                            if egui::ImageButton::new(image).ui(ui).clicked() {
-                                                self.current_directory = file.get_path();
-                                            }
-                                            ui.strong(file.get_name());
-                                        },
-                                    );
-                                } else {
-                                    ui.with_layout(
-                                        egui::Layout::top_down(egui::Align::LEFT),
-                                        |ui| {
-                                            let image = SizedTexture {
-                                                id: self.file_epaint_texture_id,
-                                                size: egui::vec2(size, size),
-                                            };
-                                            if egui::ImageButton::new(image).ui(ui).clicked() {
-                                                log::debug!("TODO: open this file");
-                                            }
-                                            ui.strong(file.get_name());
-                                        },
-                                    );
+                        if self.cached_directory_result.as_ref().is_none() {
+                            self.cached_directory_result = Some(
+                                dream_fs::fs::read_dir(self.current_directory.clone())
+                                    .expect("Unable to read current directory"),
+                            );
+                            log::debug!("Reading directory info");
+                        } else {
+                            let mut idx = 0;
+                            let mut reset_cached_directory_result = false;
+                            for file in self.cached_directory_result.as_ref().unwrap() {
+                                let excluded_files = vec![".DS_Store", "files.json"];
+                                let file_name = file.get_name();
+                                let is_excluded_file = excluded_files.contains(&&*file_name);
+                                let is_meta_file =
+                                    file.get_path().extension().unwrap_or("".as_ref()) == "meta";
+                                if file.is_dir() || (!is_excluded_file && !is_meta_file) {
+                                    if file.is_dir() {
+                                        ui.with_layout(
+                                            egui::Layout::top_down(egui::Align::LEFT),
+                                            |ui| {
+                                                let image = SizedTexture {
+                                                    id: self.directory_epaint_texture_id,
+                                                    size: egui::vec2(size, size),
+                                                };
+                                                if egui::ImageButton::new(image).ui(ui).clicked() {
+                                                    self.current_directory = file.get_path();
+                                                    reset_cached_directory_result = true;
+                                                }
+                                                ui.strong(file.get_name());
+                                            },
+                                        );
+                                    } else {
+                                        ui.with_layout(
+                                            egui::Layout::top_down(egui::Align::LEFT),
+                                            |ui| {
+                                                let image = SizedTexture {
+                                                    id: self.file_epaint_texture_id,
+                                                    size: egui::vec2(size, size),
+                                                };
+                                                if egui::ImageButton::new(image).ui(ui).clicked() {
+                                                    log::debug!("TODO: open this file");
+                                                }
+                                                ui.strong(file.get_name());
+                                            },
+                                        );
+                                    }
+                                    if (idx + 1) % num_items_per_row == 0 {
+                                        ui.end_row();
+                                    }
+                                    idx += 1;
                                 }
-                                if (idx + 1) % num_items_per_row == 0 {
-                                    ui.end_row();
-                                }
-                                idx += 1;
+                            }
+                            if reset_cached_directory_result {
+                                self.cached_directory_result = None;
                             }
                         }
                     });
