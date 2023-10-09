@@ -136,6 +136,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // transparency
     var alpha = material_factors.alpha;
     if (alpha <= material_factors.alpha_cutoff) {
+        alpha = 0.0;
+        discard;
+    }
+    if (albedo.a <= material_factors.alpha_cutoff) {
+        alpha = 0.0;
         discard;
     }
 

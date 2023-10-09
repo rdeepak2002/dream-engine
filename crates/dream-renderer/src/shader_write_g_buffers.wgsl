@@ -139,6 +139,11 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     var alpha = material_factors.alpha;
     if (alpha <= material_factors.alpha_cutoff) {
         alpha = 0.0;
+        discard;
+    }
+    if (base_color.a <= material_factors.alpha_cutoff) {
+        alpha = 0.0;
+        discard;
     }
 
     var output : GBufferOutput;
