@@ -1,3 +1,4 @@
+use egui::load::SizedTexture;
 use egui::Widget;
 use egui_wgpu::Renderer;
 
@@ -25,6 +26,8 @@ impl RendererControlsPanel {
             rgba.to_vec(),
             rgba.dimensions(),
             None,
+            Some(wgpu::FilterMode::Nearest),
+            None,
         )
         .expect("Unable to load play icon texture");
 
@@ -48,12 +51,12 @@ impl Panel for RendererControlsPanel {
             .max_height(25.0)
             .min_height(25.0)
             .show(egui_context, |ui| {
-                egui::trace!(ui);
                 ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                    let btn = egui::ImageButton::new(
-                        self.play_icon_epaint_texture_id,
-                        egui::vec2(15.5, 15.5),
-                    );
+                    let image = SizedTexture {
+                        id: self.play_icon_epaint_texture_id,
+                        size: egui::vec2(15.5, 15.5),
+                    };
+                    let btn = egui::ImageButton::new(image);
                     btn.ui(ui);
                 });
             });

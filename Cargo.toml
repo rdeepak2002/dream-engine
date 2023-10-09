@@ -13,13 +13,13 @@ serde_yaml = "0.9.21"
 
 # rendering API
 #wgpu = { version = "0.17.0", features = ["webgl"] } # enable this feature to do webgl
-wgpu = { version = "0.17.0" }
+wgpu = { version = "0.17.1" }
 
 # 3D model parsing
 gltf = "1.1.0"
 
 # windowing
-winit = "0.28"
+winit = "0.28.7"
 
 # logging
 log = "0.4"
@@ -30,12 +30,8 @@ once_cell = "1.17.1"
 # custom code per configuration
 cfg-if = "1"
 
-# linar algebra math
-nalgebra = "0.32.3"
-nalgebra-glm = "0.18.0"
-
 # immediate gui library
-egui = { version = "0.22.0", git = "https://github.com/emilk/egui.git" }
+egui = { version = "0.23.0" }
 
 # easy conversion to plain datatypes
 bytemuck = { version = "1.12", features = ["derive"] }

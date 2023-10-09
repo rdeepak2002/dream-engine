@@ -57,10 +57,10 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
 }
 
 pub struct Material {
-    pub pbr_material_factors_bind_group: wgpu::BindGroup,
+    // pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
-    pub factor_base_color: nalgebra::Vector3<f32>,
-    pub factor_emissive: nalgebra::Vector3<f32>,
+    pub factor_base_color: dream_math::Vector3<f32>,
+    pub factor_emissive: dream_math::Vector3<f32>,
     pub factor_metallic: f32,
     pub factor_roughness: f32,
     pub factor_alpha: f32,
@@ -68,10 +68,11 @@ pub struct Material {
     pub alpha_blend_mode: AlphaBlendMode,
     pub double_sided: bool,
     pub base_color_image: Image,
-    pub metallic_image: Image,
+    pub metallic_roughness_image: Image,
     pub normal_map_image: Image,
     pub emissive_image: Image,
     pub occlusion_image: Image,
+    pub pbr_mat_buffer: wgpu::Buffer,
 }
 
 impl Material {
@@ -97,14 +98,15 @@ impl Material {
         }
 
         // get metallic texture
-        let mut metallic_image = Image::default();
+        let mut metallic_roughness_image = Image::default();
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
-                metallic_image.load_from_bytes_threaded(bytes, "default", None);
+                metallic_roughness_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                metallic_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                metallic_roughness_image
+                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
             }
         }
 
@@ -162,19 +164,18 @@ impl Material {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let pbr_material_factors_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: pbr_material_factors_bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: pbr_mat_buffer.as_entire_binding(),
-                }],
-                label: None,
-            });
+        // let pbr_material_factors_bind_group =
+        //     device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //         layout: pbr_material_factors_bind_group_layout,
+        //         entries: &[wgpu::BindGroupEntry {
+        //             binding: 10,
+        //             resource: pbr_mat_buffer.as_entire_binding(),
+        //         }],
+        //         label: None,
+        //     });
 
         // define this struct
         Self {
-            pbr_material_factors_bind_group,
             pbr_material_textures_bind_group: None,
             factor_base_color: material_factors_uniform.base_color.into(),
             factor_emissive: material_factors_uniform.emissive.into(),
@@ -185,10 +186,11 @@ impl Material {
             alpha_blend_mode: AlphaBlendMode::from(material.alpha_mode()),
             double_sided: material.double_sided(),
             base_color_image,
-            metallic_image,
+            metallic_roughness_image,
             normal_map_image,
             emissive_image,
             occlusion_image,
+            pbr_mat_buffer,
         }
     }
 
@@ -206,7 +208,7 @@ impl Material {
             return;
         }
 
-        if !self.metallic_image.loaded() {
+        if !self.metallic_roughness_image.loaded() {
             return;
         }
 
@@ -230,19 +232,23 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Base color texture"),
+            Some(wgpu::FilterMode::Linear),
+            None,
         )
         .expect("Unable to load base color texture");
 
         // load metallic image
-        let rgba_image = self.metallic_image.to_rgba8();
-        let metallic_texture = crate::texture::Texture::new(
+        let rgba_image = self.metallic_roughness_image.to_rgba8();
+        let metallic_roughness_texture = crate::texture::Texture::new(
             device,
             queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
-            Some("Metallic texture"),
+            Some("Metallic roughness texture"),
+            Some(wgpu::FilterMode::Linear),
+            Some(wgpu::TextureFormat::Rgba8Unorm),
         )
-        .expect("Unable to load metallic texture");
+        .expect("Unable to load metallic roughness texture");
 
         // load normal map image
         let rgba_image = self.normal_map_image.to_rgba8();
@@ -252,6 +258,8 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Normal map texture"),
+            Some(wgpu::FilterMode::Linear),
+            Some(wgpu::TextureFormat::Rgba8Unorm),
         )
         .expect("Unable to load normal map texture");
 
@@ -263,6 +271,8 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Emissive texture"),
+            Some(wgpu::FilterMode::Linear),
+            None,
         )
         .expect("Unable to load emissive texture");
 
@@ -274,6 +284,8 @@ impl Material {
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Occlusion texture"),
+            Some(wgpu::FilterMode::Linear),
+            Some(wgpu::TextureFormat::Rgba8Unorm),
         )
         .expect("Unable to load occlusion texture");
 
@@ -291,11 +303,15 @@ impl Material {
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::TextureView(&metallic_texture.view),
+                        resource: wgpu::BindingResource::TextureView(
+                            &metallic_roughness_texture.view,
+                        ),
                     },
                     wgpu::BindGroupEntry {
                         binding: 3,
-                        resource: wgpu::BindingResource::Sampler(&metallic_texture.sampler),
+                        resource: wgpu::BindingResource::Sampler(
+                            &metallic_roughness_texture.sampler,
+                        ),
                     },
                     wgpu::BindGroupEntry {
                         binding: 4,
@@ -321,6 +337,10 @@ impl Material {
                         binding: 9,
                         resource: wgpu::BindingResource::Sampler(&occlusion_texture.sampler),
                     },
+                    wgpu::BindGroupEntry {
+                        binding: 10,
+                        resource: self.pbr_mat_buffer.as_entire_binding(),
+                    },
                 ],
                 label: Some("pbr_textures_bind_group"),
             }));
@@ -331,8 +351,8 @@ impl Material {
             self.base_color_image.update();
         }
 
-        if !self.metallic_image.loaded() {
-            self.metallic_image.update();
+        if !self.metallic_roughness_image.loaded() {
+            self.metallic_roughness_image.update();
         }
 
         if !self.normal_map_image.loaded() {
@@ -350,13 +370,16 @@ impl Material {
 
     pub fn get_progress(&self) -> f32 {
         let base_color_image = self.base_color_image.loaded() as i32;
-        let metallic_image = self.metallic_image.loaded() as i32;
+        let metallic_roughness_image = self.metallic_roughness_image.loaded() as i32;
         let normal_map_image = self.normal_map_image.loaded() as i32;
         let emissive_image = self.emissive_image.loaded() as i32;
         let occlusion_image = self.occlusion_image.loaded() as i32;
 
-        (base_color_image + metallic_image + normal_map_image + emissive_image + occlusion_image)
-            as f32
+        (base_color_image
+            + metallic_roughness_image
+            + normal_map_image
+            + emissive_image
+            + occlusion_image) as f32
             / 5.0
     }
 

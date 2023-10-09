@@ -79,8 +79,7 @@ impl Window {
         }
 
         let mut app = App::default();
-        let mut renderer =
-            dream_renderer::renderer::RendererWgpu::default(Some(&self.window)).await;
+        let mut renderer = dream_renderer::renderer::RendererWgpu::new(Some(&self.window)).await;
         let mut editor = EditorEguiWgpu::new(
             &app,
             &renderer,

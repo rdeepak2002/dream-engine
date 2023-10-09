@@ -88,7 +88,7 @@ impl Texture {
             dimension: wgpu::TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
-            view_formats: &[Self::DEPTH_FORMAT],
+            view_formats: &[],
         };
         let texture = device.create_texture(&desc);
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -118,13 +118,15 @@ impl Texture {
         rgba: Vec<u8>,
         dimensions: (u32, u32),
         label: Option<&str>,
+        mip_map_filter: Option<wgpu::FilterMode>,
+        format: Option<wgpu::TextureFormat>,
     ) -> Result<Self> {
         let size = wgpu::Extent3d {
             width: dimensions.0,
             height: dimensions.1,
             depth_or_array_layers: 1,
         };
-        let format = wgpu::TextureFormat::Rgba8UnormSrgb;
+        let format = format.unwrap_or(TextureFormat::Rgba8UnormSrgb);
         let texture = device.create_texture(&wgpu::TextureDescriptor {
             label,
             size,
@@ -159,7 +161,7 @@ impl Texture {
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,
             min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: mip_map_filter.unwrap_or(wgpu::FilterMode::Nearest),
             ..Default::default()
         });
 

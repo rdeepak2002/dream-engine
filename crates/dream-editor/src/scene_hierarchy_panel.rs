@@ -28,19 +28,22 @@ impl Panel for SceneHierarchyPanel {
             .max_width(200.0)
             .min_width(200.0)
             .show(egui_context, |ui| {
-                egui::trace!(ui);
                 let scene = self.scene.upgrade().unwrap();
                 let scene = scene.lock().unwrap();
                 let root_entity_id = scene.root_entity_runtime_id;
                 drop(scene);
-                if let Some(root_entity_id) = root_entity_id {
-                    // self.draw_scene_hierarchy_entity(root_entity_id, ui);
-                    let children =
-                        Scene::get_children_for_entity(self.scene.clone(), root_entity_id);
-                    for child in children {
-                        self.draw_scene_hierarchy_entity(child, ui);
-                    }
-                }
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    egui::ScrollArea::horizontal().show(ui, |ui| {
+                        if let Some(root_entity_id) = root_entity_id {
+                            // self.draw_scene_hierarchy_entity(root_entity_id, ui);
+                            let children =
+                                Scene::get_children_for_entity(self.scene.clone(), root_entity_id);
+                            for child in children {
+                                self.draw_scene_hierarchy_entity(child, ui);
+                            }
+                        }
+                    });
+                });
             });
     }
 }

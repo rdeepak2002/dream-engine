@@ -26,7 +26,7 @@ Run the following command in ``crates/dream-runner``
 
 ```shell
 # build project
-rustup run nightly-2022-12-12 wasm-pack build --target web --out-dir ../../web/build --release
+rustup run nightly-2023-06-10 wasm-pack build --target web --out-dir ../../web/build --release
 
 # serve it on the web by starting the server
 cd ../../web

@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-nalgebra = { workspace = true }
-nalgebra-glm = { workspace = true }
+# linar algebra math
+nalgebra = "0.32.3"
+nalgebra-glm = "0.18.0"

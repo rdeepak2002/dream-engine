@@ -16,7 +16,7 @@ fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String
     } else {
         let mime_type = mime_type.unwrap();
         if mime_type == "image/png" {
-            log::warn!("TODO: use png crate for faster image loading");
+            // log::warn!("TODO: use png crate for faster image loading");
             image::load_from_memory_with_format(bytes, ImageFormat::Png)
                 .expect("Unable to decode png image")
         } else if mime_type == "image/jpeg" {

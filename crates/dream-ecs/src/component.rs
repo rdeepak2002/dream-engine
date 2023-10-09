@@ -1,32 +1,33 @@
 use std::fmt::Debug;
 use std::sync::{Mutex, Weak};
 
-use dream_math::{Quaternion, Vector3};
+use dream_math::{Matrix4, Quaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 
+use crate::component::LightType::POINT;
 use crate::entity::Entity;
 use crate::scene::Scene;
 
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
-    pub position: Vector3,
-    pub rotation: Quaternion,
-    pub scale: Vector3,
+    pub position: Vector3<f32>,
+    pub rotation: Quaternion<f32>,
+    pub scale: Vector3<f32>,
 }
 
 impl Default for Transform {
     fn default() -> Self {
         Self {
             position: Vector3::default(),
-            rotation: Quaternion::default(),
+            rotation: Quaternion::identity(),
             scale: Vector3::new(1.0, 1.0, 1.0),
         }
     }
 }
 
 impl Transform {
-    pub fn new(position: Vector3, rotation: Quaternion, scale: Vector3) -> Self {
+    pub fn new(position: Vector3<f32>, rotation: Quaternion<f32>, scale: Vector3<f32>) -> Self {
         Self {
             position,
             rotation,
@@ -38,6 +39,56 @@ impl Transform {
 impl std::fmt::Display for Transform {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Transform({})", self.position)
+    }
+}
+
+#[derive(shipyard::Component, Debug, Clone, PartialEq)]
+pub struct Bone {
+    pub is_root: bool,
+    pub node_id: u32,
+    pub bone_id: u32,
+    pub inverse_bind_pose: Matrix4<f32>,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum LightType {
+    POINT = 0,
+    DIRECTIONAL = 1,
+}
+
+impl Default for LightType {
+    fn default() -> Self {
+        POINT
+    }
+}
+
+#[derive(shipyard::Component, Default, Debug, Clone, PartialEq)]
+pub struct Light {
+    pub light_type: LightType,
+    pub color: Vector3<f32>,
+    pub radius: f32,
+    pub direction: Vector3<f32>,
+}
+
+impl Light {
+    pub fn new(
+        light_type: LightType,
+        color: Vector3<f32>,
+        radius: f32,
+        direction: Vector3<f32>,
+    ) -> Light {
+        Light {
+            light_type,
+            color,
+            radius,
+            direction,
+        }
+    }
+}
+
+impl std::fmt::Display for Light {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Light({})", self.color)
     }
 }
 

@@ -1,6 +1,6 @@
 /**********************************************************************************
  *  Dream is a software for developing real-time 3D experiences.
- *  Copyright (C) 2023 Deepak Ramalignam
+ *  Copyright (C) 2023 Deepak Ramalingam
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -18,16 +18,20 @@
 
 use std::iter;
 
-use nalgebra::{Point3, Vector3};
-use wgpu::util::DeviceExt;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use crate::camera_uniform::CameraUniform;
-use crate::instance::{Instance, InstanceRaw};
-use crate::model::{DrawModel, Model, ModelVertex, Vertex};
+use dream_math::{Point3, Vector3};
+
+use crate::deferred_rendering_tech::DeferredRenderingTech;
+use crate::forward_rendering_tech::ForwardRenderingTech;
+use crate::instance::Instance;
+use crate::lights::{Lights, RendererLight};
 use crate::path_not_found_error::PathNotFoundError;
-use crate::{camera, gltf_loader, texture};
+use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
+use crate::render_storage::RenderStorage;
+use crate::skinning::SkinningTech;
+use crate::{camera, texture};
 
 #[cfg(not(feature = "wgpu/webgl"))]
 pub fn is_webgpu_enabled() -> bool {
@@ -39,47 +43,35 @@ pub fn is_webgpu_enabled() -> bool {
     false
 }
 
-#[derive(Hash, PartialEq, Eq, Clone)]
-struct RenderMapKey {
-    pub model_guid: String,
-    pub mesh_index: i32,
-}
-
 pub struct RendererWgpu {
     pub surface: Option<wgpu::Surface>,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    pub frame_texture_view: Option<wgpu::TextureView>,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
+    pub frame_texture: texture::Texture,
+    pub deferred_rendering_tech: DeferredRenderingTech,
+    render_storage: RenderStorage,
     camera: camera::Camera,
-    camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
-    render_pipeline: wgpu::RenderPipeline,
     depth_texture: texture::Texture,
-    frame_texture: texture::Texture,
-    camera_bind_group: wgpu::BindGroup,
-    model_guids: std::collections::HashMap<String, Box<Model>>,
-    render_map: std::collections::HashMap<RenderMapKey, Vec<Instance>>,
-    instance_buffer_map: std::collections::HashMap<RenderMapKey, wgpu::Buffer>,
-    pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
-    pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
+    forward_rendering_tech: ForwardRenderingTech,
+    pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
+    skinning_tech: SkinningTech,
+    lights: Lights,
 }
 
 impl RendererWgpu {
-    pub async fn default(window: Option<&winit::window::Window>) -> Self {
-        let preferred_texture_format;
-
-        // The instance is a handle to our GPU
-        // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
+    pub async fn new(window: Option<&winit::window::Window>) -> Self {
+        // instance is a handle to our GPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             dx12_shader_compiler: Default::default(),
         });
 
+        // size is the dimensions of the window
         let size;
+        // surface is the surface of our window
         let surface;
-
         if window.is_some() {
             size = window.as_ref().unwrap().inner_size();
             // # Safety
@@ -92,6 +84,7 @@ impl RendererWgpu {
             surface = None;
         }
 
+        // adapter is the physical gpu driver
         let adapter;
         if surface.is_some() {
             adapter = instance
@@ -113,16 +106,14 @@ impl RendererWgpu {
                 .expect("(2) Unable to request for adapter to initialize renderer");
         }
 
-        let mut web_gl_limits = wgpu::Limits::downlevel_webgl2_defaults();
-        web_gl_limits.max_texture_dimension_2d =
-            std::cmp::max(4096, web_gl_limits.max_texture_dimension_2d);
-
+        // device is an open connection to a gpu device
+        // queue is for writing to buffers and textures by executing command buffers
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::empty(),
-                    limits: web_gl_limits,
+                    limits: wgpu::Limits::default(),
                 },
                 None,
             )
@@ -130,13 +121,15 @@ impl RendererWgpu {
             .map(|(device, queue)| -> (wgpu::Device, wgpu::Queue) { (device, queue) })
             .unwrap();
 
+        // preferred texture format is the format of the surface we draw to
+        let preferred_texture_format;
+        // surface configuration describes a surface like its dimensions
         let config;
-
         if surface.is_some() {
             let surface_caps = surface.as_ref().unwrap().get_capabilities(&adapter);
 
             // Shader code in this tutorial assumes an Srgb surface texture. Using a different
-            // one will result all the colors comming out darker. If you want to support non
+            // one will result all the colors coming out darker. If you want to support non
             // Srgb surfaces, you'll need to account for that when drawing to the frame.
             let surface_format = surface_caps
                 .formats
@@ -185,168 +178,19 @@ impl RendererWgpu {
             }
         }
 
-        let pbr_material_factors_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("texture_bind_group_layout"),
-            });
-
-        let pbr_material_textures_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    // base color texture
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // metallic texture
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // normal map texture
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 4,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 5,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // emissive texture
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 6,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 7,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                    // occlusion texture
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 8,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            multisampled: false,
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 9,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
-                ],
-                label: Some("pbr_textures_bind_group_layout"),
-            });
-
+        // main camera
         let camera = camera::Camera::new(
-            Point3::new(5.0, 5.0, 5.0),
+            Point3::new(3.0, 3.0, 3.0),
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
             config.width as f32 / config.height as f32,
-            std::f32::consts::FRAC_PI_4 * 0.6,
+            std::f32::consts::FRAC_PI_4,
             0.01,
             1000.0,
-        );
-
-        let mut camera_uniform = CameraUniform::default();
-        camera_uniform.update_view_proj(&camera);
-
-        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[camera_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-
-        let camera_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("camera_bind_group_layout"),
-            });
-
-        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &camera_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: camera_buffer.as_entire_binding(),
-            }],
-            label: Some("camera_bind_group"),
-        });
-
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
-        });
-
-        let depth_texture = texture::Texture::create_depth_texture(
             &device,
-            config.width,
-            config.height,
-            "depth_texture",
         );
 
+        // texture we draw our final result to
         let frame_texture = texture::Texture::create_frame_texture(
             &device,
             config.width,
@@ -355,112 +199,89 @@ impl RendererWgpu {
             preferred_texture_format.unwrap(),
         );
 
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &camera_bind_group_layout,
-                    &pbr_material_factors_bind_group_layout,
-                    &pbr_material_textures_bind_group_layout,
-                ],
-                push_constant_ranges: &[],
-            });
+        // texture to keep track of depth buffer
+        let depth_texture = texture::Texture::create_depth_texture(
+            &device,
+            config.width,
+            config.height,
+            "depth_texture",
+        );
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
-                // buffers: &[Vertex::desc()],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                        alpha: wgpu::BlendComponent::OVER,
-                    }),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
-                // or Features::POLYGON_MODE_POINT
-                polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
-                unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: texture::Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        // lights storage
+        let lights = Lights::new(&device);
+
+        // skinning tech
+        let skinning_tech = SkinningTech::new(&device);
+
+        // bind groups and layouts for physically based rendering textures
+        let pbr_bind_groups_and_layouts =
+            PbrBindGroupsAndLayouts::new(&device, &camera, &lights, &skinning_tech);
+
+        // algorithms for deferred rendering
+        let deferred_rendering_tech = DeferredRenderingTech::new(
+            &device,
+            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
+            config.format,
+            &lights,
+            config.width,
+            config.height,
+            &depth_texture,
+            &camera,
+        );
+
+        // algorithms for forward rendering
+        let forward_rendering_tech = ForwardRenderingTech::new(
+            &device,
+            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
+            config.format,
+        );
+
+        // storage for all 3D mesh data and positions
+        let render_storage = RenderStorage {
+            model_guids: Default::default(),
+            render_map: Default::default(),
+            instance_buffer_map: Default::default(),
+        };
 
         Self {
             surface,
             device,
             queue,
             config,
-            render_pipeline,
-            depth_texture,
-            frame_texture,
-            frame_texture_view: None,
-            camera,
-            camera_uniform,
-            camera_buffer,
-            camera_bind_group,
-            model_guids: Default::default(),
-            render_map: Default::default(),
-            instance_buffer_map: Default::default(),
-            pbr_material_factors_bind_group_layout,
-            pbr_material_textures_bind_group_layout,
             preferred_texture_format,
+            render_storage,
+            camera,
+            frame_texture,
+            depth_texture,
+            deferred_rendering_tech,
+            forward_rendering_tech,
+            pbr_bind_groups_and_layouts,
+            lights,
+            skinning_tech,
         }
     }
 
+    /// User-facing API to set the aspect ratio of the main camera. This is primarily used by the
+    /// editor to change the aspect ratio of the camera when the renderer panel is resized.
     pub fn set_camera_aspect_ratio(&mut self, new_aspect_ratio: f32) {
-        if self.camera.aspect != new_aspect_ratio {
-            self.camera.aspect = new_aspect_ratio;
-            self.camera.build_view_projection_matrix();
-            self.camera_uniform.update_view_proj(&self.camera);
-            self.queue.write_buffer(
-                &self.camera_buffer,
-                0,
-                bytemuck::cast_slice(&[self.camera_uniform]),
-            );
-        }
+        self.camera.set_aspect_ratio(&self.queue, new_aspect_ratio);
     }
 
+    /// User-facing API to resize all textures and surface configuration
     pub fn resize(&mut self, new_size: Option<PhysicalSize<u32>>) {
+        // update config width and height
         if let Some(new_size) = new_size {
             if new_size.width > 0 && new_size.height > 0 {
                 self.config.width = new_size.width;
                 self.config.height = new_size.height;
             }
         }
+        log::warn!(
+            "New config size {} {}",
+            self.config.width,
+            self.config.height
+        );
+        // update surface using new config
         if self.surface.is_some() {
             self.surface
                 .as_mut()
@@ -475,221 +296,161 @@ impl RendererWgpu {
             "frame_texture",
             self.preferred_texture_format.unwrap(),
         );
+        // resize depth texture for g buffers
         self.depth_texture = texture::Texture::create_depth_texture(
             &self.device,
             self.config.width,
             self.config.height,
             "depth_texture",
         );
+        // resize gbuffers for deferred rendering
+        self.deferred_rendering_tech
+            .resize(&self.device, self.config.width, self.config.height);
     }
 
-    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
-        let key = RenderMapKey {
-            model_guid: model_guid.parse().unwrap(),
-            mesh_index,
-        };
-        {
-            if let std::collections::hash_map::Entry::Vacant(e) = self.render_map.entry(key) {
-                // create new array
-                e.insert(vec![model_mat]);
-            } else {
-                let key = RenderMapKey {
-                    model_guid: model_guid.parse().unwrap(),
-                    mesh_index,
-                };
-                // add to existing array
-                let current_vec = &mut self.render_map.get_mut(&key).unwrap();
-                current_vec.push(model_mat);
-            }
-        }
-    }
-
-    pub fn is_model_stored(&self, model_guid: &str) -> bool {
-        self.model_guids.contains_key(model_guid)
-    }
-
-    pub fn store_model(
-        &mut self,
-        model_guid_in: Option<&str>,
-        model_path: &str,
-    ) -> Result<String, PathNotFoundError> {
-        let model_guid;
-        if model_guid_in.is_some() {
-            model_guid = model_guid_in.unwrap();
-        } else {
-            // TODO: auto-generate guid
-            todo!();
-        }
-        log::debug!("Storing model {} with guid {}", model_path, model_guid);
-        let model = gltf_loader::read_gltf(
-            model_path,
-            &self.device,
-            &self.pbr_material_factors_bind_group_layout,
-        );
-        self.model_guids
-            .insert(model_guid.parse().unwrap(), Box::new(model));
-        log::debug!("Model with guid {} stored", model_guid);
-        Ok(str::parse(model_guid).unwrap())
-    }
-
+    /// User-facing API to invoke render loop once
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let texture_view = self
-            .frame_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Render Encoder"),
             });
 
-        {
-            // define render pass
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &texture_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: true,
-                    },
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture.view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
-                    }),
-                    stencil_ops: None,
-                }),
-            });
-            render_pass.set_pipeline(&self.render_pipeline);
+        // create instance buffers for mesh positions and update loading of textures for materials
+        self.render_storage
+            .update_mesh_instance_buffer_and_materials(
+                &self.device,
+                &self.queue,
+                &self
+                    .pbr_bind_groups_and_layouts
+                    .pbr_material_textures_bind_group_layout,
+            );
 
-            // camera bind group
-            render_pass.set_bind_group(0, &self.camera_bind_group, &[]);
+        // update light buffers
+        self.lights.update_light_buffer(&self.device);
 
-            // setup instance buffer for meshes
-            for (render_map_key, transforms) in &self.render_map {
-                // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
-                {
-                    let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
-                    let instance_buffer =
-                        self.device
-                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                                label: Some("Instance Buffer"),
-                                contents: bytemuck::cast_slice(&instance_data),
-                                usage: wgpu::BufferUsages::VERTEX,
-                            });
-                    // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                    self.instance_buffer_map
-                        .insert(render_map_key.clone(), instance_buffer);
-                }
-            }
+        // update bones buffer
+        self.skinning_tech.update_all_bones_buffer(&self.queue);
 
-            // TODO: combine this with loop below to make things more concise
-            // update materials
-            for (render_map_key, _transforms) in &self.render_map {
-                let model_map = &mut self.model_guids;
-                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-                let model_guid = render_map_key.model_guid.clone();
-                let model = model_map.get_mut(&*model_guid).unwrap_or_else(|| {
-                    panic!("no model loaded in renderer with guid {}", model_guid)
-                });
-                let mesh_index = render_map_key.mesh_index;
-                let mesh = model
-                    .meshes
-                    .get_mut(mesh_index as usize)
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "no mesh at index {} for model with guid {}",
-                            mesh_index, model_guid
-                        )
-                    });
-                let material = model
-                    .materials
-                    .get_mut(mesh.material)
-                    .expect("No material at index");
-                if !material.loaded() {
-                    material.update_images();
-                    material.update_textures(
-                        &self.device,
-                        &self.queue,
-                        &self.pbr_material_textures_bind_group_layout,
-                    );
-                    // println!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                    // log::warn!(
-                    //     "material loading progress: {:.2}%",
-                    //     material.get_progress() * 100.0
-                    // );
-                }
-            }
+        // render to gbuffers
+        self.deferred_rendering_tech.render_to_gbuffers(
+            &mut encoder,
+            &self.depth_texture,
+            &self.camera,
+            &self.lights,
+            &self.render_storage,
+            &self.skinning_tech,
+        );
 
-            // iterate through all meshes that should be instanced drawn
-            for (render_map_key, transforms) in &self.render_map {
-                let model_map = &self.model_guids;
-                // get the mesh to be instance drawn
-                let model_guid = render_map_key.model_guid.clone();
-                if model_map.get(&*model_guid).is_none() {
-                    log::warn!("skipping drawing of model {}", model_guid);
-                    continue;
-                }
-                let model = model_map.get(&*model_guid).unwrap_or_else(|| {
-                    panic!("no model loaded in renderer with guid {}", model_guid)
-                });
-                let mesh_index = render_map_key.mesh_index;
-                let mesh = model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
-                    panic!(
-                        "no mesh at index {} for model with guid {}",
-                        mesh_index, model_guid
-                    )
-                });
-                // setup instancing buffer
-                let instance_buffer = self
-                    .instance_buffer_map
-                    .get(render_map_key)
-                    .expect("No instance buffer found in map");
-                render_pass.set_vertex_buffer(1, instance_buffer.slice(..));
-                // get the material and set it in the bind group
-                let material = model
-                    .materials
-                    .get(mesh.material)
-                    .expect("No material at index");
-                if material.pbr_material_textures_bind_group.is_some() {
-                    render_pass.set_bind_group(1, &material.pbr_material_factors_bind_group, &[]);
-                    render_pass.set_bind_group(
-                        2,
-                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
-                        &[],
-                    );
-                    // draw the mesh
-                    render_pass.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
-                }
-            }
-        }
+        // combine gbuffers into one final texture result
+        self.deferred_rendering_tech.combine_gbuffers_to_texture(
+            &self.device,
+            &mut encoder,
+            &mut self.frame_texture,
+            &mut self.depth_texture,
+            &self.camera,
+            &self.lights,
+        );
 
+        // forward render translucent objects
+        self.forward_rendering_tech.render_translucent_objects(
+            &mut encoder,
+            &mut self.frame_texture,
+            &mut self.depth_texture,
+            &self.camera,
+            &self.lights,
+            &self.render_storage,
+            &self.skinning_tech,
+        );
+
+        // submit all drawing commands to gpu
         self.queue.submit(iter::once(encoder.finish()));
 
-        let output_texture_view = self
-            .frame_texture
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        self.frame_texture_view = Some(output_texture_view);
+        // update the output texture view, so editor can display it in a panel
+        // let output_texture_view = &self
+        //     .frame_texture.view;
+        // self.frame_texture_view = Some(output_texture_view);
 
         Ok(())
     }
 
+    /// User-facing API to specify what should be drawn and where
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    /// * `mesh_index`
+    /// * `model_mat`
+    pub fn draw_mesh(&mut self, model_guid: &str, mesh_index: i32, model_mat: Instance) {
+        self.render_storage
+            .queue_for_drawing(model_guid, mesh_index, model_mat);
+    }
+
+    /// User-facing API to draw a light at a specific position and color
+    ///
+    /// # Arguments
+    ///
+    /// * `position`
+    /// * `color`
+    pub fn draw_light(
+        &mut self,
+        light_type: u32,
+        position: Vector3<f32>,
+        color: Vector3<f32>,
+        radius: f32,
+        direction: Vector3<f32>,
+    ) {
+        self.lights.renderer_lights.push(RendererLight {
+            position,
+            color,
+            radius,
+            light_type,
+            direction,
+        });
+    }
+
+    /// User-facing API to store a model and associate it with a guid
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    /// * `path`
+    pub fn store_model(
+        &mut self,
+        model_guid_in: Option<&str>,
+        model_path: &str,
+    ) -> Result<String, PathNotFoundError> {
+        self.render_storage.store_model(
+            model_guid_in,
+            model_path,
+            &self.device,
+            &self
+                .pbr_bind_groups_and_layouts
+                .pbr_material_textures_bind_group_layout,
+        )
+    }
+
+    /// User-facing API to verify if a model is stored
+    ///
+    /// # Arguments
+    ///
+    /// * `model_guid`
+    pub fn is_model_stored(&self, model_guid: &str) -> bool {
+        self.render_storage.is_model_stored(model_guid)
+    }
+
+    /// User-facing API to remove all models, meshes, and instance buffers
     pub fn clear(&mut self) {
-        self.render_map.clear();
-        self.instance_buffer_map.clear();
+        self.render_storage.render_map.clear();
+        self.render_storage.instance_buffer_map.clear();
+        self.lights.renderer_lights.clear();
+    }
+
+    pub fn set_bone_transform(&mut self, bone_id: u32, mat: dream_math::Matrix4<f32>) {
+        // phase 2 (this will allow u to model the same instance of a model in different ways)
+        // TODO: the entity ID of the root bone tells us which armature we are using
+        // TODO: associate bones for that armature
+        // todo!();
+        self.skinning_tech.update_bone(bone_id, mat);
     }
 }
