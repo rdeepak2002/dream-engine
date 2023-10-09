@@ -17,6 +17,7 @@ pub struct Lights {
     pub lights_bind_group_layout: wgpu::BindGroupLayout,
     pub lights_bind_group: wgpu::BindGroup,
     pub renderer_lights: Vec<RendererLight>,
+    pub lights_buffer: wgpu::Buffer,
 }
 
 impl Lights {
@@ -58,24 +59,17 @@ impl Lights {
             lights_bind_group_layout,
             lights_bind_group,
             renderer_lights: Vec::default(),
+            lights_buffer,
         }
     }
 
-    pub fn update_light_buffer(&mut self, device: &wgpu::Device) {
+    pub fn update_light_buffer(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
         self.lights_uniform.update_lights(&self.renderer_lights);
-        let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Lights Buffer"),
-            contents: bytemuck::cast_slice(&[self.lights_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-        self.lights_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &self.lights_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: lights_buffer.as_entire_binding(),
-            }],
-            label: Some("lights_bind_group"),
-        });
+        queue.write_buffer(
+            &self.lights_buffer,
+            0,
+            bytemuck::cast_slice(&[self.lights_uniform]),
+        );
     }
 }
 

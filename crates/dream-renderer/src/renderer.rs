@@ -333,7 +333,7 @@ impl RendererWgpu {
             );
 
         // update light buffers
-        self.lights.update_light_buffer(&self.device);
+        self.lights.update_light_buffer(&self.device, &self.queue);
 
         // update bones buffer
         self.skinning_tech.update_all_bones_buffer(&self.queue);
