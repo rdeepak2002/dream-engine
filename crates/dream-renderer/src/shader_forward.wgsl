@@ -45,6 +45,7 @@ fn vs_main(
         if (weights[0] + weights[1] + weights[2] + weights[3] <= 0.000001f) {
             // mesh is not skinned
             totalPosition = pos;
+            totalNormal = nrm;
             break;
         }
 
