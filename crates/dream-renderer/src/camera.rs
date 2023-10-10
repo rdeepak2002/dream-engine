@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use dream_math::{Matrix4, Point3, Vector3};
+use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
 
 // #[rustfmt::skip]
 // pub const OPENGL_TO_WGPU_MATRIX: Matrix4<f32> = Matrix4::new(
@@ -81,6 +81,33 @@ impl Camera {
             camera_bind_group,
             camera_bind_group_layout,
         }
+    }
+
+    pub fn set_position_and_orientation(
+        &mut self,
+        queue: &wgpu::Queue,
+        position: Point3<f32>,
+        orientation: Quaternion<f32>,
+    ) {
+        self.eye = position;
+        let forward_vector = UnitQuaternion::from_quaternion(orientation)
+            .transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
+        self.target = self.eye + forward_vector;
+        // TODO: update target using orientation
+        self.camera_uniform.update_view_proj(
+            self.eye,
+            self.target,
+            self.up,
+            self.aspect,
+            self.fovy,
+            self.znear,
+            self.zfar,
+        );
+        queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
     }
 
     pub fn set_aspect_ratio(&mut self, queue: &wgpu::Queue, new_aspect_ratio: f32) {

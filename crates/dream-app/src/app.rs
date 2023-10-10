@@ -17,17 +17,22 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, Transform};
+use winit::dpi::PhysicalPosition;
+use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
+
+use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector2, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
+use crate::input::{set_keyboard_state, set_mouse_move, set_mouse_pressed, set_mouse_scroll};
 use crate::python_script_component_system::PythonScriptComponentSystem;
+use crate::scene_camera_component_system::SceneCameraComponentSystem;
 use crate::system::System;
 
 pub struct App {
@@ -76,6 +81,21 @@ impl Default for App {
         //         ),
         //     );
         // }
+        {
+            let scene_camera_entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Scene Camera".into()),
+                None,
+                Some(Transform::new(
+                    Vector3::new(0.7, 1.3, 4.4),
+                    Quaternion::new(1.0, -0.2, 0.0, 0.0),
+                    Vector3::new(1.0, 1.0, 1.0),
+                )),
+            )
+            .expect("Unable to create scene camera entity");
+            let e = Entity::from_handle(scene_camera_entity_handle, Arc::downgrade(&scene));
+            e.add_component(SceneCamera::default());
+        }
         {
             let directional_light_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
@@ -144,7 +164,7 @@ impl Default for App {
             );
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0.7, 0.4, 1.0),
+                    Vector3::new(0.7, 0.0, 1.0),
                     Quaternion::new(1.0, 0.2, 8.5, 7.0),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
@@ -174,9 +194,10 @@ impl Default for App {
         // }
 
         // init component systems
-        let component_systems =
-            vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-                as Arc<Mutex<dyn System>>];
+        let component_systems = vec![
+            Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
+            Arc::new(Mutex::new(SceneCameraComponentSystem::default())) as Arc<Mutex<dyn System>>,
+        ];
 
         Self {
             dt: 0.0,
@@ -255,6 +276,9 @@ impl App {
                     * Matrix4::new_nonuniform_scaling(&scale)
                     * UnitQuaternion::from_quaternion(rotation).to_homogeneous();
                 mat = parent_mat * model_mat;
+                if let Some(_scene_camera_component) = entity.get_component::<SceneCamera>() {
+                    renderer.set_camera(position.into(), rotation);
+                }
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
                     renderer.draw_light(
@@ -307,5 +331,32 @@ impl App {
                 draw_entity_and_children(renderer, child_id, scene.clone(), mat, new_bone_mat);
             }
         }
+    }
+
+    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) {
+        let amount = if state == ElementState::Pressed {
+            1.0
+        } else {
+            0.0
+        };
+        set_keyboard_state(key, amount);
+    }
+
+    pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
+        let dx = mouse_dx as f32;
+        let dy = mouse_dy as f32;
+        set_mouse_move(Vector2::new(dx, dy))
+    }
+
+    pub fn process_mouse_input(&mut self, is_pressed: bool) {
+        set_mouse_pressed(is_pressed);
+    }
+
+    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+        let scroll = -match delta {
+            MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
+            MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => *scroll as f32,
+        };
+        set_mouse_scroll(scroll);
     }
 }

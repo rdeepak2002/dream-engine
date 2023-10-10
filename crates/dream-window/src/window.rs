@@ -138,9 +138,33 @@ impl Window {
                     }
                 }
 
+                Event::DeviceEvent {
+                    event: DeviceEvent::MouseMotion { delta },
+                    ..
+                } => app.process_mouse(delta.0, delta.1),
+
                 Event::WindowEvent { event, .. } => {
                     if !editor.handle_event(&event) {
                         match event {
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    KeyboardInput {
+                                        virtual_keycode: Some(key),
+                                        state,
+                                        ..
+                                    },
+                                ..
+                            } => app.process_keyboard(key, state),
+                            WindowEvent::MouseWheel { delta, .. } => {
+                                app.process_scroll(&delta);
+                            }
+                            WindowEvent::MouseInput {
+                                button: MouseButton::Left,
+                                state,
+                                ..
+                            } => {
+                                app.process_mouse_input(state == ElementState::Pressed);
+                            }
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(Some(physical_size));
                                 editor.handle_resize(&renderer);

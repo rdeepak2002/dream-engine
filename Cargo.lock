@@ -771,6 +771,7 @@ dependencies = [
  "dream-resource",
  "dream-tasks",
  "log",
+ "once_cell",
  "rayon",
  "rustpython-common",
  "rustpython-derive",

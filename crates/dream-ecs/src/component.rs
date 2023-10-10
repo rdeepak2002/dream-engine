@@ -9,6 +9,9 @@ use crate::component::LightType::POINT;
 use crate::entity::Entity;
 use crate::scene::Scene;
 
+#[derive(shipyard::Component, Debug, Clone, PartialEq, Default)]
+pub struct SceneCamera {}
+
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vector3<f32>,
