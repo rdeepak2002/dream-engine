@@ -453,7 +453,6 @@ impl RendererWgpu {
     /// User-facing API to remove all models, meshes, and instance buffers
     pub fn clear(&mut self) {
         self.render_storage.render_map.clear();
-        self.render_storage.instance_buffer_map.clear();
         self.lights.renderer_lights.clear();
     }
 

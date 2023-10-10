@@ -73,15 +73,30 @@ impl RenderStorage {
         // setup instance buffer for meshes
         for (render_map_key, transforms) in &self.render_map {
             // TODO: this is generating instance buffers every frame, do it only whenever transforms changes
+            // ^ be able to mark certain meshes as 'static'
+            // ^ be able to pass another value into instance buffer marking distance from camera at which it should not be drawn
+            // ^ this will allow us to do LOD without having to change instance buffers every time we move
             let instance_data = transforms.iter().map(Instance::to_raw).collect::<Vec<_>>();
-            let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Instance Buffer"),
-                contents: bytemuck::cast_slice(&instance_data),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
-            // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
-            self.instance_buffer_map
-                .insert(render_map_key.clone(), instance_buffer);
+            if let std::collections::hash_map::Entry::Vacant(e) =
+                self.instance_buffer_map.entry(render_map_key.clone())
+            {
+                let instance_buffer =
+                    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("Instance Buffer"),
+                        contents: bytemuck::cast_slice(&instance_data),
+                        usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                    });
+                e.insert(instance_buffer);
+            } else {
+                // TODO: use Arc<[T]> for faster clone https://www.youtube.com/watch?v=A4cKi7PTJSs&ab_channel=LoganSmith
+                queue.write_buffer(
+                    self.instance_buffer_map
+                        .get_mut(&render_map_key.clone())
+                        .unwrap(),
+                    0,
+                    bytemuck::cast_slice(&instance_data),
+                );
+            }
         }
 
         // TODO: combine this with loop below to make things more concise
