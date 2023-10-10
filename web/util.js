@@ -215,14 +215,14 @@ const startApplication = (showDownloadLogs = false) => {
 
     if (!isChrome) {
         alert("Unsupported browser. Please use the latest version of Desktop Google Chrome.");
-        return;
+        // return;
     }
 
     const enableWebGpu = navigator?.gpu !== undefined;
     console.debug("Web GPU enabled: ", enableWebGpu);
 
     if (!enableWebGpu) {
-        alert("Browser does not support WebGPU. Please use the latest version of Chrome on a modern computer.");
+        alert("Unable to run the application. Browser does not support WebGPU.");
         return;
     }
 
@@ -230,7 +230,7 @@ const startApplication = (showDownloadLogs = false) => {
     console.debug("Multi-threading enabled: ", enableMultiThreading);
 
     if (!enableMultiThreading) {
-        alert("Multi-threading / web workers is not supported on this platform. Please use a modern computer.");
+        alert("Unable to run the application. Web workers are not supported on this platform.");
         return;
     }
 
