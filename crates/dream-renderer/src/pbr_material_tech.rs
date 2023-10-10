@@ -1,35 +1,9 @@
-use crate::camera::Camera;
-use crate::lights::Lights;
-use crate::skinning::SkinningTech;
-
-pub struct PbrBindGroupsAndLayouts {
-    pub render_pipeline_pbr_layout: wgpu::PipelineLayout,
+pub struct PbrMaterialTech {
     pub pbr_material_textures_bind_group_layout: wgpu::BindGroupLayout,
-    // pub pbr_material_factors_bind_group_layout: wgpu::BindGroupLayout,
 }
 
-impl PbrBindGroupsAndLayouts {
-    pub fn new(
-        device: &wgpu::Device,
-        camera: &Camera,
-        lights: &Lights,
-        skinning_tech: &SkinningTech,
-    ) -> Self {
-        // let pbr_material_factors_bind_group_layout =
-        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        //         entries: &[wgpu::BindGroupLayoutEntry {
-        //             binding: 0,
-        //             visibility: wgpu::ShaderStages::FRAGMENT,
-        //             ty: wgpu::BindingType::Buffer {
-        //                 ty: wgpu::BufferBindingType::Uniform,
-        //                 has_dynamic_offset: false,
-        //                 min_binding_size: None,
-        //             },
-        //             count: None,
-        //         }],
-        //         label: Some("pbr_material_factors_bind_group_layout"),
-        //     });
-
+impl PbrMaterialTech {
+    pub fn new(device: &wgpu::Device) -> Self {
         let pbr_material_textures_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -132,23 +106,8 @@ impl PbrBindGroupsAndLayouts {
                 label: Some("pbr_textures_bind_group_layout"),
             });
 
-        // TODO: this should be defined per tech (i.e. deferred_rendering_tech and lighting_tech)
-        let render_pipeline_pbr_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    &camera.camera_bind_group_layout,
-                    &skinning_tech.skinning_bind_group_layout,
-                    &pbr_material_textures_bind_group_layout,
-                    &lights.lights_bind_group_layout,
-                ],
-                push_constant_ranges: &[],
-            });
-
         Self {
-            render_pipeline_pbr_layout,
             pbr_material_textures_bind_group_layout,
-            // pbr_material_factors_bind_group_layout,
         }
     }
 }

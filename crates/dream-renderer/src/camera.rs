@@ -10,14 +10,25 @@ use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
 //     0.0, 0.0, 0.5, 1.0,
 // );
 
+#[derive(Copy, Clone)]
+enum CameraType {
+    Perspective = 0,
+    Orthographic = 1,
+}
+
 pub struct Camera {
     pub eye: Point3<f32>,
     pub target: Point3<f32>,
     pub up: Vector3<f32>,
     pub aspect: f32,
     pub fovy: f32,
+    pub left: f32,
+    pub right: f32,
+    pub bottom: f32,
+    pub top: f32,
     pub znear: f32,
     pub zfar: f32,
+    camera_type: CameraType,
     pub(crate) camera_uniform: CameraUniform,
     pub(crate) camera_buffer: wgpu::Buffer,
     pub(crate) camera_bind_group: wgpu::BindGroup,
@@ -25,7 +36,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(
+    pub fn new_perspective(
         eye: Point3<f32>,
         target: Point3<f32>,
         up: Vector3<f32>,
@@ -36,7 +47,7 @@ impl Camera {
         device: &wgpu::Device,
     ) -> Self {
         let mut camera_uniform = CameraUniform::default();
-        camera_uniform.update_view_proj(eye, target, up, aspect, fovy, znear, zfar);
+        camera_uniform.update_view_proj_persp(eye, target, up, aspect, fovy, znear, zfar);
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -79,7 +90,78 @@ impl Camera {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
+            camera_type: CameraType::Perspective,
             camera_bind_group_layout,
+            left: -10.0,
+            right: 10.0,
+            bottom: -10.0,
+            top: 10.0,
+        }
+    }
+
+    pub fn new_orthographic(
+        eye: Point3<f32>,
+        target: Point3<f32>,
+        up: Vector3<f32>,
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        znear: f32,
+        zfar: f32,
+        device: &wgpu::Device,
+    ) -> Self {
+        let mut camera_uniform = CameraUniform::default();
+        camera_uniform
+            .update_view_proj_ortho(eye, target, up, left, right, bottom, top, znear, zfar);
+
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
+        let camera_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("camera_bind_group_layout"),
+            });
+
+        let camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &camera_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: camera_buffer.as_entire_binding(),
+            }],
+            label: Some("camera_bind_group"),
+        });
+
+        Self {
+            eye,
+            target,
+            up,
+            aspect: 1.5,
+            fovy: std::f32::consts::FRAC_PI_4,
+            znear,
+            zfar,
+            camera_uniform,
+            camera_buffer,
+            camera_bind_group,
+            camera_bind_group_layout,
+            camera_type: CameraType::Orthographic,
+            left,
+            right,
+            bottom,
+            top,
         }
     }
 
@@ -93,16 +175,33 @@ impl Camera {
         let forward_vector = UnitQuaternion::from_quaternion(orientation)
             .transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
         self.target = self.eye + forward_vector;
-        // TODO: update target using orientation
-        self.camera_uniform.update_view_proj(
-            self.eye,
-            self.target,
-            self.up,
-            self.aspect,
-            self.fovy,
-            self.znear,
-            self.zfar,
-        );
+        match self.camera_type {
+            CameraType::Perspective => {
+                self.camera_uniform.update_view_proj_persp(
+                    self.eye,
+                    self.target,
+                    self.up,
+                    self.aspect,
+                    self.fovy,
+                    self.znear,
+                    self.zfar,
+                );
+            }
+            CameraType::Orthographic => {
+                // TODO: correctly update orthographic camera using orientation
+                self.camera_uniform.update_view_proj_ortho(
+                    self.eye,
+                    self.target,
+                    self.up,
+                    self.left,
+                    self.right,
+                    self.bottom,
+                    self.top,
+                    self.znear,
+                    self.zfar,
+                );
+            }
+        }
         queue.write_buffer(
             &self.camera_buffer,
             0,
@@ -113,15 +212,20 @@ impl Camera {
     pub fn set_aspect_ratio(&mut self, queue: &wgpu::Queue, new_aspect_ratio: f32) {
         if self.aspect != new_aspect_ratio {
             self.aspect = new_aspect_ratio;
-            self.camera_uniform.update_view_proj(
-                self.eye,
-                self.target,
-                self.up,
-                self.aspect,
-                self.fovy,
-                self.znear,
-                self.zfar,
-            );
+            match self.camera_type {
+                CameraType::Perspective => {
+                    self.camera_uniform.update_view_proj_persp(
+                        self.eye,
+                        self.target,
+                        self.up,
+                        self.aspect,
+                        self.fovy,
+                        self.znear,
+                        self.zfar,
+                    );
+                }
+                CameraType::Orthographic => {}
+            }
             queue.write_buffer(
                 &self.camera_buffer,
                 0,
@@ -141,7 +245,7 @@ pub struct CameraUniform {
 }
 
 impl CameraUniform {
-    pub fn update_view_proj(
+    pub fn update_view_proj_persp(
         &mut self,
         eye: Point3<f32>,
         target: Point3<f32>,
@@ -153,6 +257,29 @@ impl CameraUniform {
     ) {
         let view = Matrix4::look_at_rh(&eye, &target, &up);
         let proj = Matrix4::new_perspective(aspect, fovy, znear, zfar);
+        let view_proj = proj * view;
+        self.view_proj = view_proj.into();
+        self.inv_view_proj = view_proj
+            .try_inverse()
+            .expect("Unable to invert camera view projection matrix")
+            .into();
+        self.position = eye.into();
+    }
+
+    pub fn update_view_proj_ortho(
+        &mut self,
+        eye: Point3<f32>,
+        target: Point3<f32>,
+        up: Vector3<f32>,
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        znear: f32,
+        zfar: f32,
+    ) {
+        let view = Matrix4::look_at_rh(&eye, &target, &up);
+        let proj = Matrix4::new_orthographic(left, right, bottom, top, znear, zfar);
         let view_proj = proj * view;
         self.view_proj = view_proj.into();
         self.inv_view_proj = view_proj

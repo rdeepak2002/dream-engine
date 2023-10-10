@@ -2,6 +2,7 @@ use crate::camera::Camera;
 use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
 use crate::skinning::SkinningTech;
@@ -14,19 +15,34 @@ pub struct ForwardRenderingTech {
 impl ForwardRenderingTech {
     pub fn new(
         device: &wgpu::Device,
-        render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
+        camera: &Camera,
+        skinning_tech: &SkinningTech,
+        pbr_material_tech: &PbrMaterialTech,
+        lights: &Lights,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
-            include_str!("shader_forward.wgsl").parse().unwrap(),
+            include_str!("shader/shader_forward.wgsl").parse().unwrap(),
             String::from("shader_forward_render"),
         );
+
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[
+                    &camera.camera_bind_group_layout,
+                    &skinning_tech.skinning_bind_group_layout,
+                    &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    &lights.lights_bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
 
         let render_pipeline_forward_render_translucent_objects =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Forward Rendering"),
-                layout: Some(&render_pipeline_pbr_layout),
+                layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: shader_forward_render.get_shader_module(),
                     entry_point: "vs_main",

@@ -2,6 +2,7 @@ use crate::camera::Camera;
 use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
 use crate::skinning::SkinningTech;
@@ -19,23 +20,26 @@ pub struct DeferredRenderingTech {
 impl DeferredRenderingTech {
     pub fn new(
         device: &wgpu::Device,
-        render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
         lights: &Lights,
         width: u32,
         height: u32,
         depth_texture: &Texture,
         camera: &Camera,
+        skinning_tech: &SkinningTech,
+        pbr_material_tech: &PbrMaterialTech,
     ) -> Self {
         let shader_write_g_buffers = Shader::new(
             device,
-            include_str!("shader_write_g_buffers.wgsl").parse().unwrap(),
+            include_str!("shader/shader_write_g_buffers.wgsl")
+                .parse()
+                .unwrap(),
             String::from("shader_write_g_buffers"),
         );
 
         let shader_render_lights_for_deferred = Shader::new(
             device,
-            include_str!("shader_render_lights_for_deferred.wgsl")
+            include_str!("shader/shader_render_lights_for_deferred.wgsl")
                 .parse()
                 .unwrap(),
             String::from("shader_render_lights_for_deferred"),
@@ -170,10 +174,22 @@ impl DeferredRenderingTech {
                 label: Some("deferred_rendering_gbuffers_bind_group"),
             });
 
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[
+                    &camera.camera_bind_group_layout,
+                    &skinning_tech.skinning_bind_group_layout,
+                    &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    &lights.lights_bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
+
         let render_pipeline_write_g_buffers =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Write G Buffers"),
-                layout: Some(&render_pipeline_pbr_layout),
+                layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: shader_write_g_buffers.get_shader_module(),
                     entry_point: "vs_main",

@@ -26,7 +26,7 @@ pub mod lights;
 pub mod material;
 pub mod model;
 pub mod path_not_found_error;
-pub mod pbr_bind_groups_and_layouts;
+pub mod pbr_material_tech;
 pub mod render_map_key;
 pub mod render_storage;
 pub mod renderer;

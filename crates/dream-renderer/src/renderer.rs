@@ -28,7 +28,7 @@ use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
 use crate::lights::{Lights, RendererLight};
 use crate::path_not_found_error::PathNotFoundError;
-use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
@@ -56,7 +56,7 @@ pub struct RendererWgpu {
     camera: camera::Camera,
     depth_texture: texture::Texture,
     forward_rendering_tech: ForwardRenderingTech,
-    pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
+    pbr_material_tech: PbrMaterialTech,
     skinning_tech: SkinningTech,
     lights: Lights,
     shadow_tech: ShadowTech,
@@ -181,7 +181,7 @@ impl RendererWgpu {
         }
 
         // main camera
-        let camera = camera::Camera::new(
+        let camera = camera::Camera::new_perspective(
             Point3::new(3.0, 3.0, 3.0),
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
@@ -216,30 +216,33 @@ impl RendererWgpu {
         let skinning_tech = SkinningTech::new(&device);
 
         // bind groups and layouts for physically based rendering textures
-        let pbr_bind_groups_and_layouts =
-            PbrBindGroupsAndLayouts::new(&device, &camera, &lights, &skinning_tech);
+        let pbr_material_tech = PbrMaterialTech::new(&device);
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
-            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
             &lights,
             config.width,
             config.height,
             &depth_texture,
             &camera,
+            &skinning_tech,
+            &pbr_material_tech,
         );
 
         // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
-            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
+            &camera,
+            &skinning_tech,
+            &pbr_material_tech,
+            &lights,
         );
 
         // shadow tech
-        let shadow_tech = ShadowTech::new();
+        let shadow_tech = ShadowTech::new(&device);
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -260,7 +263,7 @@ impl RendererWgpu {
             depth_texture,
             deferred_rendering_tech,
             forward_rendering_tech,
-            pbr_bind_groups_and_layouts,
+            pbr_material_tech,
             lights,
             skinning_tech,
             shadow_tech,
@@ -328,7 +331,7 @@ impl RendererWgpu {
                 &self.device,
                 &self.queue,
                 &self
-                    .pbr_bind_groups_and_layouts
+                    .pbr_material_tech
                     .pbr_material_textures_bind_group_layout,
             );
 
@@ -436,7 +439,7 @@ impl RendererWgpu {
             model_path,
             &self.device,
             &self
-                .pbr_bind_groups_and_layouts
+                .pbr_material_tech
                 .pbr_material_textures_bind_group_layout,
         )
     }
