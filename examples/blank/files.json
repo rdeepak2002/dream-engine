@@ -24,6 +24,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/berserk_armor_4k.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/robot.glb.meta",
     "fileUrl": null
   },
@@ -49,6 +53,10 @@
   },
   {
     "filepath": "models/cube.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/berserk_armor_4k.glb",
     "fileUrl": null
   }
 ]

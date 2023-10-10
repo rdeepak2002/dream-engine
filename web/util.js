@@ -62,7 +62,7 @@ function hideWindowOverlay() {
 }
 
 function disableWebKeyboardEvents() {
-    const canvasElement = document?.getElementsByTagName('canvas')[0];
+    const canvasElement = document?.getElementsByTagName('body')[0];
     if (canvasElement) {
         // remove context menu pop-up when right-clicking on canvas
         canvasElement.addEventListener('contextmenu', function (e) {

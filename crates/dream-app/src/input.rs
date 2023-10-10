@@ -25,16 +25,29 @@ pub fn get_keyboard_state(key_code: VirtualKeyCode) -> f32 {
     res
 }
 
-pub fn set_mouse_pressed(is_pressed: bool) {
+pub fn set_mouse_left_pressed(is_pressed: bool) {
     let i = INPUT.clone();
     let input = i.write();
-    input.unwrap().mouse_is_pressed = is_pressed;
+    input.unwrap().mouse_left_is_pressed = is_pressed;
 }
 
-pub fn is_mouse_pressed() -> bool {
+pub fn is_mouse_left_pressed() -> bool {
     let i = INPUT.clone();
     let input = i.read();
-    let res = input.unwrap().mouse_is_pressed;
+    let res = input.unwrap().mouse_left_is_pressed;
+    res
+}
+
+pub fn set_mouse_right_pressed(is_pressed: bool) {
+    let i = INPUT.clone();
+    let input = i.write();
+    input.unwrap().mouse_right_is_pressed = is_pressed;
+}
+
+pub fn is_mouse_right_pressed() -> bool {
+    let i = INPUT.clone();
+    let input = i.read();
+    let res = input.unwrap().mouse_right_is_pressed;
     res
 }
 
@@ -64,10 +77,25 @@ pub fn get_mouse_scroll() -> f32 {
     res
 }
 
+pub fn set_renderer_panel_active(is_active: bool) {
+    let i = INPUT.clone();
+    let input = i.write();
+    input.unwrap().renderer_panel_active = is_active;
+}
+
+pub fn is_renderer_panel_active() -> bool {
+    let i = INPUT.clone();
+    let input = i.read();
+    let res = input.unwrap().renderer_panel_active;
+    res
+}
+
 #[derive(Default, Debug)]
 struct Input {
     key_states: HashMap<VirtualKeyCode, f32>,
-    mouse_is_pressed: bool,
+    mouse_left_is_pressed: bool,
+    mouse_right_is_pressed: bool,
     mouse_move: Vector2<f32>,
     mouse_scroll: f32,
+    renderer_panel_active: bool,
 }

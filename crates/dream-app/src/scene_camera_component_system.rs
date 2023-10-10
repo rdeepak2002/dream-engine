@@ -1,13 +1,14 @@
 use std::sync::{Mutex, Weak};
 
-use winit::event::VirtualKeyCode;
-
 use dream_ecs::component::Transform;
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{UnitQuaternion, Vector3};
+use dream_math::{UnitQuaternion, UnitVector3, Vector3};
 
-use crate::input::get_keyboard_state;
+use crate::input::{
+    get_mouse_move, get_mouse_scroll, is_mouse_left_pressed, is_mouse_right_pressed,
+    is_renderer_panel_active,
+};
 use crate::system::System;
 
 #[derive(Default)]
@@ -21,37 +22,78 @@ impl System for SceneCameraComponentSystem {
             .lock()
             .expect("Unable to lock")
             .get_entities_with_component::<dream_ecs::component::SceneCamera>();
-        for entity_id in scene_camera_entities {
-            let entity = Entity::from_handle(entity_id, scene.clone());
-            if let Some(mut transform) = entity.get_component::<Transform>() {
-                let rotation = UnitQuaternion::from_quaternion(transform.rotation);
-                let forward_vector =
-                    rotation.transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
-                let forward_vector_no_y = Vector3::new(forward_vector.x, 0.0, forward_vector.z);
-                let up_vector = Vector3::new(0.0, 1.0, 0.0);
-                let right_vector = up_vector.cross(&forward_vector);
+        if is_renderer_panel_active() {
+            for entity_id in scene_camera_entities {
+                let entity = Entity::from_handle(entity_id, scene.clone());
+                if let Some(mut transform) = entity.get_component::<Transform>() {
+                    let mut rotation = UnitQuaternion::from_quaternion(transform.rotation);
 
-                let mut delta_position = Vector3::<f32>::default();
-                if get_keyboard_state(VirtualKeyCode::W) == 1.0 {
-                    delta_position += forward_vector_no_y;
+                    let forward_vector =
+                        rotation.transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
+                    let forward_vector_no_y =
+                        Vector3::new(forward_vector.x, 0.0, forward_vector.z).normalize();
+
+                    let up_vector = Vector3::new(0.0, 1.0, 0.0);
+                    let up_vector_screen =
+                        rotation.transform_vector(&Vector3::<f32>::new(0.0, -1.0, 0.0));
+
+                    let right_vector = up_vector.cross(&forward_vector_no_y).normalize();
+
+                    let mut delta_position = Vector3::<f32>::default();
+
+                    // move camera using WASD
+                    // if get_keyboard_state(VirtualKeyCode::W) == 1.0 {
+                    //     delta_position += forward_vector_no_y;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::S) == 1.0 {
+                    //     delta_position -= forward_vector_no_y;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::A) == 1.0 {
+                    //     delta_position += right_vector;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::D) == 1.0 {
+                    //     delta_position -= right_vector;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::Space) == 1.0 {
+                    //     delta_position += up_vector;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::LShift) == 1.0 {
+                    //     delta_position -= up_vector;
+                    // }
+
+                    // move camera using scroll
+                    delta_position -= forward_vector * get_mouse_scroll();
+
+                    // move camera using mouse drag
+                    if is_mouse_left_pressed() {
+                        let mouse_move = get_mouse_move();
+                        delta_position += mouse_move.x * right_vector;
+                        delta_position -= mouse_move.y * up_vector_screen;
+                    }
+
+                    // turn camera using mouse drag
+                    if is_mouse_right_pressed() {
+                        let mouse_move = get_mouse_move();
+
+                        let x = UnitQuaternion::from_axis_angle(
+                            &UnitVector3::new_normalize(up_vector),
+                            mouse_move.x * 0.6 * dt,
+                        );
+                        let around_local_y_rot = x.quaternion();
+
+                        let y = UnitQuaternion::from_axis_angle(
+                            &UnitVector3::new_normalize(right_vector),
+                            -mouse_move.y * 0.6 * dt,
+                        );
+                        let around_local_x_rot = y.quaternion();
+
+                        transform.rotation =
+                            (around_local_x_rot * (around_local_y_rot * transform.rotation));
+                    }
+
+                    transform.position += delta_position * dt;
+                    entity.add_component(transform);
                 }
-                if get_keyboard_state(VirtualKeyCode::S) == 1.0 {
-                    delta_position -= forward_vector_no_y;
-                }
-                if get_keyboard_state(VirtualKeyCode::A) == 1.0 {
-                    delta_position += right_vector;
-                }
-                if get_keyboard_state(VirtualKeyCode::D) == 1.0 {
-                    delta_position -= right_vector;
-                }
-                if get_keyboard_state(VirtualKeyCode::Space) == 1.0 {
-                    delta_position += up_vector;
-                }
-                if get_keyboard_state(VirtualKeyCode::LShift) == 1.0 {
-                    delta_position -= up_vector;
-                }
-                transform.position += delta_position * dt;
-                entity.add_component(transform);
             }
         }
     }

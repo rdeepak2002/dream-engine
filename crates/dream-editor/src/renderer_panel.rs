@@ -1,6 +1,8 @@
 use egui::load::SizedTexture;
 use egui_wgpu::Renderer;
 
+use dream_app::input::set_renderer_panel_active;
+
 use crate::editor::Panel;
 
 pub struct RendererPanel {
@@ -148,6 +150,12 @@ impl Default for RendererPanel {
 impl Panel for RendererPanel {
     fn draw(&mut self, egui_context: &egui::Context) {
         egui::CentralPanel::default().show(egui_context, |ui| {
+            if egui_context.is_pointer_over_area() {
+                // TODO: why do we have to set this to false?
+                set_renderer_panel_active(false);
+            } else {
+                set_renderer_panel_active(true);
+            }
             if self.render_output_epaint_texture_id.is_some() {
                 let panel_size = ui.available_size();
                 if panel_size.y != 0.0 {

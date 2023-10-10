@@ -144,7 +144,9 @@ impl Window {
                 } => app.process_mouse(delta.0, delta.1),
 
                 Event::WindowEvent { event, .. } => {
-                    if !editor.handle_event(&event) {
+                    editor.handle_event(&event);
+                    if true {
+                        //  was !editor.handle_event(&event)
                         match event {
                             WindowEvent::KeyboardInput {
                                 input:
@@ -163,7 +165,14 @@ impl Window {
                                 state,
                                 ..
                             } => {
-                                app.process_mouse_input(state == ElementState::Pressed);
+                                app.process_mouse_left_input(state == ElementState::Pressed);
+                            }
+                            WindowEvent::MouseInput {
+                                button: MouseButton::Right,
+                                state,
+                                ..
+                            } => {
+                                app.process_mouse_right_input(state == ElementState::Pressed);
                             }
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(Some(physical_size));

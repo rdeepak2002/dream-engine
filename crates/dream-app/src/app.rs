@@ -30,7 +30,10 @@ use dream_resource::resource_manager::ResourceManager;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
-use crate::input::{set_keyboard_state, set_mouse_move, set_mouse_pressed, set_mouse_scroll};
+use crate::input::{
+    get_mouse_move, get_mouse_scroll, set_keyboard_state, set_mouse_left_pressed, set_mouse_move,
+    set_mouse_right_pressed, set_mouse_scroll,
+};
 use crate::python_script_component_system::PythonScriptComponentSystem;
 use crate::scene_camera_component_system::SceneCameraComponentSystem;
 use crate::system::System;
@@ -158,7 +161,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(),
+                "f358ffb3-b766-4839-a93f-30b81ff9c107".into(), // 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
                 true,
                 Default::default(),
             );
@@ -217,6 +220,9 @@ impl App {
                 .unwrap()
                 .update(self.dt, Arc::downgrade(&self.scene));
         }
+        // mouse dx and dy should be reset
+        set_mouse_move(get_mouse_move() * 0.0);
+        set_mouse_scroll(get_mouse_scroll() * 0.0);
         self.dt
     }
 
@@ -348,8 +354,12 @@ impl App {
         set_mouse_move(Vector2::new(dx, dy))
     }
 
-    pub fn process_mouse_input(&mut self, is_pressed: bool) {
-        set_mouse_pressed(is_pressed);
+    pub fn process_mouse_left_input(&mut self, is_pressed: bool) {
+        set_mouse_left_pressed(is_pressed);
+    }
+
+    pub fn process_mouse_right_input(&mut self, is_pressed: bool) {
+        set_mouse_right_pressed(is_pressed);
     }
 
     pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
