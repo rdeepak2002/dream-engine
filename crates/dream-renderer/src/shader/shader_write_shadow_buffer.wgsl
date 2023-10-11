@@ -2,12 +2,6 @@
 //include:model.wgsl
 //include:skinning.wgsl
 
-//struct Scene {
-//  lightViewProjMatrix: mat4x4<f32>,
-//  cameraViewProjMatrix: mat4x4<f32>,
-//  lightPos: vec3<f32>,
-//}
-
 @group(0) @binding(0)
 var<uniform> light_as_camera: CameraUniform;
 
@@ -15,7 +9,7 @@ var<uniform> light_as_camera: CameraUniform;
 var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 @vertex
-fn main(
+fn vs_main(
     model: VertexInput,
     instance: InstanceInput,
 ) -> @builtin(position) vec4<f32> {
@@ -46,4 +40,10 @@ fn main(
     }
 
     return light_as_camera.view_proj * model_matrix * totalPosition;
+}
+
+@fragment
+fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
+    // TODO: discard if texture color alpha is <= 0 or <= cutoff
+    return vec4(0.0, 1.0, 0.0, 1.0);
 }

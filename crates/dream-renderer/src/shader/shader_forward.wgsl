@@ -144,7 +144,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world_position = in.world_position;
 
     // final color
-    var final_color_rgb = compute_final_color(world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
+    var final_color_rgb = compute_final_color(1.0, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, alpha);
 }

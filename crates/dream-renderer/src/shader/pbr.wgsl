@@ -62,7 +62,7 @@ fn fresnelSchlick(cosTheta: f32, F0: vec3<f32>) -> vec3<f32>{
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
+fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera_position: vec3<f32>, normal: vec3<f32>, albedo: vec4<f32>, emissive: vec4<f32>, ao: f32, roughness: f32, metallic: f32) -> vec3<f32> {
     // TODO: use num_lights uniform variable
     var result = vec3(0., 0., 0.);
 
@@ -86,7 +86,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
         }
         if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
             // TODO: verify
-            L = normalize(light.direction);
+            L = -normalize(light.direction);
         }
         let H: vec3<f32> = normalize(V + L);
         var radiance: vec3<f32> = vec3(0.0);
@@ -134,7 +134,7 @@ fn compute_final_color(world_position: vec3<f32>, camera_position: vec3<f32>, no
 
     let ambientIntensity = 0.01;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
-    var color = result + ambient;
+    var color = shadow_visibility * result + ambient;
 
     if ((emissive.r > 0.0 || emissive.g > 0.0 || emissive.b > 0.0) && emissive.a > 0.0) {
         color = emissive.rgb;

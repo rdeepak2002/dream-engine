@@ -218,6 +218,9 @@ impl RendererWgpu {
         // bind groups and layouts for physically based rendering textures
         let pbr_material_tech = PbrMaterialTech::new(&device);
 
+        // shadow tech
+        let shadow_tech = ShadowTech::new(&device, &camera, &skinning_tech);
+
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
@@ -229,6 +232,7 @@ impl RendererWgpu {
             &camera,
             &skinning_tech,
             &pbr_material_tech,
+            &shadow_tech,
         );
 
         // algorithms for forward rendering
@@ -240,9 +244,6 @@ impl RendererWgpu {
             &pbr_material_tech,
             &lights,
         );
-
-        // shadow tech
-        let shadow_tech = ShadowTech::new(&device);
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -342,16 +343,24 @@ impl RendererWgpu {
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
         // figure out shadows
-        self.shadow_tech.render_shadow_depth_buffers(&self.lights);
+        self.shadow_tech.render_shadow_depth_buffers(
+            &self.device,
+            &mut encoder,
+            &self.lights,
+            &self.render_storage,
+            &self.skinning_tech,
+        );
 
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
             &self.depth_texture,
-            &self.camera,
+            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
+            // &self.shadow_tech.shadow_cameras[0],
             &self.lights,
             &self.render_storage,
             &self.skinning_tech,
+            &self.shadow_tech,
         );
 
         // combine gbuffers into one final texture result
@@ -360,8 +369,10 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera,
+            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
+            // &self.shadow_tech.shadow_cameras[0],
             &self.lights,
+            &self.shadow_tech,
         );
 
         // forward render translucent objects
@@ -369,7 +380,8 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera,
+            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
+            // &self.shadow_tech.shadow_cameras[0],
             &self.lights,
             &self.render_storage,
             &self.skinning_tech,

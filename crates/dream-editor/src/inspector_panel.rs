@@ -253,21 +253,21 @@ impl Panel for InspectorPanel {
                                             egui::DragValue::new(&mut light_component.direction.x)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0)),
+                                                .clamp_range(RangeInclusive::new(-1.0, 1.0)),
                                         );
                                         ui.strong("y");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.direction.y)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(-1.0, 1.0))
                                         );
                                         ui.strong("z");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.direction.z)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(-1.0, 1.0))
                                         );
 
                                         entity.add_component(light_component);

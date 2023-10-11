@@ -35,6 +35,38 @@ impl RendererPanel {
             wgpu::FilterMode::default(),
         ));
 
+        // depth texture of shadow
+        // {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             &state.shadow_depth_texture_debugger.output_texture.view,
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
+
+        // texture of shadow tech
+        // {
+        //     if self.render_output_epaint_texture_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer
+        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.render_output_epaint_texture_id =
+        //         Some(egui_wgpu_renderer.register_native_texture(
+        //             &state.device,
+        //             &state.shadow_tech.frame_textures[0].view,
+        //             wgpu::FilterMode::default(),
+        //         ));
+        // }
+
         // show deferred result
         // let i = 0;
         // if state.deferred_render_result_texture.is_some() {

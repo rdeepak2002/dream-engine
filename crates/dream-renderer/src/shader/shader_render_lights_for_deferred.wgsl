@@ -34,6 +34,13 @@ var texture_g_buffer_depth: texture_depth_2d;
 @group(2) @binding(0)
 var<uniform> lightsBuffer: LightsUniform;
 
+@group(3) @binding(0)
+var texture_shadow_map: texture_depth_2d;
+@group(3) @binding(1)
+var sampler_shadow_map: sampler_comparison;
+@group(3) @binding(2)
+var<uniform> light_as_camera: CameraUniform;
+
 fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
     // reconstruct world-space position from the screen coordinate
     let pos_clip = vec4(coord.x * 2.0 - 1.0, (1.0 - coord.y) * 2.0 - 1.0, depth_sample, 1.0);
@@ -83,18 +90,44 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
         0
     );
 
-    // depth >= 1 means nothing was there at this pixel
-    if (depth >= 1.0) {
-        discard;
-    }
-
     // compute world position using depth buffer
     let depth_buffer_size = textureDimensions(texture_g_buffer_depth);
     let coord_uv = coord.xy / vec2<f32>(depth_buffer_size);
     let world_position = world_from_screen_coord(coord_uv, depth);
 
+    // convert fragment position to light position view matrix, then convert XY of this to (0, 1) range
+    var fragment_shadow_position_raw = light_as_camera.view_proj * vec4(world_position, 1.0);
+
+    // shadow calculation
+    let fragment_shadow_position = vec3(
+        fragment_shadow_position_raw.xy * vec2(0.5, -0.5) + vec2(0.5),
+        fragment_shadow_position_raw.z
+    );
+    // pcf filtering to compute visibility of shadow
+    var visibility = 0.0;
+    let shadow_depth_texture_size: f32 = 4096.0;
+    let one_over_shadow_depth_texture_size = 1.0 / shadow_depth_texture_size;
+    for (var y = -1; y <= 1; y++) {
+        for (var x = -1; x <= 1; x++) {
+            let offset = vec2<f32>(vec2(x, y)) * one_over_shadow_depth_texture_size;
+            visibility += textureSampleCompare(
+                texture_shadow_map, sampler_shadow_map,
+                fragment_shadow_position.xy + offset, fragment_shadow_position.z - 0.002
+            );
+        }
+    }
+    visibility /= 9.0;
+    if (fragment_shadow_position_raw.z > 1.0) {
+        visibility = 1.0;
+    }
+
+    // depth >= 1 means nothing was there at this pixel
+    if (depth >= 1.0) {
+        discard;
+    }
+
     // final color
-    var final_color_rgb = compute_final_color(world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
+    var final_color_rgb = compute_final_color(visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, 1.0);
 }

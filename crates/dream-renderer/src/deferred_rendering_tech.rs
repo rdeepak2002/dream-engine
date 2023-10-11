@@ -5,6 +5,7 @@ use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
+use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
 use crate::texture;
 use crate::texture::Texture;
@@ -28,6 +29,7 @@ impl DeferredRenderingTech {
         camera: &Camera,
         skinning_tech: &SkinningTech,
         pbr_material_tech: &PbrMaterialTech,
+        shadow_tech: &ShadowTech,
     ) -> Self {
         let shader_write_g_buffers = Shader::new(
             device,
@@ -260,6 +262,7 @@ impl DeferredRenderingTech {
                     &camera.camera_bind_group_layout,
                     &render_lights_for_deferred_gbuffers_bind_group_layout,
                     &lights.lights_bind_group_layout,
+                    &shadow_tech.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -324,6 +327,7 @@ impl DeferredRenderingTech {
         lights: &Lights,
         render_storage: &RenderStorage,
         skinning_tech: &SkinningTech,
+        shadow_tech: &ShadowTech,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -461,6 +465,7 @@ impl DeferredRenderingTech {
         depth_texture: &mut texture::Texture,
         camera: &Camera,
         lights: &Lights,
+        shadow_tech: &ShadowTech,
     ) {
         // define render pass
         let mut render_pass_render_lights_for_deferred =
@@ -530,6 +535,16 @@ impl DeferredRenderingTech {
 
         // lights bind group
         render_pass_render_lights_for_deferred.set_bind_group(2, &lights.lights_bind_group, &[]);
+
+        // shadow tech bind group
+        render_pass_render_lights_for_deferred.set_bind_group(
+            3,
+            &shadow_tech
+                .bind_groups
+                .get(0)
+                .expect("No shadow bind group found for deferred rendering"),
+            &[],
+        );
 
         render_pass_render_lights_for_deferred
             .set_pipeline(&self.render_pipeline_render_deferred_result);
