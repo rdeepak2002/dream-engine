@@ -233,7 +233,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Base color texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
         )
         .expect("Unable to load base color texture");
 
@@ -272,7 +272,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Emissive texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
         )
         .expect("Unable to load emissive texture");
 

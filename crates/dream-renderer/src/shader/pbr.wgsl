@@ -136,16 +136,16 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
     var color = shadow_visibility * result + ambient;
 
-    if ((emissive.r > 0.0 || emissive.g > 0.0 || emissive.b > 0.0) && emissive.a > 0.0) {
-        color = emissive.rgb;
-    }
-
     // HDR tonemapping
     let exposure: f32 = 4.0f;
     color = vec3(1.0) - exp(-color * exposure);
     // gamma correct
     let gamma: f32 = 1.2;
     color = pow(color, vec3(1.0 / gamma));
+
+    if ((emissive.r > 0.0 || emissive.g > 0.0 || emissive.b > 0.0) && emissive.a > 0.0) {
+        color = emissive.rgb;
+    }
 
     return color;
 }
