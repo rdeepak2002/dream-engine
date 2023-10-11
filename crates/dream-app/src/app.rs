@@ -106,7 +106,7 @@ impl Default for App {
             Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
                 .add_component(Light::new(
                     LightType::DIRECTIONAL,
-                    Vector3::new(0.25, 0.62, 0.99),
+                    Vector3::new(251.0 / 255.0, 247.0 / 255.0, 237.0 / 255.0),
                     4.0,
                     Vector3::new(-0.2, -0.4, -0.1),
                     true,

@@ -345,6 +345,7 @@ impl RendererWgpu {
         // figure out shadows
         self.shadow_tech.render_shadow_depth_buffers(
             &self.device,
+            &self.queue,
             &mut encoder,
             &self.lights,
             &self.render_storage,

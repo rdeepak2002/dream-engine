@@ -539,10 +539,10 @@ impl DeferredRenderingTech {
         // shadow tech bind group
         render_pass_render_lights_for_deferred.set_bind_group(
             3,
-            &shadow_tech
+            shadow_tech
                 .bind_groups
                 .get(0)
-                .expect("No shadow bind group found for deferred rendering"),
+                .unwrap_or(&shadow_tech.dummy_bind_group),
             &[],
         );
 

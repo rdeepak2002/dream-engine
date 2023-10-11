@@ -1,6 +1,6 @@
 use wgpu::TextureFormat::Bgra8Unorm;
 
-use dream_math::Vector3;
+use dream_math::{Point3, Vector3};
 
 use crate::camera::Camera;
 use crate::instance::InstanceRaw;
@@ -18,6 +18,7 @@ pub struct ShadowTech {
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub bind_groups: Vec<wgpu::BindGroup>,
     pub frame_textures: Vec<Texture>,
+    pub dummy_bind_group: wgpu::BindGroup,
 }
 
 impl ShadowTech {
@@ -138,6 +139,41 @@ impl ShadowTech {
             label: Some("shadow_tech_bind_group_layout"),
         });
 
+        // shaders expect at least one bind group, so create one with no shadow
+        let dummy_depth_texture =
+            Texture::create_depth_texture(device, 4, 4, "dummy depth texture for shadows");
+        let dummy_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&dummy_depth_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&dummy_depth_texture.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: Camera::new_orthographic(
+                        Point3::new(-999.0, -999.0, -999.0),
+                        Point3::new(1000.0, 1000.0, 1000.0),
+                        Vector3::new(0.0, 1.0, 0.0),
+                        0.0,
+                        1.0,
+                        0.0,
+                        1.0,
+                        1.0,
+                        2.0,
+                        device,
+                    )
+                    .camera_buffer
+                    .as_entire_binding(),
+                },
+            ],
+            label: Some("shadow_tech_bind_group"),
+        });
+
         Self {
             shadow_cameras,
             depth_textures,
@@ -145,21 +181,23 @@ impl ShadowTech {
             render_pipeline,
             bind_group_layout,
             bind_groups: Vec::new(),
+            dummy_bind_group,
         }
     }
 
     pub fn render_shadow_depth_buffers(
         &mut self,
         device: &wgpu::Device,
+        queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         lights: &Lights,
         render_storage: &RenderStorage,
         skinning_tech: &SkinningTech,
     ) {
-        self.shadow_cameras.clear();
-        self.bind_groups.clear();
+        // self.shadow_cameras.clear();
+        // self.bind_groups.clear();
 
-        // TODO: only clear the difference amount, and update the existing ones rather than creating new buffers every time this is called (which is every frame right now)
+        let mut idx = 0;
         for light in &lights.renderer_lights {
             // TODO: move these to enums so less refactoring (and be ale to easily convert from ECS light enum)
             let light_type_directional: u32 = 1;
@@ -173,48 +211,70 @@ impl ShadowTech {
                 let top = 10.0;
                 let near_plane = 1.0;
                 let far_plane = 7.5;
-                // TODO: rather than creating a new buffer every frame, update an exising buffer at an index (while also removing extras)
-                self.shadow_cameras.push(Camera::new_orthographic(
-                    eye.into(),
-                    target.into(),
-                    up,
-                    left,
-                    right,
-                    bottom,
-                    top,
-                    near_plane,
-                    far_plane,
-                    device,
-                ));
+
+                if self.shadow_cameras.len() <= idx {
+                    self.shadow_cameras.push(Camera::new_orthographic(
+                        eye.into(),
+                        target.into(),
+                        up,
+                        left,
+                        right,
+                        bottom,
+                        top,
+                        near_plane,
+                        far_plane,
+                        device,
+                    ));
+                } else {
+                    self.shadow_cameras.get_mut(idx).unwrap().update_ortho(
+                        eye.into(),
+                        target.into(),
+                        up,
+                        left,
+                        right,
+                        bottom,
+                        top,
+                        near_plane,
+                        far_plane,
+                        &queue,
+                    );
+                }
+
+                idx += 1;
             }
         }
+
+        // TODO: remove any extra shadow cameras
 
         for (idx, shadow_camera) in self.shadow_cameras.iter().enumerate() {
             // update bind group so other
             // TODO: we'll need multiple bind groups in future
 
-            // TODO: instead of clearing every time, just update the current bind group?
-            let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.depth_textures[idx].view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::Sampler(&self.depth_textures[idx].sampler),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: shadow_camera.camera_buffer.as_entire_binding(),
-                    },
-                ],
-                label: Some("shadow_tech_bind_group"),
-            });
-            self.bind_groups.push(bind_group);
+            if self.bind_groups.len() <= idx {
+                let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &self.bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.depth_textures[idx].view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(
+                                &self.depth_textures[idx].sampler,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: shadow_camera.camera_buffer.as_entire_binding(),
+                        },
+                    ],
+                    label: Some("shadow_tech_bind_group"),
+                });
+                self.bind_groups.push(bind_group);
+            }
 
             // define render pass
             let mut render_pass_write_shadow_buffer =

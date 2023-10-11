@@ -165,6 +165,37 @@ impl Camera {
         }
     }
 
+    pub fn update_ortho(
+        &mut self,
+        eye: Point3<f32>,
+        target: Point3<f32>,
+        up: Vector3<f32>,
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        znear: f32,
+        zfar: f32,
+        queue: &wgpu::Queue,
+    ) {
+        self.eye = eye;
+        self.target = target;
+        self.up = up;
+        self.left = left;
+        self.right = right;
+        self.bottom = bottom;
+        self.top = top;
+        self.znear = znear;
+        self.zfar = zfar;
+        self.camera_uniform
+            .update_view_proj_ortho(eye, target, up, left, right, bottom, top, znear, zfar);
+        queue.write_buffer(
+            &self.camera_buffer,
+            0,
+            bytemuck::cast_slice(&[self.camera_uniform]),
+        );
+    }
+
     pub fn set_position_and_orientation(
         &mut self,
         queue: &wgpu::Queue,
