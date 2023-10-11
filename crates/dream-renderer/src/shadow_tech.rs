@@ -31,15 +31,21 @@ impl ShadowTech {
             String::from("shader_write_shadow_buffer"),
         );
 
+        let texture_size = 4096;
+
         let shadow_cameras: Vec<Camera> = vec![];
-        let depth_texture =
-            Texture::create_depth_texture(device, 4096, 4096, "shadow_depth_texture_0");
+        let depth_texture = Texture::create_depth_texture(
+            device,
+            texture_size,
+            texture_size,
+            "shadow_depth_texture_0",
+        );
         let depth_textures = vec![depth_texture];
 
         let frame_texture = Texture::create_frame_texture(
             device,
-            4096,
-            4096,
+            texture_size,
+            texture_size,
             "shadow tech frame texture",
             Bgra8Unorm,
         );

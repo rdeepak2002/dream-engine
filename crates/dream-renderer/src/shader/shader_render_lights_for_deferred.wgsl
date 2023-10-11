@@ -105,7 +105,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     );
     // pcf filtering to compute visibility of shadow
     var visibility = 0.0;
-    let shadow_depth_texture_size: f32 = 4096.0;
+    let shadow_depth_texture_size: f32 = vec2<f32>(textureDimensions(texture_shadow_map)).x;
     let one_over_shadow_depth_texture_size = 1.0 / shadow_depth_texture_size;
     for (var y = -1; y <= 1; y++) {
         for (var x = -1; x <= 1; x++) {
