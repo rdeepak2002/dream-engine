@@ -117,8 +117,30 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
         }
     }
     visibility /= 9.0;
+    var is_outside_bounds = false;
+    if (fragment_shadow_position_raw.y > 1.0) {
+        visibility = 1.0;
+        is_outside_bounds = true;
+    }
+    if (fragment_shadow_position_raw.y < -1.0) {
+        visibility = 1.0;
+        is_outside_bounds = true;
+    }
+    if (fragment_shadow_position_raw.x > 1.0) {
+        visibility = 1.0;
+        is_outside_bounds = true;
+    }
+    if (fragment_shadow_position_raw.x < -1.0) {
+        visibility = 1.0;
+        is_outside_bounds = true;
+    }
     if (fragment_shadow_position_raw.z > 1.0) {
         visibility = 1.0;
+        is_outside_bounds = true;
+    }
+    if (fragment_shadow_position_raw.z < 0.0) {
+        visibility = 1.0;
+        is_outside_bounds = true;
     }
 
     // depth >= 1 means nothing was there at this pixel
@@ -128,6 +150,10 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
 
     // final color
     var final_color_rgb = compute_final_color(visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
+
+//    if (is_outside_bounds) {
+//        final_color_rgb *= vec3(1.0, 0.0, 0.0);
+//    }
 
     return vec4(final_color_rgb, 1.0);
 }
