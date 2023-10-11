@@ -26,6 +26,10 @@ impl Shader {
             );
         }
 
+        if source.contains("//include:shadow.wgsl") {
+            source = source.replace("//include:shadow.wgsl", include_str!("shader/shadow.wgsl"));
+        }
+
         let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some(label.as_str()),
             source: wgpu::ShaderSource::Wgsl(source.clone().into()),

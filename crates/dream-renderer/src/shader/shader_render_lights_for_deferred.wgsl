@@ -1,5 +1,6 @@
 //include:pbr.wgsl
 //include:camera.wgsl
+//include:shadow.wgsl
 
 // Vertex shader
 @group(0) @binding(0)
@@ -95,53 +96,8 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let coord_uv = coord.xy / vec2<f32>(depth_buffer_size);
     let world_position = world_from_screen_coord(coord_uv, depth);
 
-    // convert fragment position to light position view matrix, then convert XY of this to (0, 1) range
-    var fragment_shadow_position_raw = light_as_camera.view_proj * vec4(world_position, 1.0);
-
-    // shadow calculation
-    let fragment_shadow_position = vec3(
-        fragment_shadow_position_raw.xy * vec2(0.5, -0.5) + vec2(0.5),
-        fragment_shadow_position_raw.z
-    );
-    // pcf filtering to compute visibility of shadow
-    var visibility = 0.0;
-    let shadow_depth_texture_size: f32 = vec2<f32>(textureDimensions(texture_shadow_map)).x;
-    let one_over_shadow_depth_texture_size = 1.0 / shadow_depth_texture_size;
-    for (var y = -1; y <= 1; y++) {
-        for (var x = -1; x <= 1; x++) {
-            let offset = vec2<f32>(vec2(x, y)) * one_over_shadow_depth_texture_size;
-            visibility += textureSampleCompare(
-                texture_shadow_map, sampler_shadow_map,
-                fragment_shadow_position.xy + offset, fragment_shadow_position.z - 0.002
-            );
-        }
-    }
-    visibility /= 9.0;
-    var is_outside_bounds = false;
-    if (fragment_shadow_position_raw.y > 1.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
-    if (fragment_shadow_position_raw.y < -1.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
-    if (fragment_shadow_position_raw.x > 1.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
-    if (fragment_shadow_position_raw.x < -1.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
-    if (fragment_shadow_position_raw.z > 1.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
-    if (fragment_shadow_position_raw.z < 0.0) {
-        visibility = 1.0;
-        is_outside_bounds = true;
-    }
+    // calculate shadow_visibility
+    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map, sampler_shadow_map, light_as_camera);
 
     // depth >= 1 means nothing was there at this pixel
     if (depth >= 1.0) {
@@ -149,11 +105,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     }
 
     // final color
-    var final_color_rgb = compute_final_color(visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
-
-//    if (is_outside_bounds) {
-//        final_color_rgb *= vec3(1.0, 0.0, 0.0);
-//    }
+    var final_color_rgb = compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, 1.0);
 }
