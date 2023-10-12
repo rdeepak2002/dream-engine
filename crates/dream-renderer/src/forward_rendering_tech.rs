@@ -141,8 +141,8 @@ impl ForwardRenderingTech {
         render_pass_forward_rendering.set_bind_group(
             2,
             shadow_tech
-                .bind_groups
-                .get(0)
+                .bind_group
+                .as_ref()
                 .unwrap_or(&shadow_tech.dummy_bind_group),
             &[],
         );

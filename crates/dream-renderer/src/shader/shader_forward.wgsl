@@ -101,12 +101,34 @@ var sampler_occlusion: sampler;
 @group(1) @binding(10)
 var<uniform> material_factors: MaterialFactors;
 
+// shadow cascades
 @group(2) @binding(0)
-var texture_shadow_map: texture_depth_2d;
+var texture_shadow_map_0: texture_depth_2d;
 @group(2) @binding(1)
-var sampler_shadow_map: sampler_comparison;
+var sampler_shadow_map_0: sampler_comparison;
 @group(2) @binding(2)
-var<uniform> light_as_camera: CameraUniform;
+var<uniform> light_as_camera_0: CameraUniform;
+
+@group(2) @binding(3)
+var texture_shadow_map_1: texture_depth_2d;
+@group(2) @binding(4)
+var sampler_shadow_map_1: sampler_comparison;
+@group(2) @binding(5)
+var<uniform> light_as_camera_1: CameraUniform;
+
+@group(2) @binding(6)
+var texture_shadow_map_2: texture_depth_2d;
+@group(2) @binding(7)
+var sampler_shadow_map_2: sampler_comparison;
+@group(2) @binding(8)
+var<uniform> light_as_camera_2: CameraUniform;
+
+@group(2) @binding(9)
+var texture_shadow_map_3: texture_depth_2d;
+@group(2) @binding(10)
+var sampler_shadow_map_3: sampler_comparison;
+@group(2) @binding(11)
+var<uniform> light_as_camera_3: CameraUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -152,7 +174,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world_position = in.world_position;
 
     // calculate shadow_visibility
-    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map, sampler_shadow_map, light_as_camera);
+    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
 
     // final color
     var final_color_rgb = compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);

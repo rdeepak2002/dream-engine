@@ -11,9 +11,24 @@ use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
 // );
 
 #[derive(Copy, Clone)]
-enum CameraType {
+pub enum CameraType {
     Perspective = 0,
     Orthographic = 1,
+}
+
+pub struct CameraParams {
+    pub eye: Point3<f32>,
+    pub target: Point3<f32>,
+    pub up: Vector3<f32>,
+    pub aspect: f32,
+    pub fovy: f32,
+    pub left: f32,
+    pub right: f32,
+    pub bottom: f32,
+    pub top: f32,
+    pub znear: f32,
+    pub zfar: f32,
+    pub camera_type: CameraType,
 }
 
 pub struct Camera {
@@ -99,21 +114,19 @@ impl Camera {
         }
     }
 
-    pub fn new_orthographic(
-        eye: Point3<f32>,
-        target: Point3<f32>,
-        up: Vector3<f32>,
-        left: f32,
-        right: f32,
-        bottom: f32,
-        top: f32,
-        znear: f32,
-        zfar: f32,
-        device: &wgpu::Device,
-    ) -> Self {
+    pub fn new_orthographic(camera_params: &CameraParams, device: &wgpu::Device) -> Self {
         let mut camera_uniform = CameraUniform::default();
-        camera_uniform
-            .update_view_proj_ortho(eye, target, up, left, right, bottom, top, znear, zfar);
+        camera_uniform.update_view_proj_ortho(
+            camera_params.eye,
+            camera_params.target,
+            camera_params.up,
+            camera_params.left,
+            camera_params.right,
+            camera_params.bottom,
+            camera_params.top,
+            camera_params.znear,
+            camera_params.zfar,
+        );
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -146,49 +159,46 @@ impl Camera {
         });
 
         Self {
-            eye,
-            target,
-            up,
-            aspect: 1.5,
+            eye: camera_params.eye,
+            target: camera_params.target,
+            up: camera_params.up,
+            aspect: camera_params.aspect,
             fovy: std::f32::consts::FRAC_PI_4,
-            znear,
-            zfar,
+            znear: camera_params.znear,
+            zfar: camera_params.zfar,
             camera_uniform,
             camera_buffer,
             camera_bind_group,
             camera_bind_group_layout,
             camera_type: CameraType::Orthographic,
-            left,
-            right,
-            bottom,
-            top,
+            left: camera_params.left,
+            right: camera_params.right,
+            bottom: camera_params.bottom,
+            top: camera_params.top,
         }
     }
 
-    pub fn update_ortho(
-        &mut self,
-        eye: Point3<f32>,
-        target: Point3<f32>,
-        up: Vector3<f32>,
-        left: f32,
-        right: f32,
-        bottom: f32,
-        top: f32,
-        znear: f32,
-        zfar: f32,
-        queue: &wgpu::Queue,
-    ) {
-        self.eye = eye;
-        self.target = target;
-        self.up = up;
-        self.left = left;
-        self.right = right;
-        self.bottom = bottom;
-        self.top = top;
-        self.znear = znear;
-        self.zfar = zfar;
-        self.camera_uniform
-            .update_view_proj_ortho(eye, target, up, left, right, bottom, top, znear, zfar);
+    pub fn update_ortho(&mut self, camera_params: &CameraParams, queue: &wgpu::Queue) {
+        self.eye = camera_params.eye;
+        self.target = camera_params.target;
+        self.up = camera_params.up;
+        self.left = camera_params.left;
+        self.right = camera_params.right;
+        self.bottom = camera_params.bottom;
+        self.top = camera_params.top;
+        self.znear = camera_params.znear;
+        self.zfar = camera_params.zfar;
+        self.camera_uniform.update_view_proj_ortho(
+            camera_params.eye,
+            camera_params.target,
+            camera_params.up,
+            camera_params.left,
+            camera_params.right,
+            camera_params.bottom,
+            camera_params.top,
+            camera_params.znear,
+            camera_params.zfar,
+        );
         queue.write_buffer(
             &self.camera_buffer,
             0,

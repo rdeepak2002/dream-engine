@@ -2,7 +2,7 @@ use wgpu::TextureFormat::Bgra8Unorm;
 
 use dream_math::{Point3, Vector3};
 
-use crate::camera::Camera;
+use crate::camera::{Camera, CameraParams, CameraType};
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
 use crate::lights::Lights;
@@ -16,7 +16,7 @@ pub struct ShadowTech {
     pub depth_textures: Vec<Texture>,
     pub render_pipeline: wgpu::RenderPipeline,
     pub bind_group_layout: wgpu::BindGroupLayout,
-    pub bind_groups: Vec<wgpu::BindGroup>,
+    pub bind_group: Option<wgpu::BindGroup>,
     pub frame_textures: Vec<Texture>,
     pub dummy_bind_group: wgpu::BindGroup,
 }
@@ -38,22 +38,71 @@ impl ShadowTech {
         let texture_size = 4096;
 
         let shadow_cameras: Vec<Camera> = vec![];
-        let depth_texture = Texture::create_depth_texture(
+        let depth_texture_0 = Texture::create_depth_texture(
             device,
             texture_size,
             texture_size,
             "shadow_depth_texture_0",
         );
-        let depth_textures = vec![depth_texture];
+        let depth_texture_1 = Texture::create_depth_texture(
+            device,
+            texture_size / 2,
+            texture_size / 2,
+            "shadow_depth_texture_1",
+        );
+        let depth_texture_2 = Texture::create_depth_texture(
+            device,
+            texture_size / 4,
+            texture_size / 4,
+            "shadow_depth_texture_2",
+        );
+        let depth_texture_3 = Texture::create_depth_texture(
+            device,
+            texture_size / 8,
+            texture_size / 8,
+            "shadow_depth_texture_3",
+        );
+        let depth_textures = vec![
+            depth_texture_0,
+            depth_texture_1,
+            depth_texture_2,
+            depth_texture_3,
+        ];
 
-        let frame_texture = Texture::create_frame_texture(
+        let frame_texture_0 = Texture::create_frame_texture(
             device,
             texture_size,
             texture_size,
-            "shadow tech frame texture",
+            "shadow tech frame texture 0",
             Bgra8Unorm,
         );
-        let frame_textures = vec![frame_texture];
+        let frame_texture_1 = Texture::create_frame_texture(
+            device,
+            texture_size / 2,
+            texture_size / 2,
+            "shadow tech frame texture 1",
+            Bgra8Unorm,
+        );
+        let frame_texture_2 = Texture::create_frame_texture(
+            device,
+            texture_size / 4,
+            texture_size / 4,
+            "shadow tech frame texture 2",
+            Bgra8Unorm,
+        );
+        let frame_texture_3 = Texture::create_frame_texture(
+            device,
+            texture_size / 8,
+            texture_size / 8,
+            "shadow tech frame texture 3",
+            Bgra8Unorm,
+        );
+        let frame_textures = vec![
+            frame_texture_0,
+            frame_texture_1,
+            frame_texture_2,
+            frame_texture_3,
+        ];
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -74,6 +123,7 @@ impl ShadowTech {
                 buffers: &[ModelVertex::desc(), InstanceRaw::desc()],
                 // buffers: &[Vertex::desc()],
             },
+            // fragment: None,
             fragment: Some(wgpu::FragmentState {
                 module: shader_write_shadow_buffer.get_shader_module(),
                 entry_point: "fs_main",
@@ -117,7 +167,7 @@ impl ShadowTech {
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
-                // depth texture
+                // shadow cascade 0
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::all(),
@@ -134,9 +184,89 @@ impl ShadowTech {
                     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
                     count: None,
                 },
-                // camera info like view projection matrix
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                // shadow cascade 1
+                wgpu::BindGroupLayoutEntry {
+                    binding: 3,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Depth,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 4,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 5,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                // shadow cascade 2
+                wgpu::BindGroupLayoutEntry {
+                    binding: 6,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Depth,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 7,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 8,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
+                // shadow cascade 3
+                wgpu::BindGroupLayoutEntry {
+                    binding: 9,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Texture {
+                        multisampled: false,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        sample_type: wgpu::TextureSampleType::Depth,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 10,
+                    visibility: wgpu::ShaderStages::all(),
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 11,
                     visibility: wgpu::ShaderStages::all(),
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
@@ -155,6 +285,7 @@ impl ShadowTech {
         let dummy_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &bind_group_layout,
             entries: &[
+                // shadow cascade 0
                 wgpu::BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::TextureView(&dummy_depth_texture.view),
@@ -166,15 +297,113 @@ impl ShadowTech {
                 wgpu::BindGroupEntry {
                     binding: 2,
                     resource: Camera::new_orthographic(
-                        Point3::new(-999.0, -999.0, -999.0),
-                        Point3::new(1000.0, 1000.0, 1000.0),
-                        Vector3::new(0.0, 1.0, 0.0),
-                        0.0,
-                        1.0,
-                        0.0,
-                        1.0,
-                        1.0,
-                        2.0,
+                        &CameraParams {
+                            eye: Point3::new(-999.0, -999.0, -999.0),
+                            target: Point3::new(1000.0, 1000.0, 1000.0),
+                            up: Vector3::new(0.0, 1.0, 0.0),
+                            aspect: 1.5,
+                            fovy: 1.0,
+                            left: 0.0,
+                            right: 1.0,
+                            bottom: 0.0,
+                            top: 1.0,
+                            znear: 1.0,
+                            zfar: 2.0,
+                            camera_type: CameraType::Orthographic,
+                        },
+                        device,
+                    )
+                    .camera_buffer
+                    .as_entire_binding(),
+                },
+                // shadow cascade 1
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: wgpu::BindingResource::TextureView(&dummy_depth_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
+                    resource: wgpu::BindingResource::Sampler(&dummy_depth_texture.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: Camera::new_orthographic(
+                        &CameraParams {
+                            eye: Point3::new(-999.0, -999.0, -999.0),
+                            target: Point3::new(1000.0, 1000.0, 1000.0),
+                            up: Vector3::new(0.0, 1.0, 0.0),
+                            aspect: 1.5,
+                            fovy: 1.0,
+                            left: 0.0,
+                            right: 1.0,
+                            bottom: 0.0,
+                            top: 1.0,
+                            znear: 1.0,
+                            zfar: 2.0,
+                            camera_type: CameraType::Orthographic,
+                        },
+                        device,
+                    )
+                    .camera_buffer
+                    .as_entire_binding(),
+                },
+                // shadow cascade 2
+                wgpu::BindGroupEntry {
+                    binding: 6,
+                    resource: wgpu::BindingResource::TextureView(&dummy_depth_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 7,
+                    resource: wgpu::BindingResource::Sampler(&dummy_depth_texture.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 8,
+                    resource: Camera::new_orthographic(
+                        &CameraParams {
+                            eye: Point3::new(-999.0, -999.0, -999.0),
+                            target: Point3::new(1000.0, 1000.0, 1000.0),
+                            up: Vector3::new(0.0, 1.0, 0.0),
+                            aspect: 1.5,
+                            fovy: 1.0,
+                            left: 0.0,
+                            right: 1.0,
+                            bottom: 0.0,
+                            top: 1.0,
+                            znear: 1.0,
+                            zfar: 2.0,
+                            camera_type: CameraType::Orthographic,
+                        },
+                        device,
+                    )
+                    .camera_buffer
+                    .as_entire_binding(),
+                },
+                // shadow cascade 3
+                wgpu::BindGroupEntry {
+                    binding: 9,
+                    resource: wgpu::BindingResource::TextureView(&dummy_depth_texture.view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 10,
+                    resource: wgpu::BindingResource::Sampler(&dummy_depth_texture.sampler),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 11,
+                    resource: Camera::new_orthographic(
+                        &CameraParams {
+                            eye: Point3::new(-999.0, -999.0, -999.0),
+                            target: Point3::new(1000.0, 1000.0, 1000.0),
+                            up: Vector3::new(0.0, 1.0, 0.0),
+                            aspect: 1.5,
+                            fovy: 1.0,
+                            left: 0.0,
+                            right: 1.0,
+                            bottom: 0.0,
+                            top: 1.0,
+                            znear: 1.0,
+                            zfar: 2.0,
+                            camera_type: CameraType::Orthographic,
+                        },
                         device,
                     )
                     .camera_buffer
@@ -190,7 +419,7 @@ impl ShadowTech {
             frame_textures,
             render_pipeline,
             bind_group_layout,
-            bind_groups: Vec::new(),
+            bind_group: None,
             dummy_bind_group,
         }
     }
@@ -207,47 +436,55 @@ impl ShadowTech {
         // self.shadow_cameras.clear();
         // self.bind_groups.clear();
 
+        let num_cascades = 4;
         let mut idx = 0;
         for light in &lights.renderer_lights {
             // TODO: move these to enums so less refactoring (and be ale to easily convert from ECS light enum)
             let light_type_directional: u32 = 1;
             if light.cast_shadow && light.light_type == light_type_directional {
-                let eye = light.position;
-                let target = light.position + light.direction;
-                let up = Vector3::new(0.0, 1.0, 0.0);
-                let left = -10.0;
-                let right = 10.0;
-                let bottom = -10.0;
-                let top = 10.0;
-                let near_plane = 1.0;
-                let far_plane = 7.5;
+                let camera_params = CameraParams {
+                    eye: light.position.into(),
+                    target: (light.position + light.direction).into(),
+                    up: Vector3::new(0.0, 1.0, 0.0),
+                    aspect: 1.5,
+                    fovy: 0.0,
+                    left: -10.0,
+                    right: 10.0,
+                    bottom: -10.0,
+                    top: 10.0,
+                    znear: 1.0,
+                    zfar: 7.5,
+                    camera_type: CameraType::Orthographic,
+                };
 
-                if self.shadow_cameras.len() <= idx {
-                    self.shadow_cameras.push(Camera::new_orthographic(
-                        eye.into(),
-                        target.into(),
-                        up,
-                        left,
-                        right,
-                        bottom,
-                        top,
-                        near_plane,
-                        far_plane,
-                        device,
-                    ));
+                if self.shadow_cameras.len() / num_cascades <= idx {
+                    // TODO: create the 4 shadow cascades
+                    self.shadow_cameras
+                        .push(Camera::new_orthographic(&camera_params, device));
+                    self.shadow_cameras
+                        .push(Camera::new_orthographic(&camera_params, device));
+                    self.shadow_cameras
+                        .push(Camera::new_orthographic(&camera_params, device));
+                    self.shadow_cameras
+                        .push(Camera::new_orthographic(&camera_params, device));
                 } else {
-                    self.shadow_cameras.get_mut(idx).unwrap().update_ortho(
-                        eye.into(),
-                        target.into(),
-                        up,
-                        left,
-                        right,
-                        bottom,
-                        top,
-                        near_plane,
-                        far_plane,
-                        &queue,
-                    );
+                    // TODO: update the 4 shadow cascades
+                    self.shadow_cameras
+                        .get_mut(idx)
+                        .unwrap()
+                        .update_ortho(&camera_params, queue);
+                    self.shadow_cameras
+                        .get_mut(idx)
+                        .unwrap()
+                        .update_ortho(&camera_params, queue);
+                    self.shadow_cameras
+                        .get_mut(idx)
+                        .unwrap()
+                        .update_ortho(&camera_params, queue);
+                    self.shadow_cameras
+                        .get_mut(idx)
+                        .unwrap()
+                        .update_ortho(&camera_params, queue);
                 }
 
                 idx += 1;
@@ -257,39 +494,11 @@ impl ShadowTech {
         // TODO: remove any extra shadow cameras
 
         for (idx, shadow_camera) in self.shadow_cameras.iter().enumerate() {
-            // update bind group so other
-            // TODO: we'll need multiple bind groups in future
-
-            if self.bind_groups.len() <= idx {
-                let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    layout: &self.bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: wgpu::BindingResource::TextureView(
-                                &self.depth_textures[idx].view,
-                            ),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: wgpu::BindingResource::Sampler(
-                                &self.depth_textures[idx].sampler,
-                            ),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 2,
-                            resource: shadow_camera.camera_buffer.as_entire_binding(),
-                        },
-                    ],
-                    label: Some("shadow_tech_bind_group"),
-                });
-                self.bind_groups.push(bind_group);
-            }
-
             // define render pass
             let mut render_pass_write_shadow_buffer =
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("Render Pass Forward Rendering"),
+                    // color_attachments: &[],
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &self.frame_textures[idx].view,
                         resolve_target: None,
@@ -326,15 +535,6 @@ impl ShadowTech {
                 &shadow_camera.camera_bind_group,
                 &[],
             );
-
-            // TODO: pass shadow camera stuff
-
-            // // skinning bind group
-            // render_pass_write_shadow_buffer.set_bind_group(
-            //     1,
-            //     &skinning_tech.skinning_bind_group,
-            //     &[],
-            // );
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -374,6 +574,68 @@ impl ShadowTech {
                         .draw_mesh_instanced(mesh, 0..transforms.len() as u32);
                 }
             }
+        }
+
+        // update bind group
+        if self.depth_textures.len() >= 4 && self.shadow_cameras.len() >= 4 {
+            self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &self.bind_group_layout,
+                entries: &[
+                    // first shadow cascade
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&self.depth_textures[0].view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&self.depth_textures[0].sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: self.shadow_cameras[0].camera_buffer.as_entire_binding(),
+                    },
+                    // second shadow cascade
+                    wgpu::BindGroupEntry {
+                        binding: 3,
+                        resource: wgpu::BindingResource::TextureView(&self.depth_textures[1].view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 4,
+                        resource: wgpu::BindingResource::Sampler(&self.depth_textures[1].sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 5,
+                        resource: self.shadow_cameras[1].camera_buffer.as_entire_binding(),
+                    },
+                    // third shadow cascade
+                    wgpu::BindGroupEntry {
+                        binding: 6,
+                        resource: wgpu::BindingResource::TextureView(&self.depth_textures[2].view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 7,
+                        resource: wgpu::BindingResource::Sampler(&self.depth_textures[2].sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 8,
+                        resource: self.shadow_cameras[2].camera_buffer.as_entire_binding(),
+                    },
+                    // fourth shadow cascade
+                    wgpu::BindGroupEntry {
+                        binding: 9,
+                        resource: wgpu::BindingResource::TextureView(&self.depth_textures[3].view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 10,
+                        resource: wgpu::BindingResource::Sampler(&self.depth_textures[3].sampler),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 11,
+                        resource: self.shadow_cameras[3].camera_buffer.as_entire_binding(),
+                    },
+                ],
+                label: Some("shadow_tech_bind_group"),
+            }));
         }
     }
 
