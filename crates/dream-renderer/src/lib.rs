@@ -17,6 +17,7 @@
  **********************************************************************************/
 
 pub mod camera;
+pub mod camera_bones_light_bind_group;
 pub mod deferred_rendering_tech;
 pub mod forward_rendering_tech;
 pub mod gltf_loader;

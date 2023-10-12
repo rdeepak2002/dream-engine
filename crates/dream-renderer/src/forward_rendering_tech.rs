@@ -1,11 +1,9 @@
-use crate::camera::Camera;
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
-use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use crate::skinning::SkinningTech;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -16,10 +14,8 @@ impl ForwardRenderingTech {
     pub fn new(
         device: &wgpu::Device,
         target_texture_format: wgpu::TextureFormat,
-        camera: &Camera,
-        skinning_tech: &SkinningTech,
         pbr_material_tech: &PbrMaterialTech,
-        lights: &Lights,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
@@ -31,10 +27,8 @@ impl ForwardRenderingTech {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Forward Rendering Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    &camera.camera_bind_group_layout,
-                    &skinning_tech.skinning_bind_group_layout,
+                    &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
-                    &lights.lights_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -103,10 +97,8 @@ impl ForwardRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
-        camera: &Camera,
-        lights: &Lights,
         render_storage: &RenderStorage,
-        skinning_tech: &SkinningTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -133,13 +125,11 @@ impl ForwardRenderingTech {
             .set_pipeline(&self.render_pipeline_forward_render_translucent_objects);
 
         // camera bind group
-        render_pass_forward_rendering.set_bind_group(0, &camera.camera_bind_group, &[]);
-
-        // skinning bind group
-        render_pass_forward_rendering.set_bind_group(1, &skinning_tech.skinning_bind_group, &[]);
-
-        // lights bind group
-        render_pass_forward_rendering.set_bind_group(3, &lights.lights_bind_group, &[]);
+        render_pass_forward_rendering.set_bind_group(
+            0,
+            &camera_bones_lights_bind_group.bind_group,
+            &[],
+        );
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -177,7 +167,7 @@ impl ForwardRenderingTech {
                 //     &[],
                 // );
                 render_pass_forward_rendering.set_bind_group(
-                    2,
+                    1,
                     material.pbr_material_textures_bind_group.as_ref().unwrap(),
                     &[],
                 );

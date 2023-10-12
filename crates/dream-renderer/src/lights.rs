@@ -14,8 +14,8 @@ pub struct RendererLight {
 
 pub struct Lights {
     lights_uniform: LightsUniform,
-    pub lights_bind_group_layout: wgpu::BindGroupLayout,
-    pub lights_bind_group: wgpu::BindGroup,
+    // pub lights_bind_group_layout: wgpu::BindGroupLayout,
+    // pub lights_bind_group: wgpu::BindGroup,
     pub renderer_lights: Vec<RendererLight>,
     pub lights_buffer: wgpu::Buffer,
 }
@@ -30,34 +30,34 @@ impl Lights {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let lights_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::all(),
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-                label: Some("lights_bind_group_layout"),
-            });
-
-        let lights_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &lights_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: lights_buffer.as_entire_binding(),
-            }],
-            label: Some("lights_bind_group"),
-        });
+        // let lights_bind_group_layout =
+        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //         entries: &[wgpu::BindGroupLayoutEntry {
+        //             binding: 0,
+        //             visibility: wgpu::ShaderStages::all(),
+        //             ty: wgpu::BindingType::Buffer {
+        //                 ty: wgpu::BufferBindingType::Uniform,
+        //                 has_dynamic_offset: false,
+        //                 min_binding_size: None,
+        //             },
+        //             count: None,
+        //         }],
+        //         label: Some("lights_bind_group_layout"),
+        //     });
+        //
+        // let lights_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        //     layout: &lights_bind_group_layout,
+        //     entries: &[wgpu::BindGroupEntry {
+        //         binding: 0,
+        //         resource: lights_buffer.as_entire_binding(),
+        //     }],
+        //     label: Some("lights_bind_group"),
+        // });
 
         Self {
             lights_uniform,
-            lights_bind_group_layout,
-            lights_bind_group,
+            // lights_bind_group_layout,
+            // lights_bind_group,
             renderer_lights: Vec::default(),
             lights_buffer,
         }

@@ -3,12 +3,12 @@ use wgpu::TextureFormat::Bgra8Unorm;
 use dream_math::{Point3, Vector3};
 
 use crate::camera::Camera;
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use crate::skinning::SkinningTech;
 use crate::texture::Texture;
 
 pub struct ShadowTech {
@@ -22,7 +22,11 @@ pub struct ShadowTech {
 }
 
 impl ShadowTech {
-    pub fn new(device: &wgpu::Device, camera: &Camera, skinning_tech: &SkinningTech) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera: &Camera,
+    ) -> Self {
         let shader_write_shadow_buffer = Shader::new(
             device,
             include_str!("shader/shader_write_shadow_buffer.wgsl")
@@ -55,8 +59,8 @@ impl ShadowTech {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Write Shadow Buffer Pipeline Layout"),
                 bind_group_layouts: &[
-                    &camera.camera_bind_group_layout, // TODO: it's weird that we are passing in the camera bind group layout like this
-                    &skinning_tech.skinning_bind_group_layout,
+                    &camera_bones_lights_bind_group.bind_group_layout,
+                    &camera.camera_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -198,7 +202,7 @@ impl ShadowTech {
         encoder: &mut wgpu::CommandEncoder,
         lights: &Lights,
         render_storage: &RenderStorage,
-        skinning_tech: &SkinningTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
     ) {
         // self.shadow_cameras.clear();
         // self.bind_groups.clear();
@@ -313,16 +317,24 @@ impl ShadowTech {
             // camera bind group
             render_pass_write_shadow_buffer.set_bind_group(
                 0,
+                &camera_bones_lights_bind_group.bind_group,
+                &[],
+            );
+
+            render_pass_write_shadow_buffer.set_bind_group(
+                1,
                 &shadow_camera.camera_bind_group,
                 &[],
             );
 
-            // skinning bind group
-            render_pass_write_shadow_buffer.set_bind_group(
-                1,
-                &skinning_tech.skinning_bind_group,
-                &[],
-            );
+            // TODO: pass shadow camera stuff
+
+            // // skinning bind group
+            // render_pass_write_shadow_buffer.set_bind_group(
+            //     1,
+            //     &skinning_tech.skinning_bind_group,
+            //     &[],
+            // );
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in render_storage.render_map.iter() {

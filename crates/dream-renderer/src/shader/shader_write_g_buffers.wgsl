@@ -7,8 +7,11 @@
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(1) @binding(0)
+@group(0) @binding(1)
 var<uniform> boneTransformsUniform: BoneTransformsUniform;
+
+@group(0) @binding(2)
+var<uniform> lightsBuffer: LightsUniform;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
@@ -75,35 +78,32 @@ struct GBufferOutput {
 }
 
 // base color texture
-@group(2) @binding(0)
+@group(1) @binding(0)
 var texture_base_color: texture_2d<f32>;
-@group(2) @binding(1)
+@group(1) @binding(1)
 var sampler_base_color: sampler;
 // metallic roughness texture
-@group(2) @binding(2)
+@group(1) @binding(2)
 var texture_metallic_roughness: texture_2d<f32>;
-@group(2) @binding(3)
+@group(1) @binding(3)
 var sampler_metallic_roughness: sampler;
 // normal map texture
-@group(2) @binding(4)
+@group(1) @binding(4)
 var texture_normal_map: texture_2d<f32>;
-@group(2) @binding(5)
+@group(1) @binding(5)
 var sampler_normal_map: sampler;
 // emissive texture
-@group(2) @binding(6)
+@group(1) @binding(6)
 var texture_emissive: texture_2d<f32>;
-@group(2) @binding(7)
+@group(1) @binding(7)
 var sampler_emissive: sampler;
 // occlusion texture
-@group(2) @binding(8)
+@group(1) @binding(8)
 var texture_occlusion: texture_2d<f32>;
-@group(2) @binding(9)
+@group(1) @binding(9)
 var sampler_occlusion: sampler;
-@group(2) @binding(10)
+@group(1) @binding(10)
 var<uniform> material_factors: MaterialFactors;
-
-@group(3) @binding(0)
-var<uniform> lightsBuffer: LightsUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> GBufferOutput {

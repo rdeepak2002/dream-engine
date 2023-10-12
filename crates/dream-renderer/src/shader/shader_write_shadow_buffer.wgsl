@@ -1,12 +1,20 @@
 //include:camera.wgsl
 //include:model.wgsl
 //include:skinning.wgsl
+//include:pbr.wgsl
 
 @group(0) @binding(0)
-var<uniform> light_as_camera: CameraUniform;
+var<uniform> camera: CameraUniform;
 
-@group(1) @binding(0)
+@group(0) @binding(1)
 var<uniform> boneTransformsUniform: BoneTransformsUniform;
+
+@group(0) @binding(2)
+var<uniform> lightsBuffer: LightsUniform;
+
+// shadow camera
+@group(1) @binding(0)
+var<uniform> light_as_camera: CameraUniform;
 
 @vertex
 fn vs_main(

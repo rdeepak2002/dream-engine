@@ -1,10 +1,17 @@
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:shadow.wgsl
+//include:skinning.wgsl
 
 // Vertex shader
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
+
+@group(0) @binding(1)
+var<uniform> boneTransformsUniform: BoneTransformsUniform;
+
+@group(0) @binding(2)
+var<uniform> lightsBuffer: LightsUniform;
 
 @vertex
 fn vs_main(
@@ -33,13 +40,10 @@ var texture_g_buffer_ao_roughness_metallic: texture_2d<f32>;
 var texture_g_buffer_depth: texture_depth_2d;
 
 @group(2) @binding(0)
-var<uniform> lightsBuffer: LightsUniform;
-
-@group(3) @binding(0)
 var texture_shadow_map: texture_depth_2d;
-@group(3) @binding(1)
+@group(2) @binding(1)
 var sampler_shadow_map: sampler_comparison;
-@group(3) @binding(2)
+@group(2) @binding(2)
 var<uniform> light_as_camera: CameraUniform;
 
 fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {

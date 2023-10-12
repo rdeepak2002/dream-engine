@@ -23,6 +23,7 @@ use winit::dpi::PhysicalSize;
 
 use dream_math::{Point3, Quaternion, Vector3};
 
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
@@ -60,6 +61,7 @@ pub struct RendererWgpu {
     skinning_tech: SkinningTech,
     lights: Lights,
     shadow_tech: ShadowTech,
+    camera_bones_light_bind_group: CameraBonesLightBindGroup,
 }
 
 impl RendererWgpu {
@@ -215,34 +217,34 @@ impl RendererWgpu {
         // skinning tech
         let skinning_tech = SkinningTech::new(&device);
 
+        // bind group for camera, bones, and lights
+        let camera_bones_light_bind_group =
+            CameraBonesLightBindGroup::new(&device, &camera, &lights, &skinning_tech);
+
         // bind groups and layouts for physically based rendering textures
         let pbr_material_tech = PbrMaterialTech::new(&device);
 
         // shadow tech
-        let shadow_tech = ShadowTech::new(&device, &camera, &skinning_tech);
+        let shadow_tech = ShadowTech::new(&device, &camera_bones_light_bind_group, &camera);
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
             config.format,
-            &lights,
             config.width,
             config.height,
             &depth_texture,
-            &camera,
-            &skinning_tech,
             &pbr_material_tech,
             &shadow_tech,
+            &camera_bones_light_bind_group,
         );
 
         // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
             config.format,
-            &camera,
-            &skinning_tech,
             &pbr_material_tech,
-            &lights,
+            &camera_bones_light_bind_group,
         );
 
         // storage for all 3D mesh data and positions
@@ -268,6 +270,7 @@ impl RendererWgpu {
             lights,
             skinning_tech,
             shadow_tech,
+            camera_bones_light_bind_group,
         }
     }
 
@@ -349,19 +352,15 @@ impl RendererWgpu {
             &mut encoder,
             &self.lights,
             &self.render_storage,
-            &self.skinning_tech,
+            &self.camera_bones_light_bind_group,
         );
 
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
             &self.depth_texture,
-            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
-            // &self.shadow_tech.shadow_cameras[0],
-            &self.lights,
             &self.render_storage,
-            &self.skinning_tech,
-            &self.shadow_tech,
+            &self.camera_bones_light_bind_group,
         );
 
         // combine gbuffers into one final texture result
@@ -370,10 +369,11 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
+            // &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
             // &self.shadow_tech.shadow_cameras[0],
-            &self.lights,
+            // &self.lights,
             &self.shadow_tech,
+            &self.camera_bones_light_bind_group,
         );
 
         // forward render translucent objects
@@ -381,11 +381,12 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
+            // &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
             // &self.shadow_tech.shadow_cameras[0],
-            &self.lights,
+            // &self.lights,
             &self.render_storage,
-            &self.skinning_tech,
+            // &self.skinning_tech,
+            &self.camera_bones_light_bind_group,
         );
 
         // submit all drawing commands to gpu
