@@ -2,6 +2,7 @@
 //include:camera.wgsl
 //include:model.wgsl
 //include:skinning.wgsl
+//include:shadow.wgsl
 
 // Vertex shader
 @group(0) @binding(0)
@@ -100,6 +101,13 @@ var sampler_occlusion: sampler;
 @group(1) @binding(10)
 var<uniform> material_factors: MaterialFactors;
 
+@group(2) @binding(0)
+var texture_shadow_map: texture_depth_2d;
+@group(2) @binding(1)
+var sampler_shadow_map: sampler_comparison;
+@group(2) @binding(2)
+var<uniform> light_as_camera: CameraUniform;
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // compute normal using normal map
@@ -143,8 +151,11 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // world position
     let world_position = in.world_position;
 
+    // calculate shadow_visibility
+    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map, sampler_shadow_map, light_as_camera);
+
     // final color
-    var final_color_rgb = compute_final_color(1.0, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
+    var final_color_rgb = compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, alpha);
 }

@@ -245,6 +245,7 @@ impl RendererWgpu {
             config.format,
             &pbr_material_tech,
             &camera_bones_light_bind_group,
+            &shadow_tech,
         );
 
         // storage for all 3D mesh data and positions
@@ -369,9 +370,6 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            // &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
-            // &self.shadow_tech.shadow_cameras[0],
-            // &self.lights,
             &self.shadow_tech,
             &self.camera_bones_light_bind_group,
         );
@@ -381,12 +379,9 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            // &self.camera, // TODO: revert back to &self.camera ; &self.shadow_tech.shadow_cameras[0]
-            // &self.shadow_tech.shadow_cameras[0],
-            // &self.lights,
             &self.render_storage,
-            // &self.skinning_tech,
             &self.camera_bones_light_bind_group,
+            &self.shadow_tech,
         );
 
         // submit all drawing commands to gpu

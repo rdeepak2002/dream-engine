@@ -4,6 +4,7 @@ use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
+use crate::shadow_tech::ShadowTech;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -16,6 +17,7 @@ impl ForwardRenderingTech {
         target_texture_format: wgpu::TextureFormat,
         pbr_material_tech: &PbrMaterialTech,
         camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        shadow_tech: &ShadowTech,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
@@ -29,6 +31,7 @@ impl ForwardRenderingTech {
                 bind_group_layouts: &[
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    &shadow_tech.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -99,6 +102,7 @@ impl ForwardRenderingTech {
         depth_texture: &mut texture::Texture,
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        shadow_tech: &ShadowTech,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -128,6 +132,16 @@ impl ForwardRenderingTech {
         render_pass_forward_rendering.set_bind_group(
             0,
             &camera_bones_lights_bind_group.bind_group,
+            &[],
+        );
+
+        // shadow bind group
+        render_pass_forward_rendering.set_bind_group(
+            2,
+            shadow_tech
+                .bind_groups
+                .get(0)
+                .unwrap_or(&shadow_tech.dummy_bind_group),
             &[],
         );
 
