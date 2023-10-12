@@ -28,6 +28,7 @@ use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
 use crate::lights::{Lights, RendererLight};
+use crate::material::Material;
 use crate::path_not_found_error::PathNotFoundError;
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
@@ -362,6 +363,7 @@ impl RendererWgpu {
             &self.depth_texture,
             &self.render_storage,
             &self.camera_bones_light_bind_group,
+            |material: &Material| material.factor_alpha >= 1.0,
         );
 
         // combine gbuffers into one final texture result
@@ -375,13 +377,14 @@ impl RendererWgpu {
         );
 
         // forward render translucent objects
-        self.forward_rendering_tech.render_translucent_objects(
+        self.forward_rendering_tech.render_to_output_texture(
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
             &self.render_storage,
             &self.camera_bones_light_bind_group,
             &self.shadow_tech,
+            |material: &Material| material.factor_alpha < 1.0,
         );
 
         // submit all drawing commands to gpu

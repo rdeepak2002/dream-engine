@@ -1,5 +1,6 @@
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
+use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
@@ -318,6 +319,7 @@ impl DeferredRenderingTech {
         depth_texture: &Texture,
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        filter_func: fn(&Material) -> bool,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -427,8 +429,7 @@ impl DeferredRenderingTech {
                 .materials
                 .get(mesh.material)
                 .expect("No material at index");
-            let is_opaque = material.factor_alpha >= 1.0;
-            if is_opaque && material.pbr_material_textures_bind_group.is_some() {
+            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
                 // render_pass_write_g_buffers.set_bind_group(
                 //     1,
                 //     &material.pbr_material_factors_bind_group,

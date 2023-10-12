@@ -1,5 +1,6 @@
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
+use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
@@ -95,7 +96,7 @@ impl ForwardRenderingTech {
         }
     }
 
-    pub fn render_translucent_objects(
+    pub fn render_to_output_texture(
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
@@ -103,6 +104,7 @@ impl ForwardRenderingTech {
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
         shadow_tech: &ShadowTech,
+        filter_func: fn(&Material) -> bool,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -173,8 +175,7 @@ impl ForwardRenderingTech {
                 .get(mesh.material)
                 .expect("No material at index");
             // only draw transparent objects
-            let is_translucent = material.factor_alpha < 1.0;
-            if is_translucent && material.pbr_material_textures_bind_group.is_some() {
+            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
                 // render_pass_forward_rendering.set_bind_group(
                 //     1,
                 //     &material.pbr_material_factors_bind_group,
