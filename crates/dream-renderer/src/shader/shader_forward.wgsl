@@ -174,7 +174,16 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world_position = in.world_position;
 
     // calculate shadow_visibility
-    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
+    var shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
+    if (shadow_visibility >= 1.0) {
+        shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1);
+        if (shadow_visibility >= 1.0) {
+            shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2);
+            if (shadow_visibility >= 1.0) {
+                shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3);
+            }
+        }
+    }
 
     // final color
     var final_color_rgb = compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);

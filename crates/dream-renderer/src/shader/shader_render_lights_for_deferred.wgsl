@@ -123,7 +123,16 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let world_position = world_from_screen_coord(coord_uv, depth);
 
     // calculate shadow_visibility
-    let shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
+    var shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
+    if (shadow_visibility >= 1.0) {
+        shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1);
+        if (shadow_visibility >= 1.0) {
+            shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2);
+            if (shadow_visibility >= 1.0) {
+                shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3);
+            }
+        }
+    }
 
     // depth >= 1 means nothing was there at this pixel
     if (depth >= 1.0) {
