@@ -432,11 +432,18 @@ impl ShadowTech {
         lights: &Lights,
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera: &Camera,
     ) {
         // self.shadow_cameras.clear();
         // self.bind_groups.clear();
 
-        let num_cascades = 4;
+        let shadow_cascade_levels = vec![
+            camera.zfar / 50.0,
+            camera.zfar / 25.0,
+            camera.zfar / 10.0,
+            camera.zfar / 2.0,
+        ];
+
         let mut idx = 0;
         for light in &lights.renderer_lights {
             // TODO: move these to enums so less refactoring (and be ale to easily convert from ECS light enum)
@@ -457,7 +464,7 @@ impl ShadowTech {
                     camera_type: CameraType::Orthographic,
                 };
 
-                if self.shadow_cameras.len() / num_cascades <= idx {
+                if self.shadow_cameras.len() / 4 <= idx {
                     // TODO: create the 4 shadow cascades
                     self.shadow_cameras
                         .push(Camera::new_orthographic(&camera_params, device));

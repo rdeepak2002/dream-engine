@@ -190,8 +190,8 @@ impl RendererWgpu {
             Vector3::new(0.0, 1.0, 0.0),
             config.width as f32 / config.height as f32,
             std::f32::consts::FRAC_PI_4,
-            0.01,
-            1000.0,
+            0.1,
+            500.0,
             &device,
         );
 
@@ -355,6 +355,7 @@ impl RendererWgpu {
             &self.lights,
             &self.render_storage,
             &self.camera_bones_light_bind_group,
+            &self.camera,
         );
 
         // render to gbuffers
