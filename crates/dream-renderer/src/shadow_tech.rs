@@ -53,8 +53,12 @@ macro_rules! min {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ShadowCascadeSettingsUniform {
-    pub cascade_end: f32,
-    pub bias: f32,
+    cascade_end: f32,
+    min_bias: f32,
+    max_bias: f32,
+    _padding0: f32,
+    light_dir: [f32; 3],
+    _padding1: f32,
 }
 
 impl ShadowTech {
@@ -151,12 +155,17 @@ impl ShadowTech {
 
         log::debug!("cascade ends {:?}", cascade_ends);
 
+        // TODO: update light_dir via buffer update
         let cascade_settings_buffers = vec![
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Shadow Cascade Settings Buffer 0"),
                 contents: bytemuck::cast_slice(&[ShadowCascadeSettingsUniform {
                     cascade_end: cascade_ends[1],
-                    bias: 0.0,
+                    min_bias: 0.000005,
+                    max_bias: 0.005,
+                    _padding0: 0.0,
+                    light_dir: [-0.2, -0.4, -0.1],
+                    _padding1: 0.0,
                 }]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }),
@@ -164,7 +173,11 @@ impl ShadowTech {
                 label: Some("Shadow Cascade Settings Buffer 1"),
                 contents: bytemuck::cast_slice(&[ShadowCascadeSettingsUniform {
                     cascade_end: cascade_ends[2],
-                    bias: 0.0,
+                    min_bias: 0.0,
+                    max_bias: 0.0,
+                    _padding0: 0.0,
+                    light_dir: [-0.2, -0.4, -0.1],
+                    _padding1: 0.0,
                 }]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }),
@@ -172,7 +185,11 @@ impl ShadowTech {
                 label: Some("Shadow Cascade Settings Buffer 2"),
                 contents: bytemuck::cast_slice(&[ShadowCascadeSettingsUniform {
                     cascade_end: cascade_ends[3],
-                    bias: 0.0,
+                    min_bias: 0.0,
+                    max_bias: 0.0,
+                    _padding0: 0.0,
+                    light_dir: [-0.2, -0.4, -0.1],
+                    _padding1: 0.0,
                 }]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }),
@@ -180,7 +197,11 @@ impl ShadowTech {
                 label: Some("Shadow Cascade Settings Buffer 3"),
                 contents: bytemuck::cast_slice(&[ShadowCascadeSettingsUniform {
                     cascade_end: cascade_ends[4],
-                    bias: 0.0,
+                    min_bias: 0.0,
+                    max_bias: 0.0,
+                    _padding0: 0.0,
+                    light_dir: [-0.2, -0.4, -0.1],
+                    _padding1: 0.0,
                 }]),
                 usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             }),
@@ -577,93 +598,133 @@ impl ShadowTech {
     ) {
         for light in &lights.renderer_lights {
             if light.cast_shadow && light.light_type == LightType::DIRECTIONAL as u32 {
+                // update shadow cascade uniforms
+                let shadow_cascade_uniform_settings = vec![
+                    ShadowCascadeSettingsUniform {
+                        cascade_end: self.cascade_ends[1],
+                        min_bias: 0.000005,
+                        max_bias: 0.00087,
+                        _padding0: 0.0,
+                        light_dir: [-0.2, -0.4, -0.1],
+                        _padding1: 0.0,
+                    },
+                    ShadowCascadeSettingsUniform {
+                        cascade_end: self.cascade_ends[2],
+                        min_bias: 0.0,
+                        max_bias: 0.0,
+                        _padding0: 0.0,
+                        light_dir: [-0.2, -0.4, -0.1],
+                        _padding1: 0.0,
+                    },
+                    ShadowCascadeSettingsUniform {
+                        cascade_end: self.cascade_ends[3],
+                        min_bias: 0.0,
+                        max_bias: 0.0,
+                        _padding0: 0.0,
+                        light_dir: [-0.2, -0.4, -0.1],
+                        _padding1: 0.0,
+                    },
+                    ShadowCascadeSettingsUniform {
+                        cascade_end: self.cascade_ends[4],
+                        min_bias: 0.0,
+                        max_bias: 0.0,
+                        _padding0: 0.0,
+                        light_dir: [-0.2, -0.4, -0.1],
+                        _padding1: 0.0,
+                    },
+                ];
+                for cascade_idx in 0..4 {
+                    queue.write_buffer(
+                        &self.cascade_settings_buffers[cascade_idx],
+                        0,
+                        bytemuck::cast_slice(&[shadow_cascade_uniform_settings[cascade_idx]]),
+                    );
+                }
+
+                // iterate and compute orthographic cameras for 4 cascades
                 let mut camera_params = Vec::new();
+                for i in 0..4 {
+                    let proj = Matrix4::new_perspective(
+                        camera.aspect,
+                        camera.fovy,
+                        self.cascade_ends[i],
+                        self.cascade_ends[i + 1],
+                    );
 
-                {
-                    // iterate and compute orthographic cameras for 4 cascades
-                    for i in 0..4 {
-                        let proj = Matrix4::new_perspective(
-                            camera.aspect,
-                            camera.fovy,
-                            self.cascade_ends[i],
-                            self.cascade_ends[i + 1],
-                        );
-
-                        let cam_view_segment: Matrix4<f32> = camera.camera_uniform.view.into();
-                        let mut frustum_corners: Vec<Vector4<f32>> = Vec::new();
-                        let inv: Matrix4<f32> = (proj * cam_view_segment).try_inverse().unwrap();
-                        for x in 0..2 {
-                            for y in 0..2 {
-                                for z in 0..2 {
-                                    let pt = inv
-                                        * Vector4::new(
-                                            2.0 * x as f32 - 1.0,
-                                            2.0 * y as f32 - 1.0,
-                                            2.0 * z as f32 - 1.0,
-                                            1.0,
-                                        );
-                                    frustum_corners.push(pt / pt.w);
-                                }
+                    let cam_view_segment: Matrix4<f32> = camera.camera_uniform.view.into();
+                    let mut frustum_corners: Vec<Vector4<f32>> = Vec::new();
+                    let inv: Matrix4<f32> = (proj * cam_view_segment).try_inverse().unwrap();
+                    for x in 0..2 {
+                        for y in 0..2 {
+                            for z in 0..2 {
+                                let pt = inv
+                                    * Vector4::new(
+                                        2.0 * x as f32 - 1.0,
+                                        2.0 * y as f32 - 1.0,
+                                        2.0 * z as f32 - 1.0,
+                                        1.0,
+                                    );
+                                frustum_corners.push(pt / pt.w);
                             }
                         }
-
-                        let mut center: Vector3<f32> = Vector3::new(0.0, 0.0, 0.0);
-                        for corner in &frustum_corners {
-                            center += corner.xyz();
-                        }
-                        center /= frustum_corners.len() as f32;
-
-                        let eye = (center - light.direction.normalize()).into();
-                        let target = (center).into();
-                        let light_view =
-                            Matrix4::look_at_rh(&eye, &target, &Vector3::new(0.0, 1.0, 0.0));
-
-                        let mut min_x: f32 = f32::MAX;
-                        let mut max_x: f32 = f32::MIN;
-                        let mut min_y: f32 = f32::MAX;
-                        let mut max_y: f32 = f32::MIN;
-                        let mut min_z: f32 = f32::MAX;
-                        let mut max_z: f32 = f32::MIN;
-
-                        for v in &frustum_corners {
-                            let trf = light_view * v;
-                            min_x = min!(min_x, trf.x);
-                            max_x = max!(max_x, trf.x);
-                            min_y = min!(min_y, trf.y);
-                            max_y = max!(max_y, trf.y);
-                            min_z = min!(min_z, trf.z);
-                            max_z = max!(max_z, trf.z);
-                        }
-
-                        // left, right, bottom, top, znear, zfar
-                        let left = min_x;
-                        let right = max_x;
-                        let bottom = min_y;
-                        let top = max_y;
-                        let znear = -camera.zfar;
-                        let zfar = camera.zfar;
-
-                        // move view back a lot to capture entire scene
-                        let eye = (center - camera.zfar / 2.0 * light.direction.normalize()).into();
-                        let target = (center).into();
-
-                        let camera_param = CameraParams {
-                            eye,
-                            target,
-                            up: Vector3::new(0.0, 1.0, 0.0),
-                            aspect: 1.5,
-                            fovy: 0.0,
-                            left,
-                            right,
-                            bottom,
-                            top,
-                            znear,
-                            zfar,
-                            camera_type: CameraType::Orthographic,
-                        };
-
-                        camera_params.push(camera_param);
                     }
+
+                    let mut center: Vector3<f32> = Vector3::new(0.0, 0.0, 0.0);
+                    for corner in &frustum_corners {
+                        center += corner.xyz();
+                    }
+                    center /= frustum_corners.len() as f32;
+
+                    let eye = (center - light.direction.normalize()).into();
+                    let target = (center).into();
+                    let light_view =
+                        Matrix4::look_at_rh(&eye, &target, &Vector3::new(0.0, 1.0, 0.0));
+
+                    let mut min_x: f32 = f32::MAX;
+                    let mut max_x: f32 = f32::MIN;
+                    let mut min_y: f32 = f32::MAX;
+                    let mut max_y: f32 = f32::MIN;
+                    let mut min_z: f32 = f32::MAX;
+                    let mut max_z: f32 = f32::MIN;
+
+                    for v in &frustum_corners {
+                        let trf = light_view * v;
+                        min_x = min!(min_x, trf.x);
+                        max_x = max!(max_x, trf.x);
+                        min_y = min!(min_y, trf.y);
+                        max_y = max!(max_y, trf.y);
+                        min_z = min!(min_z, trf.z);
+                        max_z = max!(max_z, trf.z);
+                    }
+
+                    // left, right, bottom, top, znear, zfar
+                    let left = min_x;
+                    let right = max_x;
+                    let bottom = min_y;
+                    let top = max_y;
+                    let znear = -camera.zfar;
+                    let zfar = camera.zfar;
+
+                    // move view back a lot to capture entire scene
+                    let eye = (center - camera.zfar / 2.0 * light.direction.normalize()).into();
+                    let target = (center).into();
+
+                    let camera_param = CameraParams {
+                        eye,
+                        target,
+                        up: Vector3::new(0.0, 1.0, 0.0),
+                        aspect: 1.5,
+                        fovy: 0.0,
+                        left,
+                        right,
+                        bottom,
+                        top,
+                        znear,
+                        zfar,
+                        camera_type: CameraType::Orthographic,
+                    };
+
+                    camera_params.push(camera_param);
                 }
 
                 if self.shadow_cameras.is_empty() {

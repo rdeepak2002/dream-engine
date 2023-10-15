@@ -146,7 +146,7 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(7.4, 2.1, 10.6),
-                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    Quaternion::new(1.0, 0.0, 0.6, 0.0),
                     Vector3::new(2.0, 2.0, 2.0),
                 ),
             );

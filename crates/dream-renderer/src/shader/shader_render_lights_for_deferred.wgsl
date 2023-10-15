@@ -134,10 +134,10 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
     let depthValue = abs((camera.view * vec4(world_position, 1.0)).z);
     var debug_cascade_factor = vec3(1.0, 1.0, 1.0);
     var shadow_visibility = 1.0;
-    let v1 = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
-    let v2 = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1);
-    let v3 = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2);
-    let v4 = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3);
+    let v1 = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0, normal, cascade_settings_0);
+    let v2 = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1, normal, cascade_settings_1);
+    let v3 = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2, normal, cascade_settings_2);
+    let v4 = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3, normal, cascade_settings_3);
     if (depthValue <= cascade_settings_0.cascade_end) {
         shadow_visibility = v1;
 //        debug_cascade_factor = vec3(1.0, 0.0, 0.0);
