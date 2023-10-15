@@ -147,9 +147,9 @@ impl ShadowTech {
 
         let cascade_ends = vec![
             camera.znear,
-            camera.zfar / 50.0,
-            camera.zfar / 25.0,
-            camera.zfar / 10.0,
+            camera.zfar / 300.0,
+            camera.zfar / 80.0,
+            camera.zfar / 20.0,
             camera.zfar,
         ];
 
@@ -610,16 +610,16 @@ impl ShadowTech {
                     },
                     ShadowCascadeSettingsUniform {
                         cascade_end: self.cascade_ends[2],
-                        min_bias: 0.0005,
-                        max_bias: 0.005,
+                        min_bias: 0.0001,
+                        max_bias: 0.001,
                         _padding0: 0.0,
                         light_dir: light.direction.into(),
                         _padding1: 0.0,
                     },
                     ShadowCascadeSettingsUniform {
                         cascade_end: self.cascade_ends[3],
-                        min_bias: 0.0009,
-                        max_bias: 0.009,
+                        min_bias: 0.00009,
+                        max_bias: 0.0009,
                         _padding0: 0.0,
                         light_dir: light.direction.into(),
                         _padding1: 0.0,

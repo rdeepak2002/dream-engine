@@ -191,7 +191,7 @@ impl RendererWgpu {
             config.width as f32 / config.height as f32,
             std::f32::consts::FRAC_PI_4,
             0.1,
-            500.0,
+            4000.0,
             &device,
         );
 
