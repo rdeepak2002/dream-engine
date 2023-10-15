@@ -61,7 +61,7 @@ pub struct RendererWgpu {
     pbr_material_tech: PbrMaterialTech,
     skinning_tech: SkinningTech,
     lights: Lights,
-    shadow_tech: ShadowTech,
+    pub shadow_tech: ShadowTech,
     camera_bones_light_bind_group: CameraBonesLightBindGroup,
 }
 
@@ -226,7 +226,12 @@ impl RendererWgpu {
         let pbr_material_tech = PbrMaterialTech::new(&device);
 
         // shadow tech
-        let shadow_tech = ShadowTech::new(&device, &camera_bones_light_bind_group, &camera);
+        let shadow_tech = ShadowTech::new(
+            &device,
+            &camera_bones_light_bind_group,
+            &camera,
+            &pbr_material_tech,
+        );
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
@@ -365,6 +370,7 @@ impl RendererWgpu {
             &self.render_storage,
             &self.camera_bones_light_bind_group,
             |material: &Material| material.factor_alpha >= 1.0,
+            // |material: &Material| false,
         );
 
         // combine gbuffers into one final texture result
@@ -386,6 +392,7 @@ impl RendererWgpu {
             &self.camera_bones_light_bind_group,
             &self.shadow_tech,
             |material: &Material| material.factor_alpha < 1.0,
+            // |material: &Material| true,
         );
 
         // submit all drawing commands to gpu

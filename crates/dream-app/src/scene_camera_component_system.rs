@@ -63,6 +63,12 @@ impl System for SceneCameraComponentSystem {
 
                     // move camera using scroll
                     delta_position -= forward_vector * get_mouse_scroll();
+                    // if get_keyboard_state(VirtualKeyCode::F) == 1.0 {
+                    //     delta_position += forward_vector;
+                    // }
+                    // if get_keyboard_state(VirtualKeyCode::B) == 1.0 {
+                    //     delta_position -= forward_vector;
+                    // }
 
                     // move camera using mouse drag
                     if is_mouse_left_pressed() {

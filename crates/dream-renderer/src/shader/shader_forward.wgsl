@@ -108,27 +108,35 @@ var texture_shadow_map_0: texture_depth_2d;
 var sampler_shadow_map_0: sampler_comparison;
 @group(2) @binding(2)
 var<uniform> light_as_camera_0: CameraUniform;
-
 @group(2) @binding(3)
-var texture_shadow_map_1: texture_depth_2d;
+var<uniform> cascade_settings_0: CascadeSettingsUniform;
+
 @group(2) @binding(4)
-var sampler_shadow_map_1: sampler_comparison;
+var texture_shadow_map_1: texture_depth_2d;
 @group(2) @binding(5)
-var<uniform> light_as_camera_1: CameraUniform;
-
+var sampler_shadow_map_1: sampler_comparison;
 @group(2) @binding(6)
-var texture_shadow_map_2: texture_depth_2d;
+var<uniform> light_as_camera_1: CameraUniform;
 @group(2) @binding(7)
-var sampler_shadow_map_2: sampler_comparison;
-@group(2) @binding(8)
-var<uniform> light_as_camera_2: CameraUniform;
+var<uniform> cascade_settings_1: CascadeSettingsUniform;
 
+@group(2) @binding(8)
+var texture_shadow_map_2: texture_depth_2d;
 @group(2) @binding(9)
-var texture_shadow_map_3: texture_depth_2d;
+var sampler_shadow_map_2: sampler_comparison;
 @group(2) @binding(10)
-var sampler_shadow_map_3: sampler_comparison;
+var<uniform> light_as_camera_2: CameraUniform;
 @group(2) @binding(11)
+var<uniform> cascade_settings_2: CascadeSettingsUniform;
+
+@group(2) @binding(12)
+var texture_shadow_map_3: texture_depth_2d;
+@group(2) @binding(13)
+var sampler_shadow_map_3: sampler_comparison;
+@group(2) @binding(14)
 var<uniform> light_as_camera_3: CameraUniform;
+@group(2) @binding(15)
+var<uniform> cascade_settings_3: CascadeSettingsUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
@@ -174,19 +182,29 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world_position = in.world_position;
 
     // calculate shadow_visibility
-    var shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
-    if (shadow_visibility >= 1.0) {
-        shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1);
-        if (shadow_visibility >= 1.0) {
-            shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2);
-            if (shadow_visibility >= 1.0) {
-                shadow_visibility = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3);
-            }
-        }
+    let depthValue = abs((camera.view * vec4(world_position, 1.0)).z);
+    var debug_cascade_factor = vec3(1.0, 1.0, 1.0);
+    var shadow_visibility = 1.0;
+    let v1 = get_visibility_for_shadow(world_position, texture_shadow_map_0, sampler_shadow_map_0, light_as_camera_0);
+    let v2 = get_visibility_for_shadow(world_position, texture_shadow_map_1, sampler_shadow_map_1, light_as_camera_1);
+    let v3 = get_visibility_for_shadow(world_position, texture_shadow_map_2, sampler_shadow_map_2, light_as_camera_2);
+    let v4 = get_visibility_for_shadow(world_position, texture_shadow_map_3, sampler_shadow_map_3, light_as_camera_3);
+    if (depthValue <= cascade_settings_0.cascade_end) {
+        shadow_visibility = v1;
+//        debug_cascade_factor = vec3(1.0, 0.0, 0.0);
+    } else if (depthValue <= cascade_settings_1.cascade_end) {
+        shadow_visibility = v2;
+//        debug_cascade_factor = vec3(0.0, 1.0, 0.0);
+    } else if (depthValue <= cascade_settings_2.cascade_end) {
+        shadow_visibility = v3;
+//        debug_cascade_factor = vec3(0.0, 0.0, 1.0);
+    } else if (depthValue <= cascade_settings_3.cascade_end) {
+        shadow_visibility = v4;
+//        debug_cascade_factor = vec3(1.0, 0.0, 1.0);
     }
 
     // final color
-    var final_color_rgb = compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
+    var final_color_rgb = debug_cascade_factor * compute_final_color(shadow_visibility, world_position, camera.position, normal, albedo, emissive, ao, roughness, metallic);
 
     return vec4(final_color_rgb, alpha);
 }

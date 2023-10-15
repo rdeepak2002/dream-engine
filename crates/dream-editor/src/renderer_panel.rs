@@ -7,6 +7,10 @@ use crate::editor::Panel;
 
 pub struct RendererPanel {
     render_output_epaint_texture_id: Option<egui::epaint::TextureId>,
+    // debug_texture_0_id: Option<egui::epaint::TextureId>,
+    // debug_texture_1_id: Option<egui::epaint::TextureId>,
+    // debug_texture_2_id: Option<egui::epaint::TextureId>,
+    // debug_texture_3_id: Option<egui::epaint::TextureId>,
     aspect_ratio: f32,
 }
 
@@ -53,18 +57,55 @@ impl RendererPanel {
 
         // texture of shadow tech
         // {
-        //     if self.render_output_epaint_texture_id.is_some() {
+        //     if self.debug_texture_0_id.is_some() {
         //         // free old texture to prevent memory leak
-        //         egui_wgpu_renderer
-        //             .free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
+        //         egui_wgpu_renderer.free_texture(self.debug_texture_0_id.as_ref().unwrap());
         //     }
         //
-        //     self.render_output_epaint_texture_id =
-        //         Some(egui_wgpu_renderer.register_native_texture(
-        //             &state.device,
-        //             &state.shadow_tech.frame_textures[0].view,
-        //             wgpu::FilterMode::default(),
-        //         ));
+        //     self.debug_texture_0_id = Some(egui_wgpu_renderer.register_native_texture(
+        //         &state.device,
+        //         &state.shadow_tech.frame_textures[0].view,
+        //         wgpu::FilterMode::default(),
+        //     ));
+        // }
+
+        // {
+        //     if self.debug_texture_1_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer.free_texture(self.debug_texture_1_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.debug_texture_1_id = Some(egui_wgpu_renderer.register_native_texture(
+        //         &state.device,
+        //         &state.shadow_tech.frame_textures[1].view,
+        //         wgpu::FilterMode::default(),
+        //     ));
+        // }
+
+        // {
+        //     if self.debug_texture_2_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer.free_texture(self.debug_texture_2_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.debug_texture_2_id = Some(egui_wgpu_renderer.register_native_texture(
+        //         &state.device,
+        //         &state.shadow_tech.frame_textures[2].view,
+        //         wgpu::FilterMode::default(),
+        //     ));
+        // }
+
+        // {
+        //     if self.debug_texture_3_id.is_some() {
+        //         // free old texture to prevent memory leak
+        //         egui_wgpu_renderer.free_texture(self.debug_texture_3_id.as_ref().unwrap());
+        //     }
+        //
+        //     self.debug_texture_3_id = Some(egui_wgpu_renderer.register_native_texture(
+        //         &state.device,
+        //         &state.shadow_tech.frame_textures[3].view,
+        //         wgpu::FilterMode::default(),
+        //     ));
         // }
 
         // show deferred result
@@ -174,6 +215,10 @@ impl Default for RendererPanel {
     fn default() -> Self {
         Self {
             render_output_epaint_texture_id: None,
+            // debug_texture_0_id: None,
+            // debug_texture_1_id: None,
+            // debug_texture_2_id: None,
+            // debug_texture_3_id: None,
             aspect_ratio: 1.0,
         }
     }
@@ -195,11 +240,34 @@ impl Panel for RendererPanel {
                     if new_aspect_ratio > 0.0 {
                         self.aspect_ratio = new_aspect_ratio;
                     }
-                    let image = SizedTexture {
+                    ui.image(SizedTexture {
                         id: self.render_output_epaint_texture_id.unwrap(),
                         size: panel_size,
-                    };
-                    ui.image(image);
+                    });
+                    // egui::ScrollArea::vertical().show(ui, |ui| {
+                    //     ui.image(SizedTexture {
+                    //         id: self.render_output_epaint_texture_id.unwrap(),
+                    //         size: panel_size / 1.5,
+                    //     });
+                    //     ui.with_layout(egui::Layout::left_to_right(egui::Align::LEFT), |ui| {
+                    //         ui.image(SizedTexture {
+                    //             id: self.debug_texture_0_id.unwrap(),
+                    //             size: panel_size / 4.5,
+                    //         });
+                    //         ui.image(SizedTexture {
+                    //             id: self.debug_texture_1_id.unwrap(),
+                    //             size: panel_size / 4.5,
+                    //         });
+                    //         ui.image(SizedTexture {
+                    //             id: self.debug_texture_2_id.unwrap(),
+                    //             size: panel_size / 4.5,
+                    //         });
+                    //         ui.image(SizedTexture {
+                    //             id: self.debug_texture_3_id.unwrap(),
+                    //             size: panel_size / 4.5,
+                    //         });
+                    //     });
+                    // });
                 }
             }
         });

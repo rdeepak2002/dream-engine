@@ -10,12 +10,13 @@ use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
 //     0.0, 0.0, 0.5, 1.0,
 // );
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum CameraType {
     Perspective = 0,
     Orthographic = 1,
 }
 
+#[derive(Debug)]
 pub struct CameraParams {
     pub eye: Point3<f32>,
     pub target: Point3<f32>,
@@ -215,7 +216,7 @@ impl Camera {
         self.eye = position;
         let forward_vector = UnitQuaternion::from_quaternion(orientation)
             .transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
-        self.target = self.eye + forward_vector;
+        self.target = self.eye + forward_vector.normalize();
         match self.camera_type {
             CameraType::Perspective => {
                 self.camera_uniform.update_view_proj_persp(
@@ -230,6 +231,7 @@ impl Camera {
             }
             CameraType::Orthographic => {
                 // TODO: correctly update orthographic camera using orientation
+                todo!();
                 self.camera_uniform.update_view_proj_ortho(
                     self.eye,
                     self.target,
@@ -279,8 +281,9 @@ impl Camera {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
-    view_proj: [[f32; 4]; 4],
-    inv_view_proj: [[f32; 4]; 4],
+    pub view: [[f32; 4]; 4],
+    pub view_proj: [[f32; 4]; 4],
+    pub inv_view_proj: [[f32; 4]; 4],
     position: [f32; 3],
     _padding: f32,
 }
@@ -299,6 +302,7 @@ impl CameraUniform {
         let view = Matrix4::look_at_rh(&eye, &target, &up);
         let proj = Matrix4::new_perspective(aspect, fovy, znear, zfar);
         let view_proj = proj * view;
+        self.view = view.into();
         self.view_proj = view_proj.into();
         self.inv_view_proj = view_proj
             .try_inverse()
@@ -322,6 +326,7 @@ impl CameraUniform {
         let view = Matrix4::look_at_rh(&eye, &target, &up);
         let proj = Matrix4::new_orthographic(left, right, bottom, top, znear, zfar);
         let view_proj = proj * view;
+        self.view = view.into();
         self.view_proj = view_proj.into();
         self.inv_view_proj = view_proj
             .try_inverse()
@@ -331,13 +336,20 @@ impl CameraUniform {
     }
 }
 
+// TODO: don't have default method, instead have method to construct from ortho or persp
 impl Default for CameraUniform {
     fn default() -> Self {
         Self {
+            view: Matrix4::identity().into(),
             view_proj: Matrix4::identity().into(),
             inv_view_proj: Matrix4::identity().into(),
             position: [0.0, 0.0, 0.0],
             _padding: 1.,
         }
     }
+}
+
+pub fn get_view(eye: Point3<f32>, target: Point3<f32>, up: Vector3<f32>) -> Matrix4<f32> {
+    let view: Matrix4<f32> = Matrix4::look_at_rh(&eye, &target, &up);
+    view
 }

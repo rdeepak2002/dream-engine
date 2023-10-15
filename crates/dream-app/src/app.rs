@@ -90,9 +90,12 @@ impl Default for App {
                 Some("Scene Camera".into()),
                 None,
                 Some(Transform::new(
-                    Vector3::new(0.7, 1.3, 4.4),
-                    Quaternion::new(1.0, -0.2, 0.0, 0.0),
+                    Vector3::new(-1.33, 0.85, 1.228),
+                    Quaternion::new(0.793, -0.0673, -0.603, -0.055),
                     Vector3::new(1.0, 1.0, 1.0),
+                    // Vector3::new(0.7, 1.3, 4.4),
+                    // Quaternion::new(0.981, -0.196, 0.0, 0.0),
+                    // Vector3::new(1.0, 1.0, 1.0),
                 )),
             )
             .expect("Unable to create scene camera entity");
@@ -126,6 +129,52 @@ impl Default for App {
                     Quaternion::identity(),
                     Vector3::new(0.1, 0.1, 0.1),
                 ));
+        }
+        {
+            let cube_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("2x Cube".into()), None, None)
+                    .expect("Unable to create cube entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(7.4, 2.1, 10.6),
+                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    Vector3::new(2.0, 2.0, 2.0),
+                ),
+            );
+        }
+        {
+            let cube_entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Floating Rectangle".into()),
+                None,
+                None,
+            )
+            .expect("Unable to create cube entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(40.0, 10.0, 0.0),
+                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    Vector3::new(10.0, 1.0, 10.0),
+                ),
+            );
         }
         {
             let cube_entity_handle =

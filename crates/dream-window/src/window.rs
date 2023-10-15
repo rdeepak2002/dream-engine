@@ -88,7 +88,7 @@ impl Window {
         )
         .await;
 
-        let sleep_millis: u64 = 16;
+        let sleep_millis: u128 = 16;
         let mut last_update_time = dream_time::time::now();
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -101,7 +101,7 @@ impl Window {
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
                     let now = dream_time::time::now();
-                    if now - last_update_time > sleep_millis as u128 {
+                    if now - last_update_time > sleep_millis {
                         app.update();
                         app.draw(&mut renderer);
                         last_update_time = dream_time::time::now();
