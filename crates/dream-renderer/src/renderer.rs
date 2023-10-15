@@ -21,15 +21,18 @@ use std::iter;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use dream_math::{Point3, Vector3};
+use dream_math::{Point3, Quaternion, Vector3};
 
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::instance::Instance;
 use crate::lights::{Lights, RendererLight};
+use crate::material::Material;
 use crate::path_not_found_error::PathNotFoundError;
-use crate::pbr_bind_groups_and_layouts::PbrBindGroupsAndLayouts;
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
+use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
 use crate::{camera, texture};
 
@@ -55,9 +58,11 @@ pub struct RendererWgpu {
     camera: camera::Camera,
     depth_texture: texture::Texture,
     forward_rendering_tech: ForwardRenderingTech,
-    pbr_bind_groups_and_layouts: PbrBindGroupsAndLayouts,
+    pbr_material_tech: PbrMaterialTech,
     skinning_tech: SkinningTech,
     lights: Lights,
+    pub shadow_tech: ShadowTech,
+    camera_bones_light_bind_group: CameraBonesLightBindGroup,
 }
 
 impl RendererWgpu {
@@ -179,14 +184,14 @@ impl RendererWgpu {
         }
 
         // main camera
-        let camera = camera::Camera::new(
+        let camera = camera::Camera::new_perspective(
             Point3::new(3.0, 3.0, 3.0),
             Point3::new(0.0, 0.0, 0.0),
             Vector3::new(0.0, 1.0, 0.0),
             config.width as f32 / config.height as f32,
             std::f32::consts::FRAC_PI_4,
-            0.01,
-            1000.0,
+            0.1,
+            4000.0,
             &device,
         );
 
@@ -213,27 +218,40 @@ impl RendererWgpu {
         // skinning tech
         let skinning_tech = SkinningTech::new(&device);
 
+        // bind group for camera, bones, and lights
+        let camera_bones_light_bind_group =
+            CameraBonesLightBindGroup::new(&device, &camera, &lights, &skinning_tech);
+
         // bind groups and layouts for physically based rendering textures
-        let pbr_bind_groups_and_layouts =
-            PbrBindGroupsAndLayouts::new(&device, &camera, &lights, &skinning_tech);
+        let pbr_material_tech = PbrMaterialTech::new(&device);
+
+        // shadow tech
+        let shadow_tech = ShadowTech::new(
+            &device,
+            &camera_bones_light_bind_group,
+            &camera,
+            &pbr_material_tech,
+        );
 
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
-            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
-            &lights,
             config.width,
             config.height,
             &depth_texture,
-            &camera,
+            &pbr_material_tech,
+            &shadow_tech,
+            &camera_bones_light_bind_group,
         );
 
         // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
-            &pbr_bind_groups_and_layouts.render_pipeline_pbr_layout,
             config.format,
+            &pbr_material_tech,
+            &camera_bones_light_bind_group,
+            &shadow_tech,
         );
 
         // storage for all 3D mesh data and positions
@@ -255,9 +273,11 @@ impl RendererWgpu {
             depth_texture,
             deferred_rendering_tech,
             forward_rendering_tech,
-            pbr_bind_groups_and_layouts,
+            pbr_material_tech,
             lights,
             skinning_tech,
+            shadow_tech,
+            camera_bones_light_bind_group,
         }
     }
 
@@ -322,24 +342,35 @@ impl RendererWgpu {
                 &self.device,
                 &self.queue,
                 &self
-                    .pbr_bind_groups_and_layouts
+                    .pbr_material_tech
                     .pbr_material_textures_bind_group_layout,
             );
 
         // update light buffers
-        self.lights.update_light_buffer(&self.device);
+        self.lights.update_light_buffer(&self.device, &self.queue);
 
         // update bones buffer
         self.skinning_tech.update_all_bones_buffer(&self.queue);
+
+        // figure out shadows
+        self.shadow_tech.render_shadow_depth_buffers(
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &self.lights,
+            &self.render_storage,
+            &self.camera_bones_light_bind_group,
+            &self.camera,
+        );
 
         // render to gbuffers
         self.deferred_rendering_tech.render_to_gbuffers(
             &mut encoder,
             &self.depth_texture,
-            &self.camera,
-            &self.lights,
             &self.render_storage,
-            &self.skinning_tech,
+            &self.camera_bones_light_bind_group,
+            |material: &Material| material.factor_alpha >= 1.0,
+            // |material: &Material| false,
         );
 
         // combine gbuffers into one final texture result
@@ -348,19 +379,20 @@ impl RendererWgpu {
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera,
-            &self.lights,
+            &self.shadow_tech,
+            &self.camera_bones_light_bind_group,
         );
 
         // forward render translucent objects
-        self.forward_rendering_tech.render_translucent_objects(
+        self.forward_rendering_tech.render_to_output_texture(
             &mut encoder,
             &mut self.frame_texture,
             &mut self.depth_texture,
-            &self.camera,
-            &self.lights,
             &self.render_storage,
-            &self.skinning_tech,
+            &self.camera_bones_light_bind_group,
+            &self.shadow_tech,
+            |material: &Material| material.factor_alpha < 1.0,
+            // |material: &Material| true,
         );
 
         // submit all drawing commands to gpu
@@ -399,6 +431,7 @@ impl RendererWgpu {
         color: Vector3<f32>,
         radius: f32,
         direction: Vector3<f32>,
+        cast_shadow: bool,
     ) {
         self.lights.renderer_lights.push(RendererLight {
             position,
@@ -406,6 +439,7 @@ impl RendererWgpu {
             radius,
             light_type,
             direction,
+            cast_shadow,
         });
     }
 
@@ -425,7 +459,7 @@ impl RendererWgpu {
             model_path,
             &self.device,
             &self
-                .pbr_bind_groups_and_layouts
+                .pbr_material_tech
                 .pbr_material_textures_bind_group_layout,
         )
     }
@@ -442,7 +476,6 @@ impl RendererWgpu {
     /// User-facing API to remove all models, meshes, and instance buffers
     pub fn clear(&mut self) {
         self.render_storage.render_map.clear();
-        self.render_storage.instance_buffer_map.clear();
         self.lights.renderer_lights.clear();
     }
 
@@ -452,5 +485,10 @@ impl RendererWgpu {
         // TODO: associate bones for that armature
         // todo!();
         self.skinning_tech.update_bone(bone_id, mat);
+    }
+
+    pub fn set_camera(&mut self, position: Point3<f32>, orientation: Quaternion<f32>) {
+        self.camera
+            .set_position_and_orientation(&self.queue, position, orientation);
     }
 }

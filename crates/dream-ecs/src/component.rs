@@ -9,6 +9,9 @@ use crate::component::LightType::POINT;
 use crate::entity::Entity;
 use crate::scene::Scene;
 
+#[derive(shipyard::Component, Debug, Clone, PartialEq, Default)]
+pub struct SceneCamera {}
+
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vector3<f32>,
@@ -68,6 +71,7 @@ pub struct Light {
     pub color: Vector3<f32>,
     pub radius: f32,
     pub direction: Vector3<f32>,
+    pub cast_shadow: bool,
 }
 
 impl Light {
@@ -76,12 +80,14 @@ impl Light {
         color: Vector3<f32>,
         radius: f32,
         direction: Vector3<f32>,
+        cast_shadow: bool,
     ) -> Light {
         Light {
             light_type,
             color,
             radius,
             direction,
+            cast_shadow,
         }
     }
 }

@@ -1,10 +1,11 @@
-use crate::camera::Camera;
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
-use crate::lights::Lights;
+use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use crate::skinning::SkinningTech;
+use crate::shadow_tech::ShadowTech;
 use crate::texture;
 use crate::texture::Texture;
 
@@ -19,23 +20,25 @@ pub struct DeferredRenderingTech {
 impl DeferredRenderingTech {
     pub fn new(
         device: &wgpu::Device,
-        render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
-        lights: &Lights,
         width: u32,
         height: u32,
         depth_texture: &Texture,
-        camera: &Camera,
+        pbr_material_tech: &PbrMaterialTech,
+        shadow_tech: &ShadowTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
     ) -> Self {
         let shader_write_g_buffers = Shader::new(
             device,
-            include_str!("shader_write_g_buffers.wgsl").parse().unwrap(),
+            include_str!("shader/shader_write_g_buffers.wgsl")
+                .parse()
+                .unwrap(),
             String::from("shader_write_g_buffers"),
         );
 
         let shader_render_lights_for_deferred = Shader::new(
             device,
-            include_str!("shader_render_lights_for_deferred.wgsl")
+            include_str!("shader/shader_render_lights_for_deferred.wgsl")
                 .parse()
                 .unwrap(),
             String::from("shader_render_lights_for_deferred"),
@@ -170,10 +173,20 @@ impl DeferredRenderingTech {
                 label: Some("deferred_rendering_gbuffers_bind_group"),
             });
 
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[
+                    &camera_bones_lights_bind_group.bind_group_layout,
+                    &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
+
         let render_pipeline_write_g_buffers =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Write G Buffers"),
-                layout: Some(&render_pipeline_pbr_layout),
+                layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: shader_write_g_buffers.get_shader_module(),
                     entry_point: "vs_main",
@@ -241,9 +254,9 @@ impl DeferredRenderingTech {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Quad Render Pipeline Layout"),
                 bind_group_layouts: &[
-                    &camera.camera_bind_group_layout,
+                    &camera_bones_lights_bind_group.bind_group_layout,
                     &render_lights_for_deferred_gbuffers_bind_group_layout,
-                    &lights.lights_bind_group_layout,
+                    &shadow_tech.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -303,11 +316,10 @@ impl DeferredRenderingTech {
     pub fn render_to_gbuffers(
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
-        depth_texture: &texture::Texture,
-        camera: &Camera,
-        lights: &Lights,
+        depth_texture: &Texture,
         render_storage: &RenderStorage,
-        skinning_tech: &SkinningTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        filter_func: fn(&Material) -> bool,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -384,13 +396,11 @@ impl DeferredRenderingTech {
         render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
 
         // camera bind group
-        render_pass_write_g_buffers.set_bind_group(0, &camera.camera_bind_group, &[]);
-
-        // skinning bind group
-        render_pass_write_g_buffers.set_bind_group(1, &skinning_tech.skinning_bind_group, &[]);
-
-        // lights bind group
-        render_pass_write_g_buffers.set_bind_group(3, &lights.lights_bind_group, &[]);
+        render_pass_write_g_buffers.set_bind_group(
+            0,
+            &camera_bones_lights_bind_group.bind_group,
+            &[],
+        );
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -419,15 +429,14 @@ impl DeferredRenderingTech {
                 .materials
                 .get(mesh.material)
                 .expect("No material at index");
-            let is_opaque = material.factor_alpha >= 1.0;
-            if is_opaque && material.pbr_material_textures_bind_group.is_some() {
+            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
                 // render_pass_write_g_buffers.set_bind_group(
                 //     1,
                 //     &material.pbr_material_factors_bind_group,
                 //     &[],
                 // );
                 render_pass_write_g_buffers.set_bind_group(
-                    2,
+                    1,
                     material.pbr_material_textures_bind_group.as_ref().unwrap(),
                     &[],
                 );
@@ -443,8 +452,8 @@ impl DeferredRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
-        camera: &Camera,
-        lights: &Lights,
+        shadow_tech: &ShadowTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
     ) {
         // define render pass
         let mut render_pass_render_lights_for_deferred =
@@ -503,7 +512,11 @@ impl DeferredRenderingTech {
             });
 
         // camera bind group
-        render_pass_render_lights_for_deferred.set_bind_group(0, &camera.camera_bind_group, &[]);
+        render_pass_render_lights_for_deferred.set_bind_group(
+            0,
+            &camera_bones_lights_bind_group.bind_group,
+            &[],
+        );
 
         // gbuffers bind group
         render_pass_render_lights_for_deferred.set_bind_group(
@@ -512,8 +525,15 @@ impl DeferredRenderingTech {
             &[],
         );
 
-        // lights bind group
-        render_pass_render_lights_for_deferred.set_bind_group(2, &lights.lights_bind_group, &[]);
+        // shadow tech bind group
+        render_pass_render_lights_for_deferred.set_bind_group(
+            2,
+            shadow_tech
+                .bind_group
+                .as_ref()
+                .unwrap_or(&shadow_tech.dummy_bind_group),
+            &[],
+        );
 
         render_pass_render_lights_for_deferred
             .set_pipeline(&self.render_pipeline_render_deferred_result);

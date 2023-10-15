@@ -24,5 +24,6 @@ rustpython-derive = { git = "https://github.com/RustPython/RustPython", tag = "0
 rustpython-pylib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true, tag = "0.3.0" }
 rustpython-stdlib = { git = "https://github.com/RustPython/RustPython", default-features = false, optional = true, tag = "0.3.0" }
 rustpython-vm = { git = "https://github.com/RustPython/RustPython", default-features = false, features = ["compiler"], tag = "0.3.0" }
+once_cell = { version = "1.18.0" }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-rayon = { workspace = true }

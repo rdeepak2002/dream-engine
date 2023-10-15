@@ -1,10 +1,11 @@
-use crate::camera::Camera;
+use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::instance::InstanceRaw;
-use crate::lights::Lights;
+use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
+use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use crate::skinning::SkinningTech;
+use crate::shadow_tech::ShadowTech;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -14,19 +15,32 @@ pub struct ForwardRenderingTech {
 impl ForwardRenderingTech {
     pub fn new(
         device: &wgpu::Device,
-        render_pipeline_pbr_layout: &wgpu::PipelineLayout,
         target_texture_format: wgpu::TextureFormat,
+        pbr_material_tech: &PbrMaterialTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        shadow_tech: &ShadowTech,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
-            include_str!("shader_forward.wgsl").parse().unwrap(),
+            include_str!("shader/shader_forward.wgsl").parse().unwrap(),
             String::from("shader_forward_render"),
         );
+
+        let render_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Forward Rendering Render Pipeline Layout"),
+                bind_group_layouts: &[
+                    &camera_bones_lights_bind_group.bind_group_layout,
+                    &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    &shadow_tech.bind_group_layout,
+                ],
+                push_constant_ranges: &[],
+            });
 
         let render_pipeline_forward_render_translucent_objects =
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some("Render Pipeline Forward Rendering"),
-                layout: Some(&render_pipeline_pbr_layout),
+                layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: shader_forward_render.get_shader_module(),
                     entry_point: "vs_main",
@@ -82,15 +96,15 @@ impl ForwardRenderingTech {
         }
     }
 
-    pub fn render_translucent_objects(
+    pub fn render_to_output_texture(
         &mut self,
         encoder: &mut wgpu::CommandEncoder,
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
-        camera: &Camera,
-        lights: &Lights,
         render_storage: &RenderStorage,
-        skinning_tech: &SkinningTech,
+        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        shadow_tech: &ShadowTech,
+        filter_func: fn(&Material) -> bool,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -117,13 +131,21 @@ impl ForwardRenderingTech {
             .set_pipeline(&self.render_pipeline_forward_render_translucent_objects);
 
         // camera bind group
-        render_pass_forward_rendering.set_bind_group(0, &camera.camera_bind_group, &[]);
+        render_pass_forward_rendering.set_bind_group(
+            0,
+            &camera_bones_lights_bind_group.bind_group,
+            &[],
+        );
 
-        // skinning bind group
-        render_pass_forward_rendering.set_bind_group(1, &skinning_tech.skinning_bind_group, &[]);
-
-        // lights bind group
-        render_pass_forward_rendering.set_bind_group(3, &lights.lights_bind_group, &[]);
+        // shadow bind group
+        render_pass_forward_rendering.set_bind_group(
+            2,
+            shadow_tech
+                .bind_group
+                .as_ref()
+                .unwrap_or(&shadow_tech.dummy_bind_group),
+            &[],
+        );
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -153,15 +175,14 @@ impl ForwardRenderingTech {
                 .get(mesh.material)
                 .expect("No material at index");
             // only draw transparent objects
-            let is_translucent = material.factor_alpha < 1.0;
-            if is_translucent && material.pbr_material_textures_bind_group.is_some() {
+            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
                 // render_pass_forward_rendering.set_bind_group(
                 //     1,
                 //     &material.pbr_material_factors_bind_group,
                 //     &[],
                 // );
                 render_pass_forward_rendering.set_bind_group(
-                    2,
+                    1,
                     material.pbr_material_textures_bind_group.as_ref().unwrap(),
                     &[],
                 );

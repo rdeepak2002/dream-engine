@@ -20,6 +20,7 @@ dream-fs = { workspace = true }
 dream-resource = { workspace = true }
 dream-tasks = { workspace = true }
 dream-math = { workspace = true }
+dream-ecs = { workspace = true }
 async-executor = { workspace = true }
 rayon = { workspace = true }
 # compute tangents using mikktspace algorithm

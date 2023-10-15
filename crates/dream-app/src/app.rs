@@ -17,17 +17,25 @@
  **********************************************************************************/
 use std::sync::{Arc, Mutex, Weak};
 
-use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, PythonScript, Transform};
+use winit::dpi::PhysicalPosition;
+use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
+
+use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector2, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_bindgen_rayon::init_thread_pool;
 
+use crate::input::{
+    get_mouse_move, get_mouse_scroll, set_keyboard_state, set_mouse_left_pressed, set_mouse_move,
+    set_mouse_right_pressed, set_mouse_scroll,
+};
 use crate::python_script_component_system::PythonScriptComponentSystem;
+use crate::scene_camera_component_system::SceneCameraComponentSystem;
 use crate::system::System;
 
 pub struct App {
@@ -54,9 +62,77 @@ impl Default for App {
             None,
         )
         .expect("Unable to create dummy entity");
+        // cube
+        // {
+        //     let cube_entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
+        //             .expect("Unable to create cube entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         cube_entity_handle,
+        //         &resource_manager,
+        //         "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(0., -1.1, 0.),
+        //             Quaternion::identity(),
+        //             Vector3::new(1., 1., 1.),
+        //         ),
+        //     );
+        // }
+        {
+            let scene_camera_entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Scene Camera".into()),
+                None,
+                Some(Transform::new(
+                    Vector3::new(-1.33, 0.85, 1.228),
+                    Quaternion::new(0.793, -0.0673, -0.603, -0.055),
+                    Vector3::new(1.0, 1.0, 1.0),
+                    // Vector3::new(0.7, 1.3, 4.4),
+                    // Quaternion::new(0.981, -0.196, 0.0, 0.0),
+                    // Vector3::new(1.0, 1.0, 1.0),
+                )),
+            )
+            .expect("Unable to create scene camera entity");
+            let e = Entity::from_handle(scene_camera_entity_handle, Arc::downgrade(&scene));
+            e.add_component(SceneCamera::default());
+        }
+        {
+            let directional_light_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
+                    .expect("Unable to create sun entity");
+            Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
+                .add_component(Light::new(
+                    LightType::DIRECTIONAL,
+                    Vector3::new(251.0 / 255.0, 247.0 / 255.0, 237.0 / 255.0),
+                    4.0,
+                    Vector3::new(-0.2, -0.4, -0.1),
+                    true,
+                ));
+            // add cube for position visualization (initial shadow map debugging)
+            // MeshRenderer::add_to_entity(
+            //     Arc::downgrade(&scene),
+            //     directional_light_entity_handle,
+            //     &resource_manager,
+            //     "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+            //     true,
+            //     Default::default(),
+            // );
+            Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
+                .add_component(Transform::new(
+                    Vector3::new(4.3, 4.2, 2.3),
+                    Quaternion::identity(),
+                    Vector3::new(0.1, 0.1, 0.1),
+                ));
+        }
         {
             let cube_entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
+                Scene::create_entity(Arc::downgrade(&scene), Some("2x Cube".into()), None, None)
                     .expect("Unable to create cube entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(
@@ -69,69 +145,62 @@ impl Default for App {
             );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0., -1.1, 0.),
-                    Quaternion::identity(),
-                    Vector3::new(1., 1., 1.),
-                ),
-            );
-        }
-        {
-            let cube_entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
-                    .expect("Unable to create sun entity");
-            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(
-                    LightType::DIRECTIONAL,
-                    Vector3::new(0.25, 0.62, 0.99),
-                    4.0,
-                    Vector3::new(1.0, 0.12, 0.18),
-                ),
-            );
-            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Transform::new(
-                    Vector3::new(0., 0.0, 1.0),
-                    Quaternion::identity(),
-                    Vector3::new(1.0, 1.0, 1.0),
+                    Vector3::new(7.4, 2.1, 10.6),
+                    Quaternion::new(1.0, 0.0, 0.6, 0.0),
+                    Vector3::new(2.0, 2.0, 2.0),
                 ),
             );
         }
         {
             let cube_entity_handle = Scene::create_entity(
                 Arc::downgrade(&scene),
-                Some("Point Light".into()),
+                Some("Floating Rectangle".into()),
                 None,
                 None,
             )
-            .expect("Unable to create point light entity");
-            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-                Light::new(
-                    LightType::POINT,
-                    Vector3::new(1.0, 0.18, 0.39),
-                    4.0,
-                    Vector3::new(1.0, 0.0, 0.0),
-                ),
-            );
+            .expect("Unable to create cube entity");
             // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0., 0.5, 1.5),
-                    Quaternion::identity(),
-                    Vector3::new(1.0, 1.0, 1.0),
+                    Vector3::new(40.0, 10.0, 0.0),
+                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    Vector3::new(10.0, 1.0, 10.0),
+                ),
+            );
+        }
+        {
+            let cube_entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Floor".into()), None, None)
+                    .expect("Unable to create point light entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "2dcd5e2e-714b-473a-bbdd-98771761cb37".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(0.0, 0.0, 0.0),
+                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    Vector3::new(100.0, 0.1, 100.0),
                 ),
             );
         }
         // {
         //     let cube_entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Light 2".into()), None, None)
-        //             .expect("Unable to create cube entity");
-        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
-        //         Light::new(
-        //             LightType::POINT,
-        //             Vector3::new(1.0, 1.0, 1.0),
-        //             4.0,
-        //             Vector3::new(1.0, 0.0, 0.0),
-        //         ),
-        //     );
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Cube".into()), None, None)
+        //             .expect("Unable to create point light entity");
         //     // add mesh renderer component
         //     MeshRenderer::add_to_entity(
         //         Arc::downgrade(&scene),
@@ -143,30 +212,43 @@ impl Default for App {
         //     );
         //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
         //         Transform::new(
-        //             Vector3::new(1.3, 0.9, 0.9),
-        //             Quaternion::identity(),
-        //             Vector3::new(0.1, 0.1, 0.1),
+        //             Vector3::new(0.0, 1.11, 0.0),
+        //             Quaternion::new(1.0, 0.0, 0.0, 0.0),
+        //             Vector3::new(1.0, 1.0, 1.0),
         //         ),
         //     );
         // }
         // {
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Link".into()), None, None)
-        //             .expect("Unable to create entity");
+        //     let cube_entity_handle = Scene::create_entity(
+        //         Arc::downgrade(&scene),
+        //         Some("Point Light".into()),
+        //         None,
+        //         None,
+        //     )
+        //     .expect("Unable to create point light entity");
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Light::new(
+        //             LightType::POINT,
+        //             Vector3::new(1.0, 0.76, 0.45),
+        //             20.0,
+        //             Vector3::new(1.0, 0.0, 0.0),
+        //             false,
+        //         ),
+        //     );
         //     // add mesh renderer component
         //     MeshRenderer::add_to_entity(
         //         Arc::downgrade(&scene),
-        //         entity_handle,
+        //         cube_entity_handle,
         //         &resource_manager,
-        //         "e958661a-ec5e-4282-86cc-09e6c3b1f8ae".into(),
+        //         "4d19dccc-e27a-4abb-9e34-e44d73d17997".into(),
         //         true,
         //         Default::default(),
         //     );
-        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //     Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
         //         Transform::new(
-        //             Vector3::new(0.7, 0.4, 1.0),
-        //             Quaternion::new(1.0, 0.2, 8.5, 7.0),
-        //             Vector3::new(1.0, 1.0, 1.0),
+        //             Vector3::new(-0.6, -0.1, 1.3),
+        //             Quaternion::new(1.0, -1.0, 0.0, 0.0),
+        //             Vector3::new(0.15, 0.15, 0.15),
         //         ),
         //     );
         // }
@@ -179,60 +261,46 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(),
+                "f358ffb3-b766-4839-a93f-30b81ff9c107".into(), // 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
                 true,
                 Default::default(),
             );
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0.7, 0.4, 1.0),
+                    Vector3::new(0.7, 0.195, 1.0),
                     Quaternion::new(1.0, 0.2, 8.5, 7.0),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
         }
-        // mixamo robot
+        // pbr robot
         // {
         //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("YBot".into()), None, None)
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
         //             .expect("Unable to create entity");
         //     // add mesh renderer component
         //     MeshRenderer::add_to_entity(
         //         Arc::downgrade(&scene),
         //         entity_handle,
         //         &resource_manager,
-        //         "757729d1-7598-4b2a-b3c4-dd1c2362053e".into(),
+        //         "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
         //         true,
         //         Default::default(),
         //     );
+        //     // add python script component
+        //     PythonScript::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
+        //     );
         // }
-        // pbr robot
-        {
-            let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Robot".into()), None, None)
-                    .expect("Unable to create entity");
-            // add mesh renderer component
-            MeshRenderer::add_to_entity(
-                Arc::downgrade(&scene),
-                entity_handle,
-                &resource_manager,
-                "8efa6863-27d2-43ba-b814-ee8b60d12a9b".into(),
-                true,
-                Default::default(),
-            );
-            // add python script component
-            PythonScript::add_to_entity(
-                Arc::downgrade(&scene),
-                entity_handle,
-                &resource_manager,
-                "c33a13c0-b9a9-4eef-b1b0-40ca8f41111a".into(),
-            );
-        }
 
         // init component systems
-        let component_systems =
-            vec![Arc::new(Mutex::new(PythonScriptComponentSystem::default()))
-                as Arc<Mutex<dyn System>>];
+        let component_systems = vec![
+            Arc::new(Mutex::new(PythonScriptComponentSystem::default())) as Arc<Mutex<dyn System>>,
+            Arc::new(Mutex::new(SceneCameraComponentSystem::default())) as Arc<Mutex<dyn System>>,
+        ];
 
         Self {
             dt: 0.0,
@@ -252,6 +320,9 @@ impl App {
                 .unwrap()
                 .update(self.dt, Arc::downgrade(&self.scene));
         }
+        // mouse dx and dy should be reset
+        set_mouse_move(get_mouse_move() * 0.0);
+        set_mouse_scroll(get_mouse_scroll() * 0.0);
         self.dt
     }
 
@@ -311,6 +382,9 @@ impl App {
                     * Matrix4::new_nonuniform_scaling(&scale)
                     * UnitQuaternion::from_quaternion(rotation).to_homogeneous();
                 mat = parent_mat * model_mat;
+                if let Some(_scene_camera_component) = entity.get_component::<SceneCamera>() {
+                    renderer.set_camera(position.into(), rotation);
+                }
                 if let Some(light_component) = entity.get_component::<Light>() {
                     let position = Vector3::new(mat.m14, mat.m24, mat.m34);
                     renderer.draw_light(
@@ -319,6 +393,7 @@ impl App {
                         light_component.color,
                         light_component.radius,
                         light_component.direction,
+                        light_component.cast_shadow,
                     );
                 }
                 if let Some(mesh_renderer) = entity.get_component::<MeshRenderer>() {
@@ -362,5 +437,36 @@ impl App {
                 draw_entity_and_children(renderer, child_id, scene.clone(), mat, new_bone_mat);
             }
         }
+    }
+
+    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) {
+        let amount = if state == ElementState::Pressed {
+            1.0
+        } else {
+            0.0
+        };
+        set_keyboard_state(key, amount);
+    }
+
+    pub fn process_mouse(&mut self, mouse_dx: f64, mouse_dy: f64) {
+        let dx = mouse_dx as f32;
+        let dy = mouse_dy as f32;
+        set_mouse_move(Vector2::new(dx, dy))
+    }
+
+    pub fn process_mouse_left_input(&mut self, is_pressed: bool) {
+        set_mouse_left_pressed(is_pressed);
+    }
+
+    pub fn process_mouse_right_input(&mut self, is_pressed: bool) {
+        set_mouse_right_pressed(is_pressed);
+    }
+
+    pub fn process_scroll(&mut self, delta: &MouseScrollDelta) {
+        let scroll = -match delta {
+            MouseScrollDelta::LineDelta(_, scroll) => scroll * 100.0,
+            MouseScrollDelta::PixelDelta(PhysicalPosition { y: scroll, .. }) => *scroll as f32,
+        };
+        set_mouse_scroll(scroll);
     }
 }

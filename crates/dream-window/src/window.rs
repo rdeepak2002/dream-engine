@@ -88,7 +88,7 @@ impl Window {
         )
         .await;
 
-        let sleep_millis: u64 = 16;
+        let sleep_millis: u128 = 16;
         let mut last_update_time = dream_time::time::now();
         self.event_loop.run(move |event, _, control_flow| {
             match event {
@@ -101,7 +101,7 @@ impl Window {
                     let editor_pixels_per_point = self.window.scale_factor() as f32;
 
                     let now = dream_time::time::now();
-                    if now - last_update_time > sleep_millis as u128 {
+                    if now - last_update_time > sleep_millis {
                         app.update();
                         app.draw(&mut renderer);
                         last_update_time = dream_time::time::now();
@@ -138,9 +138,42 @@ impl Window {
                     }
                 }
 
+                Event::DeviceEvent {
+                    event: DeviceEvent::MouseMotion { delta },
+                    ..
+                } => app.process_mouse(delta.0, delta.1),
+
                 Event::WindowEvent { event, .. } => {
-                    if !editor.handle_event(&event) {
+                    editor.handle_event(&event);
+                    if true {
+                        //  was !editor.handle_event(&event)
                         match event {
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    KeyboardInput {
+                                        virtual_keycode: Some(key),
+                                        state,
+                                        ..
+                                    },
+                                ..
+                            } => app.process_keyboard(key, state),
+                            WindowEvent::MouseWheel { delta, .. } => {
+                                app.process_scroll(&delta);
+                            }
+                            WindowEvent::MouseInput {
+                                button: MouseButton::Left,
+                                state,
+                                ..
+                            } => {
+                                app.process_mouse_left_input(state == ElementState::Pressed);
+                            }
+                            WindowEvent::MouseInput {
+                                button: MouseButton::Right,
+                                state,
+                                ..
+                            } => {
+                                app.process_mouse_right_input(state == ElementState::Pressed);
+                            }
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(Some(physical_size));
                                 editor.handle_resize(&renderer);

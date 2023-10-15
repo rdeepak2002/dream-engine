@@ -127,7 +127,7 @@ impl Material {
         let mut emissive_image = Image::default();
         match material.emissive_texture() {
             None => {
-                let bytes = include_bytes!("black.png");
+                let bytes = include_bytes!("white.png");
                 emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
@@ -233,7 +233,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Base color texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
         )
         .expect("Unable to load base color texture");
 
@@ -272,7 +272,7 @@ impl Material {
             rgba_image.dimensions(),
             Some("Emissive texture"),
             Some(wgpu::FilterMode::Linear),
-            None,
+            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
         )
         .expect("Unable to load emissive texture");
 
