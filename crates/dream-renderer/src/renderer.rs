@@ -18,14 +18,17 @@
 
 use std::iter;
 
+use wgpu::TextureFormat::Rgba16Float;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
 use dream_math::{Point3, Quaternion, Vector3};
 
+use crate::bloom_tech::BloomTech;
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
+use crate::hdr_tech::HdrTech;
 use crate::instance::Instance;
 use crate::lights::{Lights, RendererLight};
 use crate::material::Material;
@@ -52,7 +55,8 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
-    pub frame_texture: texture::Texture,
+    pub surface_texture_format: Option<wgpu::TextureFormat>,
+    pub no_hdr_frame_texture: texture::Texture,
     pub deferred_rendering_tech: DeferredRenderingTech,
     render_storage: RenderStorage,
     camera: camera::Camera,
@@ -63,6 +67,8 @@ pub struct RendererWgpu {
     lights: Lights,
     pub shadow_tech: ShadowTech,
     camera_bones_light_bind_group: CameraBonesLightBindGroup,
+    pub bloom_tech: BloomTech,
+    pub hdr_tech: HdrTech,
 }
 
 impl RendererWgpu {
@@ -90,6 +96,7 @@ impl RendererWgpu {
         }
 
         // adapter is the physical gpu driver
+        let mut surface_texture_format = None;
         let adapter;
         if surface.is_some() {
             adapter = instance
@@ -127,7 +134,7 @@ impl RendererWgpu {
             .unwrap();
 
         // preferred texture format is the format of the surface we draw to
-        let preferred_texture_format;
+        let preferred_texture_format = Some(Rgba16Float);
         // surface configuration describes a surface like its dimensions
         let config;
         if surface.is_some() {
@@ -136,14 +143,17 @@ impl RendererWgpu {
             // Shader code in this tutorial assumes an Srgb surface texture. Using a different
             // one will result all the colors coming out darker. If you want to support non
             // Srgb surfaces, you'll need to account for that when drawing to the frame.
-            let surface_format = surface_caps
+            let mut surface_format = surface_caps
                 .formats
                 .iter()
                 .copied()
                 .find(|f| f.is_srgb())
                 .unwrap_or(surface_caps.formats[0]);
 
-            preferred_texture_format = Some(surface_format);
+            surface_texture_format = Some(surface_format);
+
+            // let surface_format = Some(surface_format);
+            // log::debug!("surface_format {:#?}", surface_format);
 
             config = wgpu::SurfaceConfiguration {
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -158,7 +168,6 @@ impl RendererWgpu {
             // case where there is no surface
             cfg_if::cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    preferred_texture_format = Some(wgpu::TextureFormat::Bgra8Unorm);
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                         format: preferred_texture_format.unwrap(),
@@ -169,7 +178,6 @@ impl RendererWgpu {
                         view_formats: vec![],
                     };
                 } else {
-                    preferred_texture_format = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                         format: preferred_texture_format.unwrap(),
@@ -236,7 +244,7 @@ impl RendererWgpu {
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
-            config.format,
+            preferred_texture_format.unwrap(),
             config.width,
             config.height,
             &depth_texture,
@@ -248,11 +256,17 @@ impl RendererWgpu {
         // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
-            config.format,
+            preferred_texture_format.unwrap(),
             &pbr_material_tech,
             &camera_bones_light_bind_group,
             &shadow_tech,
         );
+
+        // algorithms for computing bloom mask and applying it onto frame texture
+        let bloom_tech = BloomTech::new(&device, config.width, config.height);
+
+        // hdr and gamma correction
+        let hdr_tech = HdrTech::new(&device, config.width, config.height);
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -269,7 +283,7 @@ impl RendererWgpu {
             preferred_texture_format,
             render_storage,
             camera,
-            frame_texture,
+            no_hdr_frame_texture: frame_texture,
             depth_texture,
             deferred_rendering_tech,
             forward_rendering_tech,
@@ -278,6 +292,9 @@ impl RendererWgpu {
             skinning_tech,
             shadow_tech,
             camera_bones_light_bind_group,
+            bloom_tech,
+            hdr_tech,
+            surface_texture_format,
         }
     }
 
@@ -309,7 +326,14 @@ impl RendererWgpu {
                 .configure(&self.device, &self.config);
         }
         // resize frame textures
-        self.frame_texture = texture::Texture::create_frame_texture(
+        // self.frame_texture = texture::Texture::create_frame_texture(
+        //     &self.device,
+        //     self.config.width,
+        //     self.config.height,
+        //     "frame_texture",
+        //     self.preferred_texture_format.unwrap(),
+        // );
+        self.no_hdr_frame_texture = texture::Texture::create_frame_texture(
             &self.device,
             self.config.width,
             self.config.height,
@@ -325,6 +349,12 @@ impl RendererWgpu {
         );
         // resize gbuffers for deferred rendering
         self.deferred_rendering_tech
+            .resize(&self.device, self.config.width, self.config.height);
+        // resize mask for bloom
+        self.bloom_tech
+            .resize(&self.device, self.config.width, self.config.height);
+        // resize hdr result
+        self.hdr_tech
             .resize(&self.device, self.config.width, self.config.height);
     }
 
@@ -377,7 +407,7 @@ impl RendererWgpu {
         self.deferred_rendering_tech.combine_gbuffers_to_texture(
             &self.device,
             &mut encoder,
-            &mut self.frame_texture,
+            &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.shadow_tech,
             &self.camera_bones_light_bind_group,
@@ -386,7 +416,7 @@ impl RendererWgpu {
         // forward render translucent objects
         self.forward_rendering_tech.render_to_output_texture(
             &mut encoder,
-            &mut self.frame_texture,
+            &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.render_storage,
             &self.camera_bones_light_bind_group,
@@ -395,13 +425,26 @@ impl RendererWgpu {
             // |material: &Material| true,
         );
 
+        // compute bloom mask
+        self.bloom_tech.generate_bright_mask(
+            &mut encoder,
+            &self.device,
+            &mut self.no_hdr_frame_texture,
+        );
+
+        // TODO: blur the bright mask 5-10 times
+
+        // TODO: combine blurred result and no hdr frame texture
+
+        // compute hdr version of texture
+        self.hdr_tech.apply_hdr_and_gamma_correction(
+            &mut encoder,
+            &self.device,
+            &mut self.no_hdr_frame_texture,
+        );
+
         // submit all drawing commands to gpu
         self.queue.submit(iter::once(encoder.finish()));
-
-        // update the output texture view, so editor can display it in a panel
-        // let output_texture_view = &self
-        //     .frame_texture.view;
-        // self.frame_texture_view = Some(output_texture_view);
 
         Ok(())
     }

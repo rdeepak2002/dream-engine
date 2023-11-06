@@ -33,9 +33,22 @@ impl RendererPanel {
             // );
         }
 
+        // self.render_output_epaint_texture_id = Some(egui_wgpu_renderer.register_native_texture(
+        //     &state.device,
+        //     &state.frame_texture.view,
+        //     wgpu::FilterMode::default(),
+        // ));
+
+        // self.render_output_epaint_texture_id = Some(egui_wgpu_renderer.register_native_texture(
+        //     &state.device,
+        //     &state.bloom_tech.mask_texture.view,
+        //     wgpu::FilterMode::default(),
+        // ));
+
+        // render HDR texture
         self.render_output_epaint_texture_id = Some(egui_wgpu_renderer.register_native_texture(
             &state.device,
-            &state.frame_texture.view,
+            &state.hdr_tech.hdr_texture.view,
             wgpu::FilterMode::default(),
         ));
 

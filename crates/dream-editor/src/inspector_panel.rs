@@ -224,21 +224,21 @@ impl Panel for InspectorPanel {
                                             egui::DragValue::new(&mut light_component.color.x)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0)),
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0)),
                                         );
                                         ui.strong("g");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.color.y)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0))
                                         );
                                         ui.strong("b");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.color.z)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0))
                                         );
                                         ui.strong("radius");
                                         ui.add(
