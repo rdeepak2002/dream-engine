@@ -52,6 +52,13 @@ impl RendererPanel {
             wgpu::FilterMode::default(),
         ));
 
+        // render bloom mask texture
+        // self.render_output_epaint_texture_id = Some(egui_wgpu_renderer.register_native_texture(
+        //     &state.device,
+        //     &state.bloom_tech.mask_texture.view,
+        //     wgpu::FilterMode::default(),
+        // ));
+
         // depth texture of shadow
         // {
         //     if self.render_output_epaint_texture_id.is_some() {

@@ -26,7 +26,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
 
     let brightness = dot(frame_color, vec3(0.2126, 0.7152, 0.0722));
     var bright_color = vec3(0.0, 0.0, 0.0);
-    if (brightness > 0.3) {
+    if (brightness > 1.0) {
         bright_color = frame_color;
     }
 
