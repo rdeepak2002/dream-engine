@@ -38,8 +38,10 @@ var frame_texture_sampler: sampler;
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let frame_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
 
-    var blurScale = 2.5;
-    var blurStrength = 2.0;
+    var blurScale = 2.0;
+    var blurStrength = 1.0;
+//    var blurScale = 1.5;
+//    var blurStrength = 1.0;
 
     var weights: array<f32, 5> = array(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
     var tex_offset: vec2<f32> = 1.0 / vec2<f32>(textureDimensions(frame_texture, 0)) * blurScale;

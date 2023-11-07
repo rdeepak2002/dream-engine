@@ -9,7 +9,6 @@ pub struct BloomTech {
     pub render_pipeline_vertical_blur: wgpu::RenderPipeline,
     pub single_texture_bind_group_layout: wgpu::BindGroupLayout,
     pub mask_texture: texture::Texture,
-    pub blur_horizontal_texture: texture::Texture,
     pub blur_final_texture: texture::Texture,
     identify_bright_bind_group: Option<wgpu::BindGroup>,
     horizontal_blur_bind_group: Option<wgpu::BindGroup>,
@@ -23,14 +22,6 @@ impl BloomTech {
             width,
             height,
             "mask_texture",
-            wgpu::TextureFormat::Rgba16Float,
-        );
-
-        let blur_horizontal_texture = texture::Texture::create_frame_texture(
-            &device,
-            width,
-            height,
-            "blur_horizontal_texture",
             wgpu::TextureFormat::Rgba16Float,
         );
 
@@ -227,7 +218,6 @@ impl BloomTech {
             render_pipeline_vertical_blur,
             single_texture_bind_group_layout,
             mask_texture,
-            blur_horizontal_texture,
             blur_final_texture,
             identify_bright_bind_group: None,
             horizontal_blur_bind_group: None,
@@ -286,8 +276,11 @@ impl BloomTech {
     }
 
     pub fn generate_blur(&mut self, encoder: &mut wgpu::CommandEncoder, device: &wgpu::Device) {
-        self.horizontal_blur(encoder, device, false);
-        self.vertical_blur(encoder, device, false);
+        self.horizontal_blur(encoder, device, true);
+        for _ in 0..10 {
+            self.vertical_blur(encoder, device, false);
+            self.horizontal_blur(encoder, device, false);
+        }
     }
 
     fn horizontal_blur(
@@ -300,7 +293,7 @@ impl BloomTech {
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("render_pass_horizontal_blur"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &self.blur_horizontal_texture.view,
+                    view: &self.blur_final_texture.view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: if clear_texture {
@@ -354,7 +347,7 @@ impl BloomTech {
             encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("render_pass_vertical_blur"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &self.blur_final_texture.view,
+                    view: &self.mask_texture.view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: if clear_texture {
@@ -379,15 +372,11 @@ impl BloomTech {
                 entries: &[
                     wgpu::BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.blur_horizontal_texture.view,
-                        ),
+                        resource: wgpu::BindingResource::TextureView(&self.blur_final_texture.view),
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::Sampler(
-                            &self.blur_horizontal_texture.sampler,
-                        ),
+                        resource: wgpu::BindingResource::Sampler(&self.blur_final_texture.sampler),
                     },
                 ],
                 label: Some("vertical_blur_bind_group"),
@@ -411,14 +400,6 @@ impl BloomTech {
             wgpu::TextureFormat::Rgba16Float,
         );
 
-        let blur_horizontal_texture = texture::Texture::create_frame_texture(
-            &device,
-            width,
-            height,
-            "blur_horizontal_texture",
-            wgpu::TextureFormat::Rgba16Float,
-        );
-
         let blur_final_texture = texture::Texture::create_frame_texture(
             &device,
             width,
@@ -428,7 +409,6 @@ impl BloomTech {
         );
 
         self.mask_texture = mask_texture;
-        self.blur_horizontal_texture = blur_horizontal_texture;
         self.blur_final_texture = blur_final_texture;
     }
 }
