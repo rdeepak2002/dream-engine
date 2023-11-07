@@ -34,23 +34,21 @@ var frame_texture: texture_2d<f32>;
 @group(0) @binding(1)
 var frame_texture_sampler: sampler;
 
-@group(0) @binding(2)
-var bloom_texture: texture_2d<f32>;
-@group(0) @binding(3)
-var bloom_texture_sampler: sampler;
-
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var hdr_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
-    hdr_color += textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords).xyz;
+    let frame_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
 
-    // exposure tone mapping
-    let exposure = 1.0;
-    var mapped = vec3(1.0) - exp(-hdr_color * exposure);
-//    var mapped = frame_color / (frame_color + vec3(1.0));
-    // gamma correction
-    let gamma = 1.0;
-    mapped = pow(mapped, vec3(1.0 / gamma));
+    var blurScale = 2.5;
+    var blurStrength = 2.0;
 
-    return vec4(mapped, 1.0);
+    var weights: array<f32, 5> = array(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+    var tex_offset: vec2<f32> = 1.0 / vec2<f32>(textureDimensions(frame_texture, 0)) * blurScale;
+    var result: vec3<f32> = frame_color * weights[0];
+
+    for(var i = 1; i < 5; i++) {
+        result += textureSample(frame_texture, frame_texture_sampler, in.tex_coords + vec2<f32>(tex_offset.x * f32(i), 0.0)).xyz * weights[i] * blurStrength;
+        result += textureSample(frame_texture, frame_texture_sampler, in.tex_coords - vec2<f32>(tex_offset.x * f32(i), 0.0)).xyz * weights[i] * blurStrength;
+    }
+
+    return vec4(result, 1.0);
 }

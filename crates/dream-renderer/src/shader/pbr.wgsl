@@ -143,7 +143,7 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 //    color = pow(color, vec3(1.0 / gamma));
 
     if ((emissive.r > 0.0 || emissive.g > 0.0 || emissive.b > 0.0) && emissive.a > 0.0) {
-        color = emissive.rgb * 2.0;
+        color = emissive.rgb * 2.0 * emissive.a;
     }
 
     return color;

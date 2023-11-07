@@ -15,6 +15,8 @@ fn vs_main(
 
 @group(0) @binding(0)
 var frame_texture: texture_2d<f32>;
+@group(0) @binding(1)
+var frame_texture_sampler: sampler;
 
 @fragment
 fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
@@ -26,7 +28,7 @@ fn fs_main(@builtin(position) coord : vec4<f32>) -> @location(0) vec4<f32> {
 
     let brightness = dot(frame_color, vec3(0.2126, 0.7152, 0.0722));
     var bright_color = vec3(0.0, 0.0, 0.0);
-    if (brightness > 1.0) {
+    if (brightness >= 1.0) {
         bright_color = frame_color;
     }
 

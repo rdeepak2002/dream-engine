@@ -432,15 +432,15 @@ impl RendererWgpu {
             &mut self.no_hdr_frame_texture,
         );
 
-        // TODO: blur the bright mask 5-10 times
-
-        // TODO: combine blurred result and no hdr frame texture
+        // generate blur texture
+        self.bloom_tech.generate_blur(&mut encoder, &self.device);
 
         // compute hdr version of texture
         self.hdr_tech.apply_hdr_and_gamma_correction(
             &mut encoder,
             &self.device,
             &mut self.no_hdr_frame_texture,
+            &self.bloom_tech,
         );
 
         // submit all drawing commands to gpu

@@ -106,7 +106,7 @@ impl Default for App {
             let directional_light_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
                     .expect("Unable to create sun entity");
-            let intensity = 4.0;
+            let intensity = 3.5;
             Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
                 .add_component(Light::new(
                     LightType::DIRECTIONAL,
