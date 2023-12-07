@@ -825,20 +825,22 @@ impl ShadowTech {
                     .get(render_map_key)
                     .expect("No instance buffer found in map");
                 render_pass_write_shadow_buffer.set_vertex_buffer(1, instance_buffer.slice(..));
-                // get the material and set it in the bind group
-                let material = model
-                    .materials
-                    .get(mesh.material)
-                    .expect("No material at index");
-                // render all types of objects
-                if material.pbr_material_textures_bind_group.is_some() {
-                    render_pass_write_shadow_buffer.set_bind_group(
-                        2,
-                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
-                        &[],
-                    );
-                    render_pass_write_shadow_buffer
-                        .draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+                for primitive in &mesh.primitives {
+                    // get the material and set it in the bind group
+                    let material = model
+                        .materials
+                        .get(primitive.material)
+                        .expect("No material at index");
+                    // render all types of objects
+                    if material.pbr_material_textures_bind_group.is_some() {
+                        render_pass_write_shadow_buffer.set_bind_group(
+                            2,
+                            material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                            &[],
+                        );
+                        render_pass_write_shadow_buffer
+                            .draw_primitive_instanced(&primitive, 0..transforms.len() as u32);
+                    }
                 }
             }
         }

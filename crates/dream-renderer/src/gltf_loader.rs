@@ -61,9 +61,11 @@ pub fn read_gltf<'a>(
     let mut mesh_map = HashMap::new();
     for mesh in mesh_list {
         let idx = mesh.index();
-        for mesh in get_dream_meshes_from_gltf_mesh(device, mesh, &buffer_data) {
-            mesh_map.insert(idx, mesh);
-        }
+        let mesh = crate::model::Mesh {
+            name: mesh.name().unwrap_or("mesh").to_string(),
+            primitives: get_dream_primitives_from_gltf_mesh(device, mesh, &buffer_data),
+        };
+        mesh_map.insert(idx, mesh);
     }
     let mut meshes = Vec::new();
     for i in 0..mesh_map.len() {
@@ -127,13 +129,14 @@ impl mikktspace::Geometry for MeshVerticesAndIndicesContainer {
     }
 }
 
-fn get_dream_meshes_from_gltf_mesh(
+fn get_dream_primitives_from_gltf_mesh(
     device: &wgpu::Device,
     mesh: Mesh,
     buffer_data: &Vec<Vec<u8>>,
-) -> Vec<crate::model::Mesh> {
-    let mut meshes = Vec::new();
+) -> Vec<crate::model::Primitive> {
+    let mut primitives_result = Vec::new();
     let primitives = mesh.primitives();
+    log::debug!("Number of primitives is {}", primitives.len());
     primitives.for_each(|primitive| {
         let mut mesh_vertices_and_indices = MeshVerticesAndIndicesContainer {
             vertices: Vec::new(),
@@ -281,13 +284,12 @@ fn get_dream_meshes_from_gltf_mesh(
             contents: bytemuck::cast_slice(&mesh_vertices_and_indices.indices),
             usage: wgpu::BufferUsages::INDEX,
         });
-        meshes.push(crate::model::Mesh {
-            name: mesh_name.to_string(),
+        primitives_result.push(crate::model::Primitive {
             vertex_buffer,
             index_buffer,
             num_elements: mesh_vertices_and_indices.indices.len() as u32,
             material: primitive.material().index().unwrap_or(0),
         });
     });
-    meshes
+    primitives_result
 }

@@ -20,6 +20,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/SimpleSkin.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/robot.glb",
     "fileUrl": null
   },
@@ -33,6 +37,26 @@
   },
   {
     "filepath": "models/campfire.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-fixed-3.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-sketchfab.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-sketchfab.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-fixed-3.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/SimpleSkin.glb.meta",
     "fileUrl": null
   },
   {
