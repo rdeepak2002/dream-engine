@@ -41,13 +41,13 @@ impl SkinningTech {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct SkinningUniform {
-    bone_transforms: [[[f32; 4]; 4]; 128],
+    bone_transforms: [[[f32; 4]; 4]; 256],
 }
 
 impl Default for SkinningUniform {
     fn default() -> Self {
         Self {
-            bone_transforms: [Matrix4::identity().into(); 128],
+            bone_transforms: [Matrix4::identity().into(); 256],
         }
     }
 }
