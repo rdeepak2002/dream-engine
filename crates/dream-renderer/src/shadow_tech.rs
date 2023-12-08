@@ -626,7 +626,7 @@ impl ShadowTech {
                     },
                     ShadowCascadeSettingsUniform {
                         cascade_end: self.cascade_ends[4],
-                        min_bias: 0.0003,
+                        min_bias: 0.0018,
                         max_bias: 0.003,
                         _padding0: 0.0,
                         light_dir: light.direction.into(),
