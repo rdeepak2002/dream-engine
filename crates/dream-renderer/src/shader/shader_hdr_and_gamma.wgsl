@@ -45,7 +45,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     hdr_color += textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords).xyz;
 
     // exposure tone mapping
-    let exposure = 1.0;
+    let exposure = 2.0;
     var mapped = vec3(1.0) - exp(-hdr_color * exposure);
 //    var mapped = frame_color / (frame_color + vec3(1.0));
     // gamma correction
