@@ -225,7 +225,14 @@ impl Scene {
                             skin_root_nodes.insert(skeleton.index() as u32);
                         }
                         None => {
-                            // skin_root_nodes.insert(node.index() as u32);
+                            // set first node that is not related to skin as the armature root
+                            if let Some(root) = gltf_scene.nodes().next() {
+                                for child in root.children() {
+                                    if child.skin().is_none() {
+                                        skin_root_nodes.insert(child.index() as u32);
+                                    }
+                                }
+                            }
                         }
                     }
                     let reader = gltf_skin.reader(|buffer| Some(&buffer_data[buffer.index()]));
