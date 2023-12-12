@@ -22,7 +22,7 @@ use wgpu::TextureFormat::Rgba16Float;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use dream_math::{Point3, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Point3, UnitQuaternion, Vector3};
 
 use crate::bloom_tech::BloomTech;
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;

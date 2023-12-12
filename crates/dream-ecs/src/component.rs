@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::sync::{Mutex, Weak};
 
-use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Matrix4, UnitQuaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 

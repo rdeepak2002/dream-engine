@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Matrix4, Point3, UnitQuaternion, Vector3};
 
 // #[rustfmt::skip]
 // pub const OPENGL_TO_WGPU_MATRIX: Matrix4<f32> = Matrix4::new(

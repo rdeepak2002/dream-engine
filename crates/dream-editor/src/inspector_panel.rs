@@ -6,7 +6,7 @@ use crossbeam_channel::Receiver;
 use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{degrees, radians, UnitQuaternion};
+use dream_math::{degrees, radians};
 
 use crate::editor::{EditorEvent, EditorEventType, Panel};
 
