@@ -23,7 +23,7 @@ use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
 use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector2, Vector3};
+use dream_math::{pi, Matrix4, UnitQuaternion, Vector2, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -69,7 +69,7 @@ impl Default for App {
                 None,
                 Some(Transform::new(
                     Vector3::new(-1.33, 0.85, 1.228),
-                    Quaternion::new(0.793, -0.0673, -0.603, -0.055),
+                    UnitQuaternion::new(Vector3::y() * 4.71),
                     Vector3::new(1.0, 1.0, 1.0),
                     // Vector3::new(0.7, 1.3, 4.4),
                     // Quaternion::new(0.981, -0.196, 0.0, 0.0),
@@ -109,7 +109,7 @@ impl Default for App {
             Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
                 .add_component(Transform::new(
                     Vector3::new(4.3, 4.2, 2.3),
-                    Quaternion::identity(),
+                    UnitQuaternion::identity(),
                     Vector3::new(0.1, 0.1, 0.1),
                 ));
         }
@@ -129,7 +129,7 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(7.4, 2.1, 10.6),
-                    Quaternion::new(1.0, 0.0, 0.6, 0.0),
+                    UnitQuaternion::new(Vector3::y() * pi() / 2.0),
                     Vector3::new(2.0, 2.0, 2.0),
                 ),
             );
@@ -154,7 +154,7 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(40.0, 10.0, 0.0),
-                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    UnitQuaternion::new(Vector3::y() * pi() / 2.0),
                     Vector3::new(10.0, 1.0, 10.0),
                 ),
             );
@@ -175,14 +175,14 @@ impl Default for App {
             Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(0.0, -9.81, 0.0),
-                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    UnitQuaternion::identity(),
                     Vector3::new(100.0, 10.0, 100.0),
                 ),
             );
         }
         {
             let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
+                Scene::create_entity(Arc::downgrade(&scene), Some("Marisa".into()), None, None)
                     .expect("Unable to create entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(
@@ -196,7 +196,7 @@ impl Default for App {
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(0.7, 0.195, 1.0),
-                    Quaternion::new(1.0, 0.0, 0.0, 0.0),
+                    UnitQuaternion::identity(),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
@@ -250,7 +250,7 @@ impl App {
             if let Some(transform) = root_entity.get_component::<Transform>() {
                 mat = Matrix4::new_translation(&transform.position)
                     * Matrix4::new_nonuniform_scaling(&transform.scale)
-                    * UnitQuaternion::from_quaternion(transform.rotation).to_homogeneous();
+                    * transform.rotation.to_homogeneous();
             }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
@@ -286,7 +286,7 @@ impl App {
                 let scale = transform.scale;
                 let model_mat = Matrix4::new_translation(&position)
                     * Matrix4::new_nonuniform_scaling(&scale)
-                    * UnitQuaternion::from_quaternion(rotation).to_homogeneous();
+                    * rotation.to_homogeneous();
                 mat = parent_mat * model_mat;
                 if let Some(_scene_camera_component) = entity.get_component::<SceneCamera>() {
                     renderer.set_camera(position.into(), rotation);

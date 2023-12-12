@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 use std::sync::{Mutex, Weak};
 
-use dream_math::{Matrix4, Quaternion, Vector3};
+use dream_math::{Matrix4, Quaternion, UnitQuaternion, Vector3};
 use dream_resource::resource_handle::ResourceHandle;
 use dream_resource::resource_manager::ResourceManager;
 
@@ -15,27 +15,46 @@ pub struct SceneCamera {}
 #[derive(shipyard::Component, Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vector3<f32>,
-    pub rotation: Quaternion<f32>,
+    pub rotation: UnitQuaternion<f32>,
     pub scale: Vector3<f32>,
+    // dummy field for UI to keep track of euler angles
+    euler_angles: (f32, f32, f32),
 }
 
 impl Default for Transform {
     fn default() -> Self {
         Self {
             position: Vector3::default(),
-            rotation: Quaternion::identity(),
+            rotation: UnitQuaternion::identity(),
+            euler_angles: UnitQuaternion::identity().euler_angles(),
             scale: Vector3::new(1.0, 1.0, 1.0),
         }
     }
 }
 
 impl Transform {
-    pub fn new(position: Vector3<f32>, rotation: Quaternion<f32>, scale: Vector3<f32>) -> Self {
+    pub fn new(position: Vector3<f32>, rotation: UnitQuaternion<f32>, scale: Vector3<f32>) -> Self {
         Self {
             position,
             rotation,
             scale,
+            euler_angles: rotation.euler_angles(),
         }
+    }
+
+    pub fn get_euler_angles(&self) -> (f32, f32, f32) {
+        (
+            self.euler_angles.0,
+            self.euler_angles.1,
+            self.euler_angles.2,
+        )
+    }
+
+    pub fn set_euler_angles(&mut self, roll: f32, pitch: f32, yaw: f32) {
+        self.euler_angles.0 = roll;
+        self.euler_angles.1 = pitch;
+        self.euler_angles.2 = yaw;
+        self.rotation = UnitQuaternion::from_euler_angles(roll, pitch, yaw);
     }
 }
 

@@ -22,7 +22,7 @@ use wgpu::TextureFormat::Rgba16Float;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use dream_math::{Point3, Quaternion, Vector3};
+use dream_math::{Point3, Quaternion, UnitQuaternion, Vector3};
 
 use crate::bloom_tech::BloomTech;
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
@@ -530,7 +530,7 @@ impl RendererWgpu {
         self.skinning_tech.update_bone(bone_id, mat);
     }
 
-    pub fn set_camera(&mut self, position: Point3<f32>, orientation: Quaternion<f32>) {
+    pub fn set_camera(&mut self, position: Point3<f32>, orientation: UnitQuaternion<f32>) {
         self.camera
             .set_position_and_orientation(&self.queue, position, orientation);
     }

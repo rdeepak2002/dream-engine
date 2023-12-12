@@ -8,3 +8,15 @@ pub type Point3<T> = nalgebra::Point3<T>;
 pub type Point4<T> = nalgebra::Point4<T>;
 pub type Matrix4<T> = nalgebra::Matrix4<T>;
 pub type Rotation3<T> = nalgebra::Rotation3<T>;
+
+pub fn pi() -> f32 {
+    nalgebra::RealField::pi()
+}
+
+pub fn radians(degrees: f32) -> f32 {
+    degrees * pi() / 180.0
+}
+
+pub fn degrees(radians: f32) -> f32 {
+    radians * 180.0 / pi()
+}
