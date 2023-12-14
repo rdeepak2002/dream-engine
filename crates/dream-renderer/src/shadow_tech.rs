@@ -2,7 +2,7 @@ use wgpu::util::DeviceExt;
 use wgpu::TextureFormat::Bgra8Unorm;
 
 use dream_ecs::component::LightType;
-use dream_math::{Matrix4, Point3, Vector3, Vector4};
+use dream_math::{max, min, Matrix4, Point3, Vector3, Vector4};
 
 use crate::camera::{Camera, CameraParams, CameraType};
 use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
@@ -24,30 +24,6 @@ pub struct ShadowTech {
     pub dummy_bind_group: wgpu::BindGroup,
     pub cascade_ends: Vec<f32>,
     pub cascade_settings_buffers: Vec<wgpu::Buffer>,
-}
-
-macro_rules! max {
-    ($x: expr) => ($x);
-    ($x: expr, $($z: expr),+) => {{
-        let y = max!($($z),*);
-        if $x > y {
-            $x
-        } else {
-            y
-        }
-    }}
-}
-
-macro_rules! min {
-    ($x: expr) => ($x);
-    ($x: expr, $($z: expr),+) => {{
-        let y = min!($($z),*);
-        if $x < y {
-            $x
-        } else {
-            y
-        }
-    }}
 }
 
 #[repr(C)]

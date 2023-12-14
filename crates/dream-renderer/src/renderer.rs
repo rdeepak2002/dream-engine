@@ -313,7 +313,7 @@ impl RendererWgpu {
                 self.config.height = new_size.height;
             }
         }
-        log::warn!(
+        log::debug!(
             "New config size {} {}",
             self.config.width,
             self.config.height
