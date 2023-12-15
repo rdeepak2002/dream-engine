@@ -1,7 +1,7 @@
 use std::sync::{Mutex, Weak};
 
 use crossbeam_channel::Sender;
-use egui::{vec2, Sense, Ui};
+use egui::{vec2, Color32, Rounding, Sense, Stroke, Ui};
 
 use dream_ecs::component::Tag;
 use dream_ecs::entity::Entity;
@@ -13,11 +13,16 @@ use crate::editor::{EditorEvent, EditorEventType, Panel};
 pub struct SceneHierarchyPanel {
     sx: Sender<EditorEvent>,
     scene: Weak<Mutex<Scene>>,
+    selected_entity: Option<u64>,
 }
 
 impl SceneHierarchyPanel {
     pub fn new(sx: Sender<EditorEvent>, scene: Weak<Mutex<Scene>>) -> Self {
-        Self { sx, scene }
+        Self {
+            sx,
+            scene,
+            selected_entity: None,
+        }
     }
 }
 
@@ -50,7 +55,7 @@ impl Panel for SceneHierarchyPanel {
 }
 
 impl SceneHierarchyPanel {
-    fn draw_scene_hierarchy_entity(&self, entity_id: u64, ui: &mut Ui) {
+    fn draw_scene_hierarchy_entity(&mut self, entity_id: u64, ui: &mut Ui) {
         let id_str = format!("scene_panel_entity_{entity_id}");
         let mut collapsing_state = egui::collapsing_header::CollapsingState::load_with_default_open(
             ui.ctx(),
@@ -79,24 +84,44 @@ impl SceneHierarchyPanel {
 
             ui.painter().add(egui::Shape::convex_polygon(
                 points,
-                visuals.fg_stroke.color,
-                egui::Stroke::NONE,
+                Color32::WHITE,
+                Stroke::NONE,
             ));
         }
 
         let children = Scene::get_children_for_entity(self.scene.clone(), entity_id);
         let header_res = ui.horizontal(|ui| {
-            let default_indent = ui.spacing().indent;
-            ui.spacing_mut().indent = 4.0;
+            let entity = Entity::from_handle(entity_id, self.scene.clone());
+            let name = entity.get_component::<Tag>().unwrap().name;
+            // draw background
+            let indent_size = ui.spacing().indent;
+            if self.selected_entity.is_some() && self.selected_entity.unwrap() == entity.handle {
+                let text_to_be_drawn = ui.painter().layout_no_wrap(
+                    name.clone(),
+                    Default::default(),
+                    Default::default(),
+                );
+                let mut max_rect = ui.max_rect();
+                max_rect.set_width(max!(
+                    max_rect.width(),
+                    indent_size + text_to_be_drawn.rect.width()
+                ));
+                // max_rect.set_left(ui.style_mut().spacing.item_spacing.x);
+                ui.painter().rect_filled(
+                    max_rect,
+                    Rounding::from(2.0),
+                    Color32::from_rgb(56, 148, 236),
+                );
+            }
+            // show drop down arrow when possible
+            // ui.spacing_mut().indent = 15.0;
             if !children.is_empty() {
                 collapsing_state.show_toggle_button(ui, drop_down_icon);
             } else {
-                let size = vec2(ui.spacing().indent, ui.spacing().icon_width);
+                let size = vec2(indent_size, ui.spacing().icon_width);
                 let (_id, _rect) = ui.allocate_space(size);
             }
-            ui.spacing_mut().indent = default_indent;
-            let entity = Entity::from_handle(entity_id, self.scene.clone());
-            let name = entity.get_component::<Tag>().unwrap().name;
+            // draw label text
             {
                 let available_width = ui.available_width();
                 let label_response = ui.colored_label(egui::Color32::WHITE, name);
@@ -104,6 +129,7 @@ impl SceneHierarchyPanel {
                 label_rect.set_width(max!(label_response.rect.width(), available_width));
                 let response = ui.allocate_rect(label_rect, Sense::click());
                 if response.clicked() {
+                    self.selected_entity = Some(entity_id);
                     self.sx
                         .send(EditorEvent {
                             event_type: EditorEventType::ShowEntityInInspector,

@@ -68,7 +68,8 @@ impl Default for App {
                 Some("Scene Camera".into()),
                 None,
                 Some(Transform::new(
-                    Vector3::new(-1.33, 0.85, 1.228),
+                    Vector3::new(-6.5, 2.2, -4.0),
+                    // Vector3::new(-1.33, 0.85, 1.228),
                     UnitQuaternion::new(Vector3::y() * 4.71),
                     Vector3::new(1.0, 1.0, 1.0),
                     // Vector3::new(0.7, 1.3, 4.4),
