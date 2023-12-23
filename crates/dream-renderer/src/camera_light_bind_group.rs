@@ -1,6 +1,5 @@
 use crate::camera::Camera;
 use crate::lights::Lights;
-use crate::skinning::SkinningTech;
 
 pub struct CameraLightBindGroup {
     pub bind_group_layout: wgpu::BindGroupLayout,
