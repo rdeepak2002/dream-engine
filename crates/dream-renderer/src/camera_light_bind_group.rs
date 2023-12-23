@@ -2,18 +2,13 @@ use crate::camera::Camera;
 use crate::lights::Lights;
 use crate::skinning::SkinningTech;
 
-pub struct CameraBonesLightBindGroup {
+pub struct CameraLightBindGroup {
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub bind_group: wgpu::BindGroup,
 }
 
-impl CameraBonesLightBindGroup {
-    pub fn new(
-        device: &wgpu::Device,
-        camera: &Camera,
-        lights: &Lights,
-        skinning_tech: &SkinningTech,
-    ) -> Self {
+impl CameraLightBindGroup {
+    pub fn new(device: &wgpu::Device, camera: &Camera, lights: &Lights) -> Self {
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
@@ -26,19 +21,19 @@ impl CameraBonesLightBindGroup {
                     },
                     count: None,
                 },
+                // wgpu::BindGroupLayoutEntry {
+                //     binding: 1,
+                //     visibility: wgpu::ShaderStages::all(),
+                //     ty: wgpu::BindingType::Buffer {
+                //         ty: wgpu::BufferBindingType::Uniform,
+                //         has_dynamic_offset: false,
+                //         min_binding_size: None,
+                //     },
+                //     count: None,
+                // },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::all(),
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -56,12 +51,12 @@ impl CameraBonesLightBindGroup {
                     binding: 0,
                     resource: camera.camera_buffer.as_entire_binding(),
                 },
+                // wgpu::BindGroupEntry {
+                //     binding: 1,
+                //     resource: skinning_tech.skinning_buffer.as_entire_binding(),
+                // },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: skinning_tech.skinning_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
                     resource: lights.lights_buffer.as_entire_binding(),
                 },
             ],

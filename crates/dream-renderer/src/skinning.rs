@@ -26,7 +26,11 @@ impl SkinningTech {
 
 impl SkinningTech {
     pub fn update_bone(&mut self, idx: u32, mat: Matrix4<f32>) {
-        self.skinning_uniform.bone_transforms[idx as usize] = mat.into();
+        if (idx as usize) < self.skinning_uniform.bone_transforms.len() {
+            self.skinning_uniform.bone_transforms[idx as usize] = mat.into();
+        } else {
+            log::warn!("Skipping bone since its index is out of bounds");
+        }
     }
 
     pub fn update_all_bones_buffer(&mut self, queue: &wgpu::Queue) {

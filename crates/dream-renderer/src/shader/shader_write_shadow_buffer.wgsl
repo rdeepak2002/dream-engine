@@ -6,15 +6,18 @@
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(0) @binding(1)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
+//@group(0) @binding(1)
+//var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
-@group(0) @binding(2)
+@group(0) @binding(1)
 var<uniform> lightsBuffer: LightsUniform;
 
 // shadow camera
 @group(1) @binding(0)
 var<uniform> light_as_camera: CameraUniform;
+
+@group(3) @binding(0)
+var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,

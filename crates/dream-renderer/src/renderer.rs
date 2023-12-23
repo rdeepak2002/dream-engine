@@ -25,7 +25,7 @@ use winit::dpi::PhysicalSize;
 use dream_math::{Point3, UnitQuaternion, Vector3};
 
 use crate::bloom_tech::BloomTech;
-use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
+use crate::camera_light_bind_group::CameraLightBindGroup;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::hdr_tech::HdrTech;
@@ -37,6 +37,7 @@ use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
+use crate::skinning_bind_group::SkinningBindGroup;
 use crate::{camera, texture};
 
 #[cfg(not(feature = "wgpu/webgl"))]
@@ -66,9 +67,10 @@ pub struct RendererWgpu {
     skinning_tech: SkinningTech,
     lights: Lights,
     pub shadow_tech: ShadowTech,
-    camera_bones_light_bind_group: CameraBonesLightBindGroup,
+    camera_light_bind_group: CameraLightBindGroup,
     pub bloom_tech: BloomTech,
     pub hdr_tech: HdrTech,
+    pub skinning_bind_group: SkinningBindGroup,
 }
 
 impl RendererWgpu {
@@ -226,9 +228,11 @@ impl RendererWgpu {
         // skinning tech
         let skinning_tech = SkinningTech::new(&device);
 
-        // bind group for camera, bones, and lights
-        let camera_bones_light_bind_group =
-            CameraBonesLightBindGroup::new(&device, &camera, &lights, &skinning_tech);
+        // bind group for camera and lights
+        let camera_bones_light_bind_group = CameraLightBindGroup::new(&device, &camera, &lights);
+
+        // bind group for skinning
+        let skinning_bind_group = SkinningBindGroup::new(&device, &skinning_tech);
 
         // bind groups and layouts for physically based rendering textures
         let pbr_material_tech = PbrMaterialTech::new(&device);
@@ -239,6 +243,7 @@ impl RendererWgpu {
             &camera_bones_light_bind_group,
             &camera,
             &pbr_material_tech,
+            &skinning_bind_group,
         );
 
         // algorithms for deferred rendering
@@ -251,6 +256,7 @@ impl RendererWgpu {
             &pbr_material_tech,
             &shadow_tech,
             &camera_bones_light_bind_group,
+            &skinning_bind_group,
         );
 
         // algorithms for forward rendering
@@ -260,6 +266,7 @@ impl RendererWgpu {
             &pbr_material_tech,
             &camera_bones_light_bind_group,
             &shadow_tech,
+            &skinning_bind_group,
         );
 
         // algorithms for computing bloom mask and applying it onto frame texture
@@ -291,10 +298,11 @@ impl RendererWgpu {
             lights,
             skinning_tech,
             shadow_tech,
-            camera_bones_light_bind_group,
+            camera_light_bind_group: camera_bones_light_bind_group,
             bloom_tech,
             hdr_tech,
             surface_texture_format,
+            skinning_bind_group,
         }
     }
 
@@ -389,8 +397,9 @@ impl RendererWgpu {
             &mut encoder,
             &self.lights,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             &self.camera,
+            &self.skinning_bind_group,
         );
 
         // render to gbuffers
@@ -398,9 +407,9 @@ impl RendererWgpu {
             &mut encoder,
             &self.depth_texture,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             |material: &Material| material.factor_alpha >= 1.0,
-            // |material: &Material| false,
+            &self.skinning_bind_group,
         );
 
         // combine gbuffers into one final texture result
@@ -410,7 +419,7 @@ impl RendererWgpu {
             &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.shadow_tech,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
         );
 
         // forward render translucent objects
@@ -419,10 +428,10 @@ impl RendererWgpu {
             &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             &self.shadow_tech,
             |material: &Material| material.factor_alpha < 1.0,
-            // |material: &Material| true,
+            &self.skinning_bind_group,
         );
 
         // compute bloom mask

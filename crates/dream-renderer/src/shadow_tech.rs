@@ -5,13 +5,14 @@ use dream_ecs::component::LightType;
 use dream_math::{max, min, Matrix4, Point3, Vector3, Vector4};
 
 use crate::camera::{Camera, CameraParams, CameraType};
-use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
+use crate::camera_light_bind_group::CameraLightBindGroup;
 use crate::instance::InstanceRaw;
 use crate::lights::Lights;
 use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
+use crate::skinning_bind_group::SkinningBindGroup;
 use crate::texture::Texture;
 
 pub struct ShadowTech {
@@ -40,9 +41,10 @@ pub struct ShadowCascadeSettingsUniform {
 impl ShadowTech {
     pub fn new(
         device: &wgpu::Device,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
         camera: &Camera,
         pbr_material_tech: &PbrMaterialTech,
+        skinning_bind_group: &SkinningBindGroup,
     ) -> Self {
         let shader_write_shadow_buffer = Shader::new(
             device,
@@ -190,6 +192,7 @@ impl ShadowTech {
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &camera.camera_bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -250,7 +253,7 @@ impl ShadowTech {
                 // shadow cascade 0
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
@@ -260,13 +263,13 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -276,7 +279,7 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 3,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -287,7 +290,7 @@ impl ShadowTech {
                 // shadow cascade 1
                 wgpu::BindGroupLayoutEntry {
                     binding: 4,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
@@ -297,13 +300,13 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 5,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 6,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -313,7 +316,7 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 7,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -324,7 +327,7 @@ impl ShadowTech {
                 // shadow cascade 2
                 wgpu::BindGroupLayoutEntry {
                     binding: 8,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
@@ -334,13 +337,13 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 9,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 10,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -350,7 +353,7 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 11,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -361,7 +364,7 @@ impl ShadowTech {
                 // shadow cascade 3
                 wgpu::BindGroupLayoutEntry {
                     binding: 12,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         multisampled: false,
                         view_dimension: wgpu::TextureViewDimension::D2,
@@ -371,13 +374,13 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 13,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison), // wgpu::SamplerBindingType::Comparison
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 14,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -387,7 +390,7 @@ impl ShadowTech {
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 15,
-                    visibility: wgpu::ShaderStages::all(),
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -569,8 +572,9 @@ impl ShadowTech {
         encoder: &mut wgpu::CommandEncoder,
         lights: &Lights,
         render_storage: &RenderStorage,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
         camera: &Camera,
+        skinning_bind_group: &SkinningBindGroup,
     ) {
         for light in &lights.renderer_lights {
             if light.cast_shadow && light.light_type == LightType::DIRECTIONAL as u32 {
@@ -778,6 +782,8 @@ impl ShadowTech {
                 &shadow_camera.camera_bind_group,
                 &[],
             );
+
+            render_pass_write_shadow_buffer.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in render_storage.render_map.iter() {
