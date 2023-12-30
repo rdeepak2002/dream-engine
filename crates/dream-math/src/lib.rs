@@ -13,6 +13,10 @@ pub fn pi() -> f32 {
     nalgebra::RealField::pi()
 }
 
+pub fn frac_2_pi() -> f32 {
+    nalgebra::RealField::frac_2_pi()
+}
+
 pub fn radians(degrees: f32) -> f32 {
     degrees * pi() / 180.0
 }

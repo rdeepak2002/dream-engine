@@ -23,7 +23,7 @@ use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
 use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{pi, Matrix4, UnitQuaternion, Vector2, Vector3};
+use dream_math::{frac_2_pi, pi, Matrix4, UnitQuaternion, Vector2, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -183,25 +183,46 @@ impl Default for App {
         }
         {
             let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Marisa".into()), None, None)
+                Scene::create_entity(Arc::downgrade(&scene), Some("Knight".into()), None, None)
                     .expect("Unable to create entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "8947d8aa-23a1-4fde-88f0-72f9a9250f3c".into(), // marisa broken: 8947d8aa-23a1-4fde-88f0-72f9a9250f3c marisa sketchfab: cebb984f-f669-435b-82fa-cedad7403e54 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+                "f358ffb3-b766-4839-a93f-30b81ff9c107".into(), // marisa broken: 8947d8aa-23a1-4fde-88f0-72f9a9250f3c marisa sketchfab: cebb984f-f669-435b-82fa-cedad7403e54 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
                 true,
                 Default::default(),
             );
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0.7, 0.195, 1.0),
-                    UnitQuaternion::identity(),
+                    Vector3::new(0.7, 0.38, 1.0),
+                    UnitQuaternion::from_euler_angles(1.8 * -frac_2_pi(), 0.0, 0.0),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
         }
+        // {
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Marisa".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "8947d8aa-23a1-4fde-88f0-72f9a9250f3c".into(), // marisa broken: 8947d8aa-23a1-4fde-88f0-72f9a9250f3c marisa sketchfab: cebb984f-f669-435b-82fa-cedad7403e54 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(0.7, 0.195, 1.0),
+        //             UnitQuaternion::identity(),
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //         ),
+        //     );
+        // }
 
         // init component systems
         let component_systems = vec![
