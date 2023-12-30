@@ -828,7 +828,10 @@ impl ShadowTech {
         }
 
         // update bind group
-        if self.depth_textures.len() >= 4 && self.shadow_cameras.len() >= 4 {
+        if self.depth_textures.len() >= 4
+            && self.shadow_cameras.len() >= 4
+            && self.bind_group.is_none()
+        {
             self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: &self.bind_group_layout,
                 entries: &[
