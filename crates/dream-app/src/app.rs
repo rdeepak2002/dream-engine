@@ -183,7 +183,7 @@ impl Default for App {
         }
         {
             let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Knight".into()), None, None)
+                Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
                     .expect("Unable to create entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(

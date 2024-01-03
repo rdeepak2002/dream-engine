@@ -6,7 +6,6 @@ use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
 use crate::shadow_tech::ShadowTech;
-use crate::skinning_bind_group::SkinningBindGroup;
 use crate::texture;
 use crate::texture::Texture;
 
@@ -28,7 +27,6 @@ impl DeferredRenderingTech {
         pbr_material_tech: &PbrMaterialTech,
         shadow_tech: &ShadowTech,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
-        skinning_bind_group: &SkinningBindGroup,
     ) -> Self {
         let shader_write_g_buffers = Shader::new(
             device,
@@ -181,7 +179,7 @@ impl DeferredRenderingTech {
                 bind_group_layouts: &[
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
-                    &skinning_bind_group.bind_group_layout,
+                    // &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -323,7 +321,6 @@ impl DeferredRenderingTech {
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         filter_func: fn(&Material) -> bool,
-        skinning_bind_group: &SkinningBindGroup,
     ) {
         // render to gbuffers
         // define render pass to write to GBuffers
@@ -407,7 +404,7 @@ impl DeferredRenderingTech {
         );
 
         // camera and lights bind group
-        render_pass_write_g_buffers.set_bind_group(2, &skinning_bind_group.bind_group, &[]);
+        // render_pass_write_g_buffers.set_bind_group(2, &skinning_bind_group.bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {

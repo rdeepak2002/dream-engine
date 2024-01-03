@@ -36,5 +36,4 @@ pub mod renderer;
 pub mod shader;
 pub mod shadow_tech;
 pub mod skinning;
-mod skinning_bind_group;
 pub mod texture;

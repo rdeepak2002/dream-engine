@@ -14,8 +14,8 @@ var<uniform> camera: CameraUniform;
 @group(0) @binding(1)
 var<uniform> lightsBuffer: LightsUniform;
 
-@group(3) @binding(0)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
+//@group(3) @binding(0)
+//var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
@@ -44,24 +44,8 @@ fn vs_main(
     var totalPosition = vec4<f32>(0.0);
     var totalNormal = vec3<f32>(0.0);
 
-    var boneIds = model.bone_ids;
-    var weights = model.weights;
-    var finalBonesMatrices = boneTransformsUniform.bone_transforms;
-
-    for(var i = 0 ; i < 4 ; i++) {
-        if (weights[0] + weights[1] + weights[2] + weights[3] <= 0.000001f) {
-            // mesh is not skinned
-            totalPosition = pos;
-            totalNormal = nrm;
-            break;
-        }
-
-        var localPosition: vec4<f32> = finalBonesMatrices[boneIds[i]] * vec4(model.position, 1.0f);
-        totalPosition += localPosition * weights[i];
-
-        var localNormal: vec3<f32> = (finalBonesMatrices[boneIds[i]] * vec4(model.normal, 0.0f)).xyz * weights[i];
-        totalNormal += localNormal;
-    }
+    totalPosition = pos;
+    totalNormal = nrm;
 
     totalNormal = normalize(totalNormal);
 

@@ -37,7 +37,6 @@ use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shadow_tech::ShadowTech;
 use crate::skinning::SkinningTech;
-use crate::skinning_bind_group::SkinningBindGroup;
 use crate::{camera, texture};
 
 #[cfg(not(feature = "wgpu/webgl"))]
@@ -70,7 +69,6 @@ pub struct RendererWgpu {
     camera_light_bind_group: CameraLightBindGroup,
     pub bloom_tech: BloomTech,
     pub hdr_tech: HdrTech,
-    pub skinning_bind_group: SkinningBindGroup,
 }
 
 impl RendererWgpu {
@@ -231,9 +229,6 @@ impl RendererWgpu {
         // bind group for camera and lights
         let camera_bones_light_bind_group = CameraLightBindGroup::new(&device, &camera, &lights);
 
-        // bind group for skinning
-        let skinning_bind_group = SkinningBindGroup::new(&device, &skinning_tech);
-
         // bind groups and layouts for physically based rendering textures
         let pbr_material_tech = PbrMaterialTech::new(&device);
 
@@ -243,7 +238,6 @@ impl RendererWgpu {
             &camera_bones_light_bind_group,
             &camera,
             &pbr_material_tech,
-            &skinning_bind_group,
         );
 
         // algorithms for deferred rendering
@@ -256,7 +250,6 @@ impl RendererWgpu {
             &pbr_material_tech,
             &shadow_tech,
             &camera_bones_light_bind_group,
-            &skinning_bind_group,
         );
 
         // algorithms for forward rendering
@@ -266,7 +259,6 @@ impl RendererWgpu {
             &pbr_material_tech,
             &camera_bones_light_bind_group,
             &shadow_tech,
-            &skinning_bind_group,
         );
 
         // algorithms for computing bloom mask and applying it onto frame texture
@@ -302,7 +294,6 @@ impl RendererWgpu {
             bloom_tech,
             hdr_tech,
             surface_texture_format,
-            skinning_bind_group,
         }
     }
 
@@ -390,6 +381,14 @@ impl RendererWgpu {
         // update bones buffer
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
+        // use compute shader to calculate new vertices after animation transformations
+        &self.skinning_tech.compute_shader_update_vertices(
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &mut self.render_storage,
+        );
+
         // figure out shadows
         self.shadow_tech.render_shadow_depth_buffers(
             &self.device,
@@ -399,7 +398,6 @@ impl RendererWgpu {
             &self.render_storage,
             &self.camera_light_bind_group,
             &self.camera,
-            &self.skinning_bind_group,
         );
 
         // render to gbuffers
@@ -409,7 +407,6 @@ impl RendererWgpu {
             &self.render_storage,
             &self.camera_light_bind_group,
             |material: &Material| material.factor_alpha >= 1.0,
-            &self.skinning_bind_group,
         );
 
         // combine gbuffers into one final texture result
@@ -431,7 +428,6 @@ impl RendererWgpu {
             &self.camera_light_bind_group,
             &self.shadow_tech,
             |material: &Material| material.factor_alpha < 1.0,
-            &self.skinning_bind_group,
         );
 
         // compute bloom mask

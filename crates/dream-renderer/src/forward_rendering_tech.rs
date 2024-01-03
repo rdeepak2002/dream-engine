@@ -6,7 +6,6 @@ use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
 use crate::shadow_tech::ShadowTech;
-use crate::skinning_bind_group::SkinningBindGroup;
 use crate::texture;
 
 pub struct ForwardRenderingTech {
@@ -20,7 +19,6 @@ impl ForwardRenderingTech {
         pbr_material_tech: &PbrMaterialTech,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
-        skinning_bind_group: &SkinningBindGroup,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
@@ -35,7 +33,7 @@ impl ForwardRenderingTech {
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
                     &shadow_tech.bind_group_layout,
-                    &skinning_bind_group.bind_group_layout,
+                    // &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -108,7 +106,6 @@ impl ForwardRenderingTech {
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
         filter_func: fn(&Material) -> bool,
-        skinning_bind_group: &SkinningBindGroup,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -152,7 +149,7 @@ impl ForwardRenderingTech {
         );
 
         // skinning bind group
-        render_pass_forward_rendering.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
+        // render_pass_forward_rendering.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {

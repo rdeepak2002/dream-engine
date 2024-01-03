@@ -8,7 +8,7 @@ use dream_fs::fs::read_binary;
 use dream_math::Vector3;
 
 use crate::material::Material;
-use crate::model::{Model, ModelVertex};
+use crate::model::{Model, ModelVertex, PrimitiveInfo};
 
 pub fn read_gltf<'a>(
     path: &str,
@@ -136,7 +136,7 @@ fn get_dream_primitives_from_gltf_mesh(
 ) -> Vec<crate::model::Primitive> {
     let mut primitives_result = Vec::new();
     let primitives = mesh.primitives();
-    log::debug!("Number of primitives is {}", primitives.len());
+    // log::debug!("Number of primitives is {}", primitives.len());
     primitives.for_each(|primitive| {
         let mut mesh_vertices_and_indices = MeshVerticesAndIndicesContainer {
             vertices: Vec::new(),
@@ -157,6 +157,10 @@ fn get_dream_primitives_from_gltf_mesh(
                         bone_weights: [0., 0., 0., 0.],
                     })
             });
+            log::debug!(
+                "Number of vertices: {:?}",
+                mesh_vertices_and_indices.vertices.len()
+            );
         }
 
         let mut manually_compute_tangents = false;
@@ -195,7 +199,9 @@ fn get_dream_primitives_from_gltf_mesh(
 
         // joints and weights for vertex skinning / skeletal animation
         // TODO: I'm passing wrong thing as index / set field of read_
+        // let mut is_skinned = false;
         if let Some(joints) = reader.read_joints(0) {
+            // is_skinned = true;
             let mut joint_index = 0;
             joints.into_u16().for_each(|joint| {
                 mesh_vertices_and_indices.vertices[joint_index].bone_ids = [
@@ -274,21 +280,103 @@ fn get_dream_primitives_from_gltf_mesh(
         }
 
         let mesh_name = mesh.name().expect("No mesh name found");
+
+        // TODO: create a new() method for Primitive struct to do all this logic
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(&format!("{mesh_name} Vertex Buffer")),
             contents: bytemuck::cast_slice(&mesh_vertices_and_indices.vertices),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::VERTEX
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
         });
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some(&format!("{mesh_name} Index Buffer")),
             contents: bytemuck::cast_slice(&mesh_vertices_and_indices.indices),
             usage: wgpu::BufferUsages::INDEX,
         });
+        let primitive_info_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Primitive Info"),
+            contents: bytemuck::cast_slice(&[PrimitiveInfo {
+                num_vertices: mesh_vertices_and_indices.vertices.len() as u32,
+            }]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let input: &[u8] = bytemuck::cast_slice(&mesh_vertices_and_indices.vertices);
+        let primitive_info_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+                label: Some("primitive_info_bind_group_layout"),
+            });
+        let primitive_info_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &primitive_info_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: primitive_info_buffer.as_entire_binding(),
+            }],
+            label: Some("primitive_info_bind_group"),
+        });
+        let vertices_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    count: None,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    },
+                }],
+            });
+        let vertex_buffer_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("vertices buffer bind group"),
+            layout: &vertices_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: vertex_buffer.as_entire_binding(),
+            }],
+        });
+        let mut skinned_vertex_buffer = Some(device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertices Input"),
+                contents: bytemuck::cast_slice(input.clone()),
+                usage: wgpu::BufferUsages::STORAGE
+                    | wgpu::BufferUsages::VERTEX
+                    | wgpu::BufferUsages::COPY_DST
+                    | wgpu::BufferUsages::COPY_SRC,
+            },
+        ));
+        let skinned_vertices_buffer_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("skinning vertices buffer bind group"),
+                layout: &vertices_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: skinned_vertex_buffer.as_mut().unwrap().as_entire_binding(),
+                }],
+            });
         primitives_result.push(crate::model::Primitive {
             vertex_buffer,
+            vertex_buffer_bind_group,
+            skinned_vertex_buffer,
+            skinned_vertices_buffer_bind_group,
+            primitive_info_buffer,
+            primitive_info_bind_group,
             index_buffer,
             num_elements: mesh_vertices_and_indices.indices.len() as u32,
             material: primitive.material().index().unwrap_or(0),
+            buffer_length: input.len() as u32,
         });
     });
     primitives_result

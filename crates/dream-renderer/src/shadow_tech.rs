@@ -12,7 +12,6 @@ use crate::model::{DrawModel, ModelVertex, Vertex};
 use crate::pbr_material_tech::PbrMaterialTech;
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use crate::skinning_bind_group::SkinningBindGroup;
 use crate::texture::Texture;
 
 pub struct ShadowTech {
@@ -44,7 +43,6 @@ impl ShadowTech {
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         camera: &Camera,
         pbr_material_tech: &PbrMaterialTech,
-        skinning_bind_group: &SkinningBindGroup,
     ) -> Self {
         let shader_write_shadow_buffer = Shader::new(
             device,
@@ -192,7 +190,7 @@ impl ShadowTech {
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &camera.camera_bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
-                    &skinning_bind_group.bind_group_layout,
+                    // &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -574,7 +572,6 @@ impl ShadowTech {
         render_storage: &RenderStorage,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         camera: &Camera,
-        skinning_bind_group: &SkinningBindGroup,
     ) {
         for light in &lights.renderer_lights {
             if light.cast_shadow && light.light_type == LightType::DIRECTIONAL as u32 {
@@ -744,7 +741,7 @@ impl ShadowTech {
             // define render pass
             let mut render_pass_write_shadow_buffer =
                 encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    label: Some("Render Pass Forward Rendering"),
+                    label: Some("Render Pass Write Shadow Buffer"),
                     // color_attachments: &[],
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &self.frame_textures[idx].view,
@@ -783,7 +780,7 @@ impl ShadowTech {
                 &[],
             );
 
-            render_pass_write_shadow_buffer.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
+            // render_pass_write_shadow_buffer.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
 
             // iterate through all meshes that should be instanced drawn
             for (render_map_key, transforms) in render_storage.render_map.iter() {

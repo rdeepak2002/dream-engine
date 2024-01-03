@@ -16,8 +16,8 @@ var<uniform> lightsBuffer: LightsUniform;
 @group(1) @binding(0)
 var<uniform> light_as_camera: CameraUniform;
 
-@group(3) @binding(0)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
+//@group(3) @binding(0)
+//var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -40,20 +40,7 @@ fn vs_main(
 
     var totalPosition = vec4<f32>(0.0);
 
-    var boneIds = model.bone_ids;
-    var weights = model.weights;
-    var finalBonesMatrices = boneTransformsUniform.bone_transforms;
-
-    for(var i = 0 ; i < 4 ; i++) {
-        if (weights[0] + weights[1] + weights[2] + weights[3] <= 0.000001f) {
-            // mesh is not skinned
-            totalPosition = pos;
-            break;
-        }
-
-        var localPosition: vec4<f32> = finalBonesMatrices[boneIds[i]] * vec4(model.position, 1.0f);
-        totalPosition += localPosition * weights[i];
-    }
+    totalPosition = pos;
 
     var out: VertexOutput;
     out.position = light_as_camera.view_proj * model_matrix * totalPosition;
