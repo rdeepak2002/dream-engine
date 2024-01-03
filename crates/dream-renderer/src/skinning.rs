@@ -1,9 +1,9 @@
 use wgpu::util::DeviceExt;
 
-use crate::model::ModelVertex;
+use dream_math::Matrix4;
+
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
-use dream_math::Matrix4;
 
 pub struct SkinningTech {
     pub(crate) skinning_uniform: SkinningUniform,
