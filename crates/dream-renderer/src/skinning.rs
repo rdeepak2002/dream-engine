@@ -19,11 +19,35 @@ impl SkinningTech {
     pub fn new(device: &wgpu::Device) -> Self {
         let skinning_uniform = SkinningUniform::default();
 
-        let skinning_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Skinning Buffer"),
-            contents: bytemuck::cast_slice(&[skinning_uniform]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        // let skinning_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Skinning Buffer"),
+        //     contents: bytemuck::cast_slice(&[skinning_uniform]),
+        //     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        // });
+
+        let mut skinning_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Skinning buffer"),
+            contents: bytemuck::cast_slice(&[skinning_uniform.bone_transforms]),
+            usage: wgpu::BufferUsages::STORAGE
+                | wgpu::BufferUsages::VERTEX
+                | wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::COPY_SRC,
         });
+
+        // let skinning_bind_group_layout =
+        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        //         entries: &[wgpu::BindGroupLayoutEntry {
+        //             binding: 0,
+        //             visibility: wgpu::ShaderStages::COMPUTE,
+        //             ty: wgpu::BindingType::Buffer {
+        //                 ty: wgpu::BufferBindingType::Uniform,
+        //                 has_dynamic_offset: false,
+        //                 min_binding_size: None,
+        //             },
+        //             count: None,
+        //         }],
+        //         label: Some("skinning_bind_group_layout"),
+        //     });
 
         let skinning_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -31,9 +55,9 @@ impl SkinningTech {
                     binding: 0,
                     visibility: wgpu::ShaderStages::COMPUTE,
                     ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
+                        ty: wgpu::BufferBindingType::Storage { read_only: false },
                     },
                     count: None,
                 }],
@@ -83,8 +107,8 @@ impl SkinningTech {
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("skinning compute shader pipeline layout"),
                 bind_group_layouts: &[
-                    &skinning_bind_group_layout,
                     &primitive_info_bind_group_layout,
+                    &skinning_bind_group_layout,
                     &vertices_bind_group_layout,
                     &vertices_bind_group_layout,
                 ],
@@ -138,8 +162,6 @@ impl SkinningTech {
 
     pub fn compute_shader_update_vertices(
         &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         render_storage: &mut RenderStorage,
     ) {
@@ -175,8 +197,8 @@ impl SkinningTech {
                     let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                         label: Some("compute skinning pass"),
                     });
-                    cpass.set_bind_group(0, &self.skinning_bind_group, &[]);
-                    cpass.set_bind_group(1, &primitive.primitive_info_bind_group, &[]);
+                    cpass.set_bind_group(0, &primitive.primitive_info_bind_group, &[]);
+                    cpass.set_bind_group(1, &self.skinning_bind_group, &[]);
                     cpass.set_bind_group(2, &primitive.vertex_buffer_bind_group, &[]);
                     cpass.set_bind_group(3, &primitive.skinned_vertices_buffer_bind_group, &[]);
                     cpass.set_pipeline(&self.skinning_compute_pipeline);

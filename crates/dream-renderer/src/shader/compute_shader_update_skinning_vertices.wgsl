@@ -7,9 +7,9 @@ struct PrimitiveInfo {
 
 // Vertex shader
 @group(0) @binding(0)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
-@group(1) @binding(0)
 var<uniform> primitiveInfo: PrimitiveInfo;
+@group(1) @binding(0)
+var<storage, read_write> finalBonesMatrices: array<mat4x4<f32>>;
 @group(2) @binding(0)
 var<storage, read_write> vertices: array<f32>;
 @group(3) @binding(0)
@@ -101,7 +101,6 @@ fn cs_main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
 
     var boneIds = vec4<u32>(boneIdX, boneIdY, boneIdZ, boneIdW);
     var weights = vec4<f32>(boneWeightX, boneWeightY, boneWeightZ, boneWeightW);
-    var finalBonesMatrices = boneTransformsUniform.bone_transforms;
 
     for(var i = 0 ; i < 4 ; i++) {
         if (weights[0] + weights[1] + weights[2] + weights[3] <= 0.000001f) {

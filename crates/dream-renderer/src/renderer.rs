@@ -382,12 +382,8 @@ impl RendererWgpu {
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
         // use compute shader to calculate new vertices after animation transformations
-        &self.skinning_tech.compute_shader_update_vertices(
-            &self.device,
-            &self.queue,
-            &mut encoder,
-            &mut self.render_storage,
-        );
+        self.skinning_tech
+            .compute_shader_update_vertices(&mut encoder, &mut self.render_storage);
 
         // figure out shadows
         self.shadow_tech.render_shadow_depth_buffers(

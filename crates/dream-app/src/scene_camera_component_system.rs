@@ -26,7 +26,7 @@ impl System for SceneCameraComponentSystem {
             for entity_id in scene_camera_entities {
                 let entity = Entity::from_handle(entity_id, scene.clone());
                 if let Some(mut transform) = entity.get_component::<Transform>() {
-                    let mut rotation = transform.rotation;
+                    let rotation = transform.rotation;
 
                     let forward_vector =
                         rotation.transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
