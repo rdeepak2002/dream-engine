@@ -6,48 +6,28 @@ use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
 
 pub struct SkinningTech {
-    pub(crate) skinning_uniform: SkinningUniform,
+    pub(crate) joints: [[[f32; 4]; 4]; 256],
     pub(crate) skinning_buffer: wgpu::Buffer,
     pub skinning_bind_group: wgpu::BindGroup,
     pub skinning_compute_pipeline_layout: wgpu::PipelineLayout,
     pub vertices_bind_group_layout: wgpu::BindGroupLayout,
     pub primitive_info_bind_group_layout: wgpu::BindGroupLayout,
     pub skinning_compute_pipeline: wgpu::ComputePipeline,
+    pub skinned_vertices_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl SkinningTech {
     pub fn new(device: &wgpu::Device) -> Self {
-        let skinning_uniform = SkinningUniform::default();
-
-        // let skinning_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-        //     label: Some("Skinning Buffer"),
-        //     contents: bytemuck::cast_slice(&[skinning_uniform]),
-        //     usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        // });
+        let joints = [Matrix4::identity().into(); 256];
 
         let mut skinning_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Skinning buffer"),
-            contents: bytemuck::cast_slice(&[skinning_uniform.bone_transforms]),
+            contents: bytemuck::cast_slice(&[joints]),
             usage: wgpu::BufferUsages::STORAGE
                 | wgpu::BufferUsages::VERTEX
                 | wgpu::BufferUsages::COPY_DST
                 | wgpu::BufferUsages::COPY_SRC,
         });
-
-        // let skinning_bind_group_layout =
-        //     device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        //         entries: &[wgpu::BindGroupLayoutEntry {
-        //             binding: 0,
-        //             visibility: wgpu::ShaderStages::COMPUTE,
-        //             ty: wgpu::BindingType::Buffer {
-        //                 ty: wgpu::BufferBindingType::Uniform,
-        //                 has_dynamic_offset: false,
-        //                 min_binding_size: None,
-        //             },
-        //             count: None,
-        //         }],
-        //         label: Some("skinning_bind_group_layout"),
-        //     });
 
         let skinning_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -57,7 +37,7 @@ impl SkinningTech {
                     ty: wgpu::BindingType::Buffer {
                         has_dynamic_offset: false,
                         min_binding_size: None,
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
                     },
                     count: None,
                 }],
@@ -98,6 +78,21 @@ impl SkinningTech {
                     ty: wgpu::BindingType::Buffer {
                         has_dynamic_offset: false,
                         min_binding_size: None,
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    },
+                }],
+            });
+
+        let skinned_vertices_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    count: None,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
                         ty: wgpu::BufferBindingType::Storage { read_only: false },
                     },
                 }],
@@ -110,7 +105,7 @@ impl SkinningTech {
                     &primitive_info_bind_group_layout,
                     &skinning_bind_group_layout,
                     &vertices_bind_group_layout,
-                    &vertices_bind_group_layout,
+                    &skinned_vertices_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -132,10 +127,11 @@ impl SkinningTech {
             });
 
         Self {
-            skinning_uniform,
+            joints,
             skinning_buffer,
             skinning_bind_group,
             skinning_compute_pipeline_layout,
+            skinned_vertices_bind_group_layout,
             vertices_bind_group_layout,
             primitive_info_bind_group_layout,
             skinning_compute_pipeline,
@@ -145,8 +141,8 @@ impl SkinningTech {
 
 impl SkinningTech {
     pub fn update_bone(&mut self, idx: u32, mat: Matrix4<f32>) {
-        if (idx as usize) < self.skinning_uniform.bone_transforms.len() {
-            self.skinning_uniform.bone_transforms[idx as usize] = mat.into();
+        if (idx as usize) < self.joints.len() {
+            self.joints[idx as usize] = mat.into();
         } else {
             log::warn!("Skipping bone since its index is out of bounds");
         }
@@ -156,7 +152,7 @@ impl SkinningTech {
         queue.write_buffer(
             &self.skinning_buffer,
             0,
-            bytemuck::cast_slice(&[self.skinning_uniform]),
+            bytemuck::cast_slice(&[self.joints]),
         );
     }
 
@@ -209,16 +205,16 @@ impl SkinningTech {
     }
 }
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct SkinningUniform {
-    bone_transforms: [[[f32; 4]; 4]; 256],
-}
-
-impl Default for SkinningUniform {
-    fn default() -> Self {
-        Self {
-            bone_transforms: [Matrix4::identity().into(); 256],
-        }
-    }
-}
+// #[repr(C)]
+// #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+// pub struct SkinningUniform {
+//     bone_transforms: [[[f32; 4]; 4]; 256],
+// }
+//
+// impl Default for SkinningUniform {
+//     fn default() -> Self {
+//         Self {
+//             bone_transforms: [Matrix4::identity().into(); 256],
+//         }
+//     }
+// }

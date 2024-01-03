@@ -335,6 +335,20 @@ fn get_dream_primitives_from_gltf_mesh(
                     ty: wgpu::BindingType::Buffer {
                         has_dynamic_offset: false,
                         min_binding_size: None,
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    },
+                }],
+            });
+        let skinned_vertices_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    count: None,
+                    visibility: wgpu::ShaderStages::COMPUTE,
+                    ty: wgpu::BindingType::Buffer {
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
                         ty: wgpu::BufferBindingType::Storage { read_only: false },
                     },
                 }],
@@ -360,7 +374,7 @@ fn get_dream_primitives_from_gltf_mesh(
         let skinned_vertices_buffer_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("skinning vertices buffer bind group"),
-                layout: &vertices_bind_group_layout,
+                layout: &skinned_vertices_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
                     resource: skinned_vertex_buffer.as_mut().unwrap().as_entire_binding(),

@@ -1,6 +1,5 @@
 //include:camera.wgsl
 //include:model.wgsl
-//include:skinning.wgsl
 //include:pbr.wgsl
 
 @group(0) @binding(0)

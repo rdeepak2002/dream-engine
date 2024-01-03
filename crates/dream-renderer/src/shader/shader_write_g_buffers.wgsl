@@ -1,7 +1,6 @@
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:model.wgsl
-//include:skinning.wgsl
 
 // Vertex shader
 @group(0) @binding(0)

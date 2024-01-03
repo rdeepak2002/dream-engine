@@ -1,5 +1,4 @@
 //include:model.wgsl
-//include:skinning.wgsl
 
 struct PrimitiveInfo {
   num_vertices: u32
@@ -9,9 +8,9 @@ struct PrimitiveInfo {
 @group(0) @binding(0)
 var<uniform> primitiveInfo: PrimitiveInfo;
 @group(1) @binding(0)
-var<storage, read_write> finalBonesMatrices: array<mat4x4<f32>>;
+var<storage, read> finalBonesMatrices: array<mat4x4<f32>>;
 @group(2) @binding(0)
-var<storage, read_write> vertices: array<f32>;
+var<storage, read> vertices: array<f32>;
 @group(3) @binding(0)
 var<storage, read_write> skinned_vertices: array<f32>;
 

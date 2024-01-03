@@ -1,7 +1,6 @@
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:model.wgsl
-//include:skinning.wgsl
 //include:shadow.wgsl
 
 // Vertex shader

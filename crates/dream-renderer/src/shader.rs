@@ -19,13 +19,6 @@ impl Shader {
             source = source.replace("//include:model.wgsl", include_str!("shader/model.wgsl"));
         }
 
-        if source.contains("//include:skinning.wgsl") {
-            source = source.replace(
-                "//include:skinning.wgsl",
-                include_str!("shader/skinning.wgsl"),
-            );
-        }
-
         if source.contains("//include:shadow.wgsl") {
             source = source.replace("//include:shadow.wgsl", include_str!("shader/shadow.wgsl"));
         }
