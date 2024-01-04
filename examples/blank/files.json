@@ -20,7 +20,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/sphere-inverted.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/SimpleSkin.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/sphere.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/cube-inverted.glb.meta",
     "fileUrl": null
   },
   {
@@ -68,6 +80,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/sphere.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/cube.glb",
     "fileUrl": null
   },
@@ -77,6 +93,14 @@
   },
   {
     "filepath": "models/cube.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/sphere-inverted.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/cube-inverted.glb",
     "fileUrl": null
   },
   {

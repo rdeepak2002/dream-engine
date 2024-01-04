@@ -161,6 +161,45 @@ impl Default for App {
             );
         }
         {
+            let cube_entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Glowing Cube".into()),
+                None,
+                None,
+            )
+            .expect("Unable to create glowing cube");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                cube_entity_handle,
+                &resource_manager,
+                "c96dccc5-15f3-441d-b01d-504e52acff36".into(), // sphere: "7f4860c5-b53d-4c2b-86eb-0c03e3986aee", cube: ""c96dccc5-15f3-441d-b01d-504e52acff36""
+                true,
+                Default::default(),
+            );
+            let intensity = 100.0;
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Light::new(
+                    LightType::POINT,
+                    Vector3::new(
+                        intensity * 50.0 / 255.0,
+                        intensity * 50.0 / 255.0,
+                        intensity * 255.0 / 255.0,
+                    ),
+                    1.5,
+                    Vector3::new(-0.2, -0.4, -0.1),
+                    true,
+                ),
+            );
+            Entity::from_handle(cube_entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(15.0, 1.5, 0.0),
+                    UnitQuaternion::identity(),
+                    Vector3::new(0.25, 0.25, 0.25),
+                ),
+            );
+        }
+        {
             let cube_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Floor".into()), None, None)
                     .expect("Unable to create point light entity");

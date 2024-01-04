@@ -68,7 +68,7 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 
     var F0: vec3<f32> = vec3(0.04, 0.04, 0.04);
     F0 = mix(F0, albedo.rgb, vec3(metallic, metallic, metallic));
-    let N = normalize(normal);
+    var N = normalize(normal);
 
     for (var i = 0u; i < 4u; i += 1u) {
         let light = lightsBuffer.lights[i];
@@ -125,6 +125,9 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 
         // add to outgoing radiance Lo
         Lo += (kD * albedo.rgb / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
+            Lo *= shadow_visibility;
+        }
 
         result += Lo;
     }
@@ -133,7 +136,7 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 
     let ambientIntensity = 0.03;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
-    var color = shadow_visibility * result + ambient;
+    var color = result + ambient;
 
     // HDR tonemapping
 //    let exposure: f32 = 4.0f;
