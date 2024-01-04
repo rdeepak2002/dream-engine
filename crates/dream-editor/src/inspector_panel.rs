@@ -6,7 +6,7 @@ use crossbeam_channel::Receiver;
 use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{degrees, radians};
+use dream_math::{degrees, pi, radians};
 
 use crate::editor::{EditorEvent, EditorEventType, Panel};
 
@@ -102,19 +102,19 @@ impl Panel for InspectorPanel {
                                         ui.strong("roll");
                                         ui.add(
                                             egui::DragValue::new(&mut roll)
-                                                .speed(1.0)
+                                                .speed(pi() / 10.0)
                                                 .max_decimals(2),
                                         );
                                         ui.strong("pitch");
                                         ui.add(
                                             egui::DragValue::new(&mut pitch)
-                                                .speed(1.0)
+                                                .speed(pi() / 10.0)
                                                 .max_decimals(2),
                                         );
                                         ui.strong("yaw");
                                         ui.add(
                                             egui::DragValue::new(&mut yaw)
-                                                .speed(1.0)
+                                                .speed(pi() / 10.0)
                                                 .max_decimals(2),
                                         );
                                         roll = radians(roll);

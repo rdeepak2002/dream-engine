@@ -23,7 +23,7 @@ use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
 use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
-use dream_math::{frac_2_pi, pi, Matrix4, UnitQuaternion, Vector2, Vector3};
+use dream_math::{pi, Matrix4, UnitQuaternion, Vector2, Vector3};
 use dream_renderer::instance::Instance;
 use dream_renderer::renderer::RendererWgpu;
 use dream_resource::resource_manager::ResourceManager;
@@ -68,13 +68,9 @@ impl Default for App {
                 Some("Scene Camera".into()),
                 None,
                 Some(Transform::new(
-                    Vector3::new(-6.5, 2.2, -4.0),
-                    // Vector3::new(-1.33, 0.85, 1.228),
-                    UnitQuaternion::new(Vector3::y() * 4.71),
+                    Vector3::new(-1.87, 1.13, -0.5),
+                    UnitQuaternion::new(Vector3::y() * 4.3),
                     Vector3::new(1.0, 1.0, 1.0),
-                    // Vector3::new(0.7, 1.3, 4.4),
-                    // Quaternion::new(0.981, -0.196, 0.0, 0.0),
-                    // Vector3::new(1.0, 1.0, 1.0),
                 )),
             )
             .expect("Unable to create scene camera entity");
@@ -221,9 +217,13 @@ impl Default for App {
             );
         }
         {
-            let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Guts".into()), None, None)
-                    .expect("Unable to create entity");
+            let entity_handle = Scene::create_entity(
+                Arc::downgrade(&scene),
+                Some("Dark Knight".into()),
+                None,
+                None,
+            )
+            .expect("Unable to create entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
@@ -235,8 +235,8 @@ impl Default for App {
             );
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
-                    Vector3::new(0.7, 0.38, 1.0),
-                    UnitQuaternion::from_euler_angles(1.8 * -frac_2_pi(), 0.0, 0.0),
+                    Vector3::new(0.7, 0.21, 1.0),
+                    UnitQuaternion::from_euler_angles(-1.7, -2.2, 0.1),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
@@ -310,8 +310,8 @@ impl App {
             let root_entity = Entity::from_handle(root_entity_id, scene_weak_ref.clone());
             if let Some(transform) = root_entity.get_component::<Transform>() {
                 mat = Matrix4::new_translation(&transform.position)
-                    * Matrix4::new_nonuniform_scaling(&transform.scale)
-                    * transform.rotation.to_homogeneous();
+                    * transform.rotation.to_homogeneous()
+                    * Matrix4::new_nonuniform_scaling(&transform.scale);
             }
             let children_ids =
                 Scene::get_children_for_entity(scene_weak_ref.clone(), root_entity_id);
@@ -346,8 +346,8 @@ impl App {
                 let rotation = transform.rotation;
                 let scale = transform.scale;
                 let model_mat = Matrix4::new_translation(&position)
-                    * Matrix4::new_nonuniform_scaling(&scale)
-                    * rotation.to_homogeneous();
+                    * rotation.to_homogeneous()
+                    * Matrix4::new_nonuniform_scaling(&scale);
                 mat = parent_mat * model_mat;
                 if let Some(_scene_camera_component) = entity.get_component::<SceneCamera>() {
                     renderer.set_camera(position.into(), rotation);
