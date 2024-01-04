@@ -229,7 +229,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "f358ffb3-b766-4839-a93f-30b81ff9c107".into(), // marisa broken: 8947d8aa-23a1-4fde-88f0-72f9a9250f3c marisa sketchfab: cebb984f-f669-435b-82fa-cedad7403e54 1k: 7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87 ; 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+                "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(), // 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
                 true,
                 Default::default(),
             );
