@@ -7,8 +7,7 @@ use crate::image::Image;
 pub struct MaterialFactors {
     pub base_color: [f32; 3],
     pub _padding1: f32,
-    pub emissive: [f32; 3],
-    pub _padding2: f32,
+    pub emissive: [f32; 4],
     pub metallic: f32,
     pub roughness: f32,
     pub alpha: f32,
@@ -18,7 +17,7 @@ pub struct MaterialFactors {
 impl MaterialFactors {
     pub fn new(
         base_color: [f32; 4],
-        emissive: [f32; 3],
+        emissive: [f32; 4],
         metallic: f32,
         roughness: f32,
         alpha_cutoff: f32,
@@ -31,7 +30,6 @@ impl MaterialFactors {
             ],
             _padding1: 0.,
             emissive,
-            _padding2: 0.,
             metallic,
             roughness,
             alpha: *(base_color.get(3).unwrap_or(&1.0)),
@@ -60,7 +58,7 @@ pub struct Material {
     // pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
     pub factor_base_color: dream_math::Vector3<f32>,
-    pub factor_emissive: dream_math::Vector3<f32>,
+    pub factor_emissive: dream_math::Vector4<f32>,
     pub factor_metallic: f32,
     pub factor_roughness: f32,
     pub factor_alpha: f32,
@@ -149,9 +147,11 @@ impl Material {
         }
 
         // define the material factors uniform
+        let em_factor = material.emissive_factor();
+        let em_strength = material.emissive_strength().unwrap_or(1.0);
         let material_factors_uniform = MaterialFactors::new(
             pbr_properties.base_color_factor(),
-            material.emissive_factor(),
+            [em_factor[0], em_factor[1], em_factor[2], em_strength],
             pbr_properties.metallic_factor(),
             pbr_properties.roughness_factor(),
             material.alpha_cutoff().unwrap_or(0.0),

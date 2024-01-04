@@ -101,8 +101,9 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     normal = normalize(TBN * normal);
     // emissive
     var emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
-    let emissive_factor = vec4(material_factors.emissive, 1.0);
-    let emissive = emissive_texture * emissive_factor;
+    let emissive_factor = vec4(material_factors.emissive.rgb, 1.0);
+    let emissive_strength = material_factors.emissive.w;
+    let emissive = emissive_texture * emissive_factor * emissive_strength;
     // ambient occlusion
     let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);
     let ao = vec4(occlusion_texture.r, occlusion_texture.r, occlusion_texture.r, 1.0);

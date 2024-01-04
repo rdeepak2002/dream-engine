@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-gltf = { workspace = true }
+gltf = { workspace = true, features = ["KHR_materials_emissive_strength"] }
 image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
 crossbeam-channel = { workspace = true }
 anyhow = { workspace = true }

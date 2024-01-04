@@ -20,10 +20,6 @@
     "fileUrl": null
   },
   {
-    "filepath": "models/sphere-inverted.glb.meta",
-    "fileUrl": null
-  },
-  {
     "filepath": "models/SimpleSkin.glb",
     "fileUrl": null
   },
@@ -32,15 +28,15 @@
     "fileUrl": null
   },
   {
-    "filepath": "models/cube-inverted.glb.meta",
-    "fileUrl": null
-  },
-  {
     "filepath": "models/robot.glb",
     "fileUrl": null
   },
   {
     "filepath": "models/berserk_armor_4k.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/emissive-cube.glb",
     "fileUrl": null
   },
   {
@@ -92,15 +88,11 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/emissive-cube.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/cube.glb.meta",
-    "fileUrl": null
-  },
-  {
-    "filepath": "models/sphere-inverted.glb",
-    "fileUrl": null
-  },
-  {
-    "filepath": "models/cube-inverted.glb",
     "fileUrl": null
   },
   {

@@ -57,21 +57,21 @@ impl DeferredRenderingTech {
                 width,
                 height,
                 "Texture GBuffer Albedo",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
             Some(texture::Texture::create_frame_texture(
                 &device,
                 width,
                 height,
                 "Texture GBuffer Emissive",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
             Some(texture::Texture::create_frame_texture(
                 &device,
                 width,
                 height,
                 "Texture GBuffer AO Roughness Metallic",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
         ];
 
@@ -206,19 +206,19 @@ impl DeferredRenderingTech {
                         }),
                         // albedo
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
                         // emissive
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
                         // ao + roughness + metallic
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
@@ -558,7 +558,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer Albedo",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let texture_g_buffer_emissive = texture::Texture::create_frame_texture(
@@ -566,7 +566,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer Emissive",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let texture_g_buffer_ao_roughness_metallic = texture::Texture::create_frame_texture(
@@ -574,7 +574,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer AO Roughness Metallic",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let g_buffer_texture_views = [

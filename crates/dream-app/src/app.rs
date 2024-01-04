@@ -85,7 +85,7 @@ impl Default for App {
             let directional_light_entity_handle =
                 Scene::create_entity(Arc::downgrade(&scene), Some("Sun".into()), None, None)
                     .expect("Unable to create sun entity");
-            let intensity = 1.8;
+            let intensity = 2.2;
             Entity::from_handle(directional_light_entity_handle, Arc::downgrade(&scene))
                 .add_component(Light::new(
                     LightType::DIRECTIONAL,
@@ -173,7 +173,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 cube_entity_handle,
                 &resource_manager,
-                "c96dccc5-15f3-441d-b01d-504e52acff36".into(), // sphere: "7f4860c5-b53d-4c2b-86eb-0c03e3986aee", cube: ""c96dccc5-15f3-441d-b01d-504e52acff36""
+                "cfcec28c-ff80-484b-a899-b7575c7454da".into(), // sphere: "7f4860c5-b53d-4c2b-86eb-0c03e3986aee", cube: ""c96dccc5-15f3-441d-b01d-504e52acff36""
                 true,
                 Default::default(),
             );
