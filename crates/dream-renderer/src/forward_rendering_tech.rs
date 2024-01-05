@@ -1,4 +1,4 @@
-use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
+use crate::camera_light_bind_group::CameraLightBindGroup;
 use crate::instance::InstanceRaw;
 use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
@@ -17,7 +17,7 @@ impl ForwardRenderingTech {
         device: &wgpu::Device,
         target_texture_format: wgpu::TextureFormat,
         pbr_material_tech: &PbrMaterialTech,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
     ) -> Self {
         let shader_forward_render = Shader::new(
@@ -33,6 +33,7 @@ impl ForwardRenderingTech {
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
                     &shadow_tech.bind_group_layout,
+                    // &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -102,7 +103,7 @@ impl ForwardRenderingTech {
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
         render_storage: &RenderStorage,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
         filter_func: fn(&Material) -> bool,
     ) {
@@ -130,7 +131,7 @@ impl ForwardRenderingTech {
         render_pass_forward_rendering
             .set_pipeline(&self.render_pipeline_forward_render_translucent_objects);
 
-        // camera bind group
+        // camera and lights bind group
         render_pass_forward_rendering.set_bind_group(
             0,
             &camera_bones_lights_bind_group.bind_group,
@@ -146,6 +147,9 @@ impl ForwardRenderingTech {
                 .unwrap_or(&shadow_tech.dummy_bind_group),
             &[],
         );
+
+        // skinning bind group
+        // render_pass_forward_rendering.set_bind_group(3, &skinning_bind_group.bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -169,25 +173,23 @@ impl ForwardRenderingTech {
                 .get(render_map_key)
                 .expect("No instance buffer found in map");
             render_pass_forward_rendering.set_vertex_buffer(1, instance_buffer.slice(..));
-            // get the material and set it in the bind group
-            let material = model
-                .materials
-                .get(mesh.material)
-                .expect("No material at index");
-            // only draw transparent objects
-            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
-                // render_pass_forward_rendering.set_bind_group(
-                //     1,
-                //     &material.pbr_material_factors_bind_group,
-                //     &[],
-                // );
-                render_pass_forward_rendering.set_bind_group(
-                    1,
-                    material.pbr_material_textures_bind_group.as_ref().unwrap(),
-                    &[],
-                );
-                // draw the mesh
-                render_pass_forward_rendering.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+            for primitive in &mesh.primitives {
+                // get the material and set it in the bind group
+                let material = model
+                    .materials
+                    .get(primitive.material)
+                    .expect("No material at index");
+                // only draw transparent objects
+                if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
+                    render_pass_forward_rendering.set_bind_group(
+                        1,
+                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                        &[],
+                    );
+                    // draw the mesh
+                    render_pass_forward_rendering
+                        .draw_primitive_instanced(&primitive, 0..transforms.len() as u32);
+                }
             }
         }
     }

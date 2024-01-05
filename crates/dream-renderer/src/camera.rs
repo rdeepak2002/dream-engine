@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use dream_math::{Matrix4, Point3, Quaternion, UnitQuaternion, Vector3};
+use dream_math::{Matrix4, Point3, UnitQuaternion, Vector3};
 
 // #[rustfmt::skip]
 // pub const OPENGL_TO_WGPU_MATRIX: Matrix4<f32> = Matrix4::new(
@@ -211,11 +211,10 @@ impl Camera {
         &mut self,
         queue: &wgpu::Queue,
         position: Point3<f32>,
-        orientation: Quaternion<f32>,
+        orientation: UnitQuaternion<f32>,
     ) {
         self.eye = position;
-        let forward_vector = UnitQuaternion::from_quaternion(orientation)
-            .transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
+        let forward_vector = orientation.transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
         self.target = self.eye + forward_vector.normalize();
         match self.camera_type {
             CameraType::Perspective => {

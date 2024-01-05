@@ -6,6 +6,7 @@ use crossbeam_channel::Receiver;
 use dream_ecs::component::{Bone, Light, MeshRenderer, PythonScript, Tag, Transform};
 use dream_ecs::entity::Entity;
 use dream_ecs::scene::Scene;
+use dream_math::{degrees, pi, radians};
 
 use crate::editor::{EditorEvent, EditorEventType, Panel};
 
@@ -93,31 +94,33 @@ impl Panel for InspectorPanel {
                                                 .max_decimals(10),
                                         );
 
+                                        let roll_pitch_yaw = transform_component.get_euler_angles();
+                                        let mut roll = degrees(roll_pitch_yaw.0);
+                                        let mut pitch = degrees(roll_pitch_yaw.1);
+                                        let mut yaw = degrees(roll_pitch_yaw.2);
                                         ui.strong("Rotation");
-                                        ui.strong("w");
+                                        ui.strong("roll");
                                         ui.add(
-                                            egui::DragValue::new(&mut transform_component.rotation.w)
-                                                .speed(0.1)
-                                                .max_decimals(10),
+                                            egui::DragValue::new(&mut roll)
+                                                .speed(pi() / 10.0)
+                                                .max_decimals(2),
                                         );
-                                        ui.strong("i");
+                                        ui.strong("pitch");
                                         ui.add(
-                                            egui::DragValue::new(&mut transform_component.rotation.i)
-                                                .speed(0.1)
-                                                .max_decimals(10),
+                                            egui::DragValue::new(&mut pitch)
+                                                .speed(pi() / 10.0)
+                                                .max_decimals(2),
                                         );
-                                        ui.strong("j");
+                                        ui.strong("yaw");
                                         ui.add(
-                                            egui::DragValue::new(&mut transform_component.rotation.j)
-                                                .speed(0.1)
-                                                .max_decimals(10),
+                                            egui::DragValue::new(&mut yaw)
+                                                .speed(pi() / 10.0)
+                                                .max_decimals(2),
                                         );
-                                        ui.strong("k");
-                                        ui.add(
-                                            egui::DragValue::new(&mut transform_component.rotation.k)
-                                                .speed(0.1)
-                                                .max_decimals(10),
-                                        );
+                                        roll = radians(roll);
+                                        pitch = radians(pitch);
+                                        yaw = radians(yaw);
+                                        transform_component.set_euler_angles(roll, pitch, yaw);
 
                                         ui.strong("Scale");
                                         ui.strong("x");
@@ -224,21 +227,21 @@ impl Panel for InspectorPanel {
                                             egui::DragValue::new(&mut light_component.color.x)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0)),
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0)),
                                         );
                                         ui.strong("g");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.color.y)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0))
                                         );
                                         ui.strong("b");
                                         ui.add(
                                             egui::DragValue::new(&mut light_component.color.z)
                                                 .speed(0.01)
                                                 .max_decimals(5)
-                                                .clamp_range(RangeInclusive::new(0.0, 1.0))
+                                                .clamp_range(RangeInclusive::new(0.0, 100.0))
                                         );
                                         ui.strong("radius");
                                         ui.add(

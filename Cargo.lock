@@ -807,6 +807,7 @@ dependencies = [
  "dream-app",
  "dream-ecs",
  "dream-fs",
+ "dream-math",
  "dream-renderer",
  "egui",
  "egui-wgpu",

@@ -20,11 +20,23 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/SimpleSkin.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/sphere.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/robot.glb",
     "fileUrl": null
   },
   {
     "filepath": "models/berserk_armor_4k.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/emissive-cube.glb",
     "fileUrl": null
   },
   {
@@ -36,6 +48,26 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/marisa-fixed-3.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-sketchfab.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-sketchfab.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/marisa-fixed-3.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/SimpleSkin.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/berserk_armor.glb",
     "fileUrl": null
   },
@@ -44,11 +76,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/sphere.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/cube.glb",
     "fileUrl": null
   },
   {
     "filepath": "models/campfire.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/emissive-cube.glb.meta",
     "fileUrl": null
   },
   {

@@ -1,16 +1,12 @@
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:shadow.wgsl
-//include:skinning.wgsl
 
 // Vertex shader
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
 @group(0) @binding(1)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
-
-@group(0) @binding(2)
 var<uniform> lightsBuffer: LightsUniform;
 
 @vertex

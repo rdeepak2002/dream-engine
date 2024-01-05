@@ -115,17 +115,19 @@ impl RenderStorage {
                 .unwrap_or_else(|| {
                     panic!("no mesh at index {mesh_index} for model with guid {model_guid}",)
                 });
-            let material = model
-                .materials
-                .get_mut(mesh.material)
-                .expect("No material at index");
-            if !material.loaded() {
-                material.update_images();
-                material.update_textures(device, queue, pbr_material_textures_bind_group_layout);
-                // log::debug!(
-                //     "material loading progress: {:.2}%",
-                //     material.get_progress() * 100.0
-                // );
+            for primitive in &mesh.primitives {
+                let material = model
+                    .materials
+                    .get_mut(primitive.material)
+                    .expect("No material at index");
+                if !material.loaded() {
+                    material.update_images();
+                    material.update_textures(
+                        device,
+                        queue,
+                        pbr_material_textures_bind_group_layout,
+                    );
+                }
             }
         }
     }

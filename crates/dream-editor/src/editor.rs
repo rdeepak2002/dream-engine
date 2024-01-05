@@ -38,7 +38,8 @@ pub fn generate_egui_wgpu_renderer(
 ) -> egui_wgpu::Renderer {
     egui_wgpu::Renderer::new(
         &state.device,
-        state.preferred_texture_format.unwrap(),
+        // state.preferred_texture_format.unwrap(),
+        state.surface_texture_format.unwrap(),
         Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
         1,
     )

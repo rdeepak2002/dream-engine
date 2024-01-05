@@ -18,14 +18,17 @@
 
 use std::iter;
 
+use wgpu::TextureFormat::Rgba16Float;
 use wgpu::{CompositeAlphaMode, PresentMode};
 use winit::dpi::PhysicalSize;
 
-use dream_math::{Point3, Quaternion, Vector3};
+use dream_math::{Point3, UnitQuaternion, Vector3};
 
-use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
+use crate::bloom_tech::BloomTech;
+use crate::camera_light_bind_group::CameraLightBindGroup;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
+use crate::hdr_tech::HdrTech;
 use crate::instance::Instance;
 use crate::lights::{Lights, RendererLight};
 use crate::material::Material;
@@ -52,7 +55,8 @@ pub struct RendererWgpu {
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
     pub preferred_texture_format: Option<wgpu::TextureFormat>,
-    pub frame_texture: texture::Texture,
+    pub surface_texture_format: Option<wgpu::TextureFormat>,
+    pub no_hdr_frame_texture: texture::Texture,
     pub deferred_rendering_tech: DeferredRenderingTech,
     render_storage: RenderStorage,
     camera: camera::Camera,
@@ -62,7 +66,9 @@ pub struct RendererWgpu {
     skinning_tech: SkinningTech,
     lights: Lights,
     pub shadow_tech: ShadowTech,
-    camera_bones_light_bind_group: CameraBonesLightBindGroup,
+    camera_light_bind_group: CameraLightBindGroup,
+    pub bloom_tech: BloomTech,
+    pub hdr_tech: HdrTech,
 }
 
 impl RendererWgpu {
@@ -90,6 +96,7 @@ impl RendererWgpu {
         }
 
         // adapter is the physical gpu driver
+        let mut surface_texture_format = None;
         let adapter;
         if surface.is_some() {
             adapter = instance
@@ -127,7 +134,7 @@ impl RendererWgpu {
             .unwrap();
 
         // preferred texture format is the format of the surface we draw to
-        let preferred_texture_format;
+        let preferred_texture_format = Some(Rgba16Float);
         // surface configuration describes a surface like its dimensions
         let config;
         if surface.is_some() {
@@ -136,14 +143,17 @@ impl RendererWgpu {
             // Shader code in this tutorial assumes an Srgb surface texture. Using a different
             // one will result all the colors coming out darker. If you want to support non
             // Srgb surfaces, you'll need to account for that when drawing to the frame.
-            let surface_format = surface_caps
+            let mut surface_format = surface_caps
                 .formats
                 .iter()
                 .copied()
                 .find(|f| f.is_srgb())
                 .unwrap_or(surface_caps.formats[0]);
 
-            preferred_texture_format = Some(surface_format);
+            surface_texture_format = Some(surface_format);
+
+            // let surface_format = Some(surface_format);
+            // log::debug!("surface_format {:#?}", surface_format);
 
             config = wgpu::SurfaceConfiguration {
                 usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -158,7 +168,6 @@ impl RendererWgpu {
             // case where there is no surface
             cfg_if::cfg_if! {
                 if #[cfg(target_arch = "wasm32")] {
-                    preferred_texture_format = Some(wgpu::TextureFormat::Bgra8Unorm);
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                         format: preferred_texture_format.unwrap(),
@@ -169,7 +178,6 @@ impl RendererWgpu {
                         view_formats: vec![],
                     };
                 } else {
-                    preferred_texture_format = Some(wgpu::TextureFormat::Bgra8UnormSrgb);
                     config = wgpu::SurfaceConfiguration {
                         usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
                         format: preferred_texture_format.unwrap(),
@@ -218,9 +226,8 @@ impl RendererWgpu {
         // skinning tech
         let skinning_tech = SkinningTech::new(&device);
 
-        // bind group for camera, bones, and lights
-        let camera_bones_light_bind_group =
-            CameraBonesLightBindGroup::new(&device, &camera, &lights, &skinning_tech);
+        // bind group for camera and lights
+        let camera_bones_light_bind_group = CameraLightBindGroup::new(&device, &camera, &lights);
 
         // bind groups and layouts for physically based rendering textures
         let pbr_material_tech = PbrMaterialTech::new(&device);
@@ -236,7 +243,7 @@ impl RendererWgpu {
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
-            config.format,
+            preferred_texture_format.unwrap(),
             config.width,
             config.height,
             &depth_texture,
@@ -248,11 +255,17 @@ impl RendererWgpu {
         // algorithms for forward rendering
         let forward_rendering_tech = ForwardRenderingTech::new(
             &device,
-            config.format,
+            preferred_texture_format.unwrap(),
             &pbr_material_tech,
             &camera_bones_light_bind_group,
             &shadow_tech,
         );
+
+        // hdr and gamma correction
+        let hdr_tech = HdrTech::new(&device, config.width, config.height);
+
+        // algorithms for computing bloom mask and applying it onto frame texture
+        let bloom_tech = BloomTech::new(&device, config.width, config.height, &frame_texture);
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -269,7 +282,7 @@ impl RendererWgpu {
             preferred_texture_format,
             render_storage,
             camera,
-            frame_texture,
+            no_hdr_frame_texture: frame_texture,
             depth_texture,
             deferred_rendering_tech,
             forward_rendering_tech,
@@ -277,7 +290,10 @@ impl RendererWgpu {
             lights,
             skinning_tech,
             shadow_tech,
-            camera_bones_light_bind_group,
+            camera_light_bind_group: camera_bones_light_bind_group,
+            bloom_tech,
+            hdr_tech,
+            surface_texture_format,
         }
     }
 
@@ -296,7 +312,7 @@ impl RendererWgpu {
                 self.config.height = new_size.height;
             }
         }
-        log::warn!(
+        log::debug!(
             "New config size {} {}",
             self.config.width,
             self.config.height
@@ -309,7 +325,14 @@ impl RendererWgpu {
                 .configure(&self.device, &self.config);
         }
         // resize frame textures
-        self.frame_texture = texture::Texture::create_frame_texture(
+        // self.frame_texture = texture::Texture::create_frame_texture(
+        //     &self.device,
+        //     self.config.width,
+        //     self.config.height,
+        //     "frame_texture",
+        //     self.preferred_texture_format.unwrap(),
+        // );
+        self.no_hdr_frame_texture = texture::Texture::create_frame_texture(
             &self.device,
             self.config.width,
             self.config.height,
@@ -325,6 +348,18 @@ impl RendererWgpu {
         );
         // resize gbuffers for deferred rendering
         self.deferred_rendering_tech
+            .resize(&self.device, self.config.width, self.config.height);
+        // resize mask for bloom
+        self.bloom_tech = BloomTech::new(
+            &self.device,
+            self.config.width,
+            self.config.height,
+            &self.no_hdr_frame_texture,
+        );
+        // self.bloom_tech
+        //     .resize(&self.device, self.config.width, self.config.height);
+        // resize hdr result
+        self.hdr_tech
             .resize(&self.device, self.config.width, self.config.height);
     }
 
@@ -352,6 +387,10 @@ impl RendererWgpu {
         // update bones buffer
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
+        // use compute shader to calculate new vertices after animation transformations
+        self.skinning_tech
+            .compute_shader_update_vertices(&mut encoder, &mut self.render_storage);
+
         // figure out shadows
         self.shadow_tech.render_shadow_depth_buffers(
             &self.device,
@@ -359,7 +398,7 @@ impl RendererWgpu {
             &mut encoder,
             &self.lights,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             &self.camera,
         );
 
@@ -368,40 +407,44 @@ impl RendererWgpu {
             &mut encoder,
             &self.depth_texture,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             |material: &Material| material.factor_alpha >= 1.0,
-            // |material: &Material| false,
         );
 
         // combine gbuffers into one final texture result
         self.deferred_rendering_tech.combine_gbuffers_to_texture(
             &self.device,
             &mut encoder,
-            &mut self.frame_texture,
+            &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.shadow_tech,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
         );
 
         // forward render translucent objects
         self.forward_rendering_tech.render_to_output_texture(
             &mut encoder,
-            &mut self.frame_texture,
+            &mut self.no_hdr_frame_texture,
             &mut self.depth_texture,
             &self.render_storage,
-            &self.camera_bones_light_bind_group,
+            &self.camera_light_bind_group,
             &self.shadow_tech,
             |material: &Material| material.factor_alpha < 1.0,
-            // |material: &Material| true,
+        );
+
+        // generate bloom texture
+        self.bloom_tech.generate_bloom_texture(&mut encoder);
+
+        // compute hdr version of texture
+        self.hdr_tech.apply_hdr_and_gamma_correction(
+            &mut encoder,
+            &self.device,
+            &mut self.no_hdr_frame_texture,
+            &self.bloom_tech,
         );
 
         // submit all drawing commands to gpu
         self.queue.submit(iter::once(encoder.finish()));
-
-        // update the output texture view, so editor can display it in a panel
-        // let output_texture_view = &self
-        //     .frame_texture.view;
-        // self.frame_texture_view = Some(output_texture_view);
 
         Ok(())
     }
@@ -487,7 +530,7 @@ impl RendererWgpu {
         self.skinning_tech.update_bone(bone_id, mat);
     }
 
-    pub fn set_camera(&mut self, position: Point3<f32>, orientation: Quaternion<f32>) {
+    pub fn set_camera(&mut self, position: Point3<f32>, orientation: UnitQuaternion<f32>) {
         self.camera
             .set_position_and_orientation(&self.queue, position, orientation);
     }

@@ -16,11 +16,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  **********************************************************************************/
 
+pub mod bloom_tech;
 pub mod camera;
-pub mod camera_bones_light_bind_group;
+pub mod camera_light_bind_group;
 pub mod deferred_rendering_tech;
 pub mod forward_rendering_tech;
 pub mod gltf_loader;
+pub mod hdr_tech;
 pub mod image;
 pub mod instance;
 pub mod lights;

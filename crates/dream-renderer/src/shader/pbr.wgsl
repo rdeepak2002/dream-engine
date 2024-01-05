@@ -5,8 +5,7 @@ const LIGHT_TYPE_DIRECTIONAL: u32 = 1u;
 struct MaterialFactors {
     base_color: vec3<f32>,
     _padding1: f32,
-    emissive: vec3<f32>,
-    _padding2: f32,
+    emissive: vec4<f32>,
     metallic: f32,
     roughness: f32,
     alpha: f32,
@@ -68,7 +67,7 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 
     var F0: vec3<f32> = vec3(0.04, 0.04, 0.04);
     F0 = mix(F0, albedo.rgb, vec3(metallic, metallic, metallic));
-    let N = normalize(normal);
+    var N = normalize(normal);
 
     for (var i = 0u; i < 4u; i += 1u) {
         let light = lightsBuffer.lights[i];
@@ -96,7 +95,6 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
             radiance = lightColor * attenuation;
         }
         if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
-            // TODO: verify
             let attenuation: f32 = 1.0;
             radiance = lightColor * attenuation;
         }
@@ -126,25 +124,20 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
 
         // add to outgoing radiance Lo
         Lo += (kD * albedo.rgb / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        if (light.light_type == LIGHT_TYPE_DIRECTIONAL) {
+            Lo *= shadow_visibility;
+        }
 
         result += Lo;
     }
 
-    // TODO: make ambient light a uniform or iterate through all ambient lights
-
-    let ambientIntensity = 0.01;
+    // TODO: ambient should be retrieved from skybox / atmosphere
+    let ambientIntensity = 0.03;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
-    var color = shadow_visibility * result + ambient;
-
-    // HDR tonemapping
-    let exposure: f32 = 4.0f;
-    color = vec3(1.0) - exp(-color * exposure);
-    // gamma correct
-    let gamma: f32 = 1.2;
-    color = pow(color, vec3(1.0 / gamma));
+    var color = result + ambient;
 
     if ((emissive.r > 0.0 || emissive.g > 0.0 || emissive.b > 0.0) && emissive.a > 0.0) {
-        color = emissive.rgb;
+        color += emissive.rgb * emissive.a;
     }
 
     return color;

@@ -1,4 +1,4 @@
-use crate::camera_bones_light_bind_group::CameraBonesLightBindGroup;
+use crate::camera_light_bind_group::CameraLightBindGroup;
 use crate::instance::InstanceRaw;
 use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
@@ -26,7 +26,7 @@ impl DeferredRenderingTech {
         depth_texture: &Texture,
         pbr_material_tech: &PbrMaterialTech,
         shadow_tech: &ShadowTech,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
     ) -> Self {
         let shader_write_g_buffers = Shader::new(
             device,
@@ -57,21 +57,21 @@ impl DeferredRenderingTech {
                 width,
                 height,
                 "Texture GBuffer Albedo",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
             Some(texture::Texture::create_frame_texture(
                 &device,
                 width,
                 height,
                 "Texture GBuffer Emissive",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
             Some(texture::Texture::create_frame_texture(
                 &device,
                 width,
                 height,
                 "Texture GBuffer AO Roughness Metallic",
-                wgpu::TextureFormat::Bgra8Unorm,
+                wgpu::TextureFormat::Rgba16Float,
             )),
         ];
 
@@ -81,7 +81,7 @@ impl DeferredRenderingTech {
                     // normal
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::all(),
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -92,7 +92,7 @@ impl DeferredRenderingTech {
                     // albedo
                     wgpu::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::all(),
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -103,7 +103,7 @@ impl DeferredRenderingTech {
                     // emissive
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
-                        visibility: wgpu::ShaderStages::all(),
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -114,7 +114,7 @@ impl DeferredRenderingTech {
                     // ao roughness metallic
                     wgpu::BindGroupLayoutEntry {
                         binding: 3,
-                        visibility: wgpu::ShaderStages::all(),
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -125,7 +125,7 @@ impl DeferredRenderingTech {
                     // depth
                     wgpu::BindGroupLayoutEntry {
                         binding: 4,
-                        visibility: wgpu::ShaderStages::all(),
+                        visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
@@ -179,6 +179,7 @@ impl DeferredRenderingTech {
                 bind_group_layouts: &[
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
+                    // &skinning_bind_group.bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -205,19 +206,19 @@ impl DeferredRenderingTech {
                         }),
                         // albedo
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
                         // emissive
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
                         // ao + roughness + metallic
                         Some(wgpu::ColorTargetState {
-                            format: wgpu::TextureFormat::Bgra8Unorm,
+                            format: wgpu::TextureFormat::Rgba16Float,
                             blend: None,
                             write_mask: wgpu::ColorWrites::ALL,
                         }),
@@ -318,7 +319,7 @@ impl DeferredRenderingTech {
         encoder: &mut wgpu::CommandEncoder,
         depth_texture: &Texture,
         render_storage: &RenderStorage,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
         filter_func: fn(&Material) -> bool,
     ) {
         // render to gbuffers
@@ -395,12 +396,15 @@ impl DeferredRenderingTech {
             });
         render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
 
-        // camera bind group
+        // camera and lights bind group
         render_pass_write_g_buffers.set_bind_group(
             0,
             &camera_bones_lights_bind_group.bind_group,
             &[],
         );
+
+        // camera and lights bind group
+        // render_pass_write_g_buffers.set_bind_group(2, &skinning_bind_group.bind_group, &[]);
 
         // iterate through all meshes that should be instanced drawn
         for (render_map_key, transforms) in render_storage.render_map.iter() {
@@ -424,24 +428,22 @@ impl DeferredRenderingTech {
                 .get(render_map_key)
                 .expect("No instance buffer found in map");
             render_pass_write_g_buffers.set_vertex_buffer(1, instance_buffer.slice(..));
-            // get the material and set it in the bind group
-            let material = model
-                .materials
-                .get(mesh.material)
-                .expect("No material at index");
-            if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
-                // render_pass_write_g_buffers.set_bind_group(
-                //     1,
-                //     &material.pbr_material_factors_bind_group,
-                //     &[],
-                // );
-                render_pass_write_g_buffers.set_bind_group(
-                    1,
-                    material.pbr_material_textures_bind_group.as_ref().unwrap(),
-                    &[],
-                );
-                // draw the mesh
-                render_pass_write_g_buffers.draw_mesh_instanced(mesh, 0..transforms.len() as u32);
+            for primitive in &mesh.primitives {
+                // get the material and set it in the bind group
+                let material = model
+                    .materials
+                    .get(primitive.material)
+                    .expect("No material at index");
+                if filter_func(material) && material.pbr_material_textures_bind_group.is_some() {
+                    render_pass_write_g_buffers.set_bind_group(
+                        1,
+                        material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                        &[],
+                    );
+                    // draw the mesh
+                    render_pass_write_g_buffers
+                        .draw_primitive_instanced(&primitive, 0..transforms.len() as u32);
+                }
             }
         }
     }
@@ -453,7 +455,7 @@ impl DeferredRenderingTech {
         frame_texture: &mut texture::Texture,
         depth_texture: &mut texture::Texture,
         shadow_tech: &ShadowTech,
-        camera_bones_lights_bind_group: &CameraBonesLightBindGroup,
+        camera_bones_lights_bind_group: &CameraLightBindGroup,
     ) {
         // define render pass
         let mut render_pass_render_lights_for_deferred =
@@ -511,7 +513,7 @@ impl DeferredRenderingTech {
                 label: Some("render_lights_for_deferred_gbuffers_bind_group"),
             });
 
-        // camera bind group
+        // camera and lights bind group
         render_pass_render_lights_for_deferred.set_bind_group(
             0,
             &camera_bones_lights_bind_group.bind_group,
@@ -556,7 +558,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer Albedo",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let texture_g_buffer_emissive = texture::Texture::create_frame_texture(
@@ -564,7 +566,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer Emissive",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let texture_g_buffer_ao_roughness_metallic = texture::Texture::create_frame_texture(
@@ -572,7 +574,7 @@ impl DeferredRenderingTech {
             width,
             height,
             "Texture GBuffer AO Roughness Metallic",
-            wgpu::TextureFormat::Bgra8Unorm,
+            wgpu::TextureFormat::Rgba16Float,
         );
 
         let g_buffer_texture_views = [

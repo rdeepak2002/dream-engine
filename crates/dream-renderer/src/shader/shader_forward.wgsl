@@ -1,18 +1,20 @@
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:model.wgsl
-//include:skinning.wgsl
 //include:shadow.wgsl
 
 // Vertex shader
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;
 
-@group(0) @binding(1)
-var<uniform> boneTransformsUniform: BoneTransformsUniform;
+//@group(0) @binding(1)
+//var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
-@group(0) @binding(2)
+@group(0) @binding(1)
 var<uniform> lightsBuffer: LightsUniform;
+
+//@group(3) @binding(0)
+//var<uniform> boneTransformsUniform: BoneTransformsUniform;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
@@ -41,24 +43,8 @@ fn vs_main(
     var totalPosition = vec4<f32>(0.0);
     var totalNormal = vec3<f32>(0.0);
 
-    var boneIds = model.bone_ids;
-    var weights = model.weights;
-    var finalBonesMatrices = boneTransformsUniform.bone_transforms;
-
-    for(var i = 0 ; i < 4 ; i++) {
-        if (weights[0] + weights[1] + weights[2] + weights[3] <= 0.000001f) {
-            // mesh is not skinned
-            totalPosition = pos;
-            totalNormal = nrm;
-            break;
-        }
-
-        var localPosition: vec4<f32> = finalBonesMatrices[boneIds[i]] * vec4(model.position, 1.0f);
-        totalPosition += localPosition * weights[i];
-
-        var localNormal: vec3<f32> = (finalBonesMatrices[boneIds[i]] * vec4(model.normal, 0.0f)).xyz * weights[i];
-        totalNormal += localNormal;
-    }
+    totalPosition = pos;
+    totalNormal = nrm;
 
     totalNormal = normalize(totalNormal);
 
@@ -153,8 +139,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     // emissive
     var emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
-    let emissive_factor = vec4(material_factors.emissive, 1.0);
-    let emissive = emissive_texture * emissive_factor;
+    let emissive_factor = vec4(material_factors.emissive.rgb, 1.0);
+    let emissive_strength = material_factors.emissive.w;
+    let emissive = emissive_texture * emissive_factor * emissive_strength;
 
     // ao
     let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);

@@ -20,4 +20,5 @@ dream-renderer = { workspace = true }
 dream-ecs = { workspace = true }
 dream-app = { workspace = true }
 dream-fs = { workspace = true }
+dream-math = { workspace = true }
 pathdiff = "0.2.1"

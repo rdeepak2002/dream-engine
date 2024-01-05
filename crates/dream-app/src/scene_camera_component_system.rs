@@ -26,7 +26,7 @@ impl System for SceneCameraComponentSystem {
             for entity_id in scene_camera_entities {
                 let entity = Entity::from_handle(entity_id, scene.clone());
                 if let Some(mut transform) = entity.get_component::<Transform>() {
-                    let mut rotation = UnitQuaternion::from_quaternion(transform.rotation);
+                    let rotation = transform.rotation;
 
                     let forward_vector =
                         rotation.transform_vector(&Vector3::<f32>::new(0.0, 0.0, -1.0));
@@ -85,16 +85,16 @@ impl System for SceneCameraComponentSystem {
                             &UnitVector3::new_normalize(up_vector),
                             mouse_move.x * 0.6 * dt,
                         );
-                        let around_local_y_rot = x.quaternion();
+                        let around_local_y_rot = x;
 
                         let y = UnitQuaternion::from_axis_angle(
                             &UnitVector3::new_normalize(right_vector),
                             -mouse_move.y * 0.6 * dt,
                         );
-                        let around_local_x_rot = y.quaternion();
+                        let around_local_x_rot = y;
 
                         transform.rotation =
-                            (around_local_x_rot * (around_local_y_rot * transform.rotation));
+                            around_local_x_rot * (around_local_y_rot * transform.rotation);
                     }
 
                     transform.position += delta_position * dt;

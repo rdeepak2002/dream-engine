@@ -225,7 +225,14 @@ impl Scene {
                             skin_root_nodes.insert(skeleton.index() as u32);
                         }
                         None => {
-                            // skin_root_nodes.insert(node.index() as u32);
+                            // set first node that is not related to skin as the armature root
+                            if let Some(root) = gltf_scene.nodes().next() {
+                                for child in root.children() {
+                                    if child.skin().is_none() {
+                                        skin_root_nodes.insert(child.index() as u32);
+                                    }
+                                }
+                            }
                         }
                     }
                     let reader = gltf_skin.reader(|buffer| Some(&buffer_data[buffer.index()]));
@@ -373,10 +380,11 @@ impl Scene {
                 gltf_translation[1],
                 gltf_translation[2],
             );
-            let rotation = dream_math::Quaternion::from_parts(
-                gltf_rotation[3],
-                dream_math::Vector3::new(gltf_rotation[0], gltf_rotation[1], gltf_rotation[2]),
-            );
+            let rotation =
+                dream_math::UnitQuaternion::from_quaternion(dream_math::Quaternion::from_parts(
+                    gltf_rotation[3],
+                    dream_math::Vector3::new(gltf_rotation[0], gltf_rotation[1], gltf_rotation[2]),
+                ));
             let scale = dream_math::Vector3::new(gltf_scale[0], gltf_scale[1], gltf_scale[2]);
             Transform::new(position, rotation, scale)
         }
