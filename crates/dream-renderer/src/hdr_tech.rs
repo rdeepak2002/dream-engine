@@ -165,13 +165,13 @@ impl HdrTech {
                 wgpu::BindGroupEntry {
                     binding: 2,
                     resource: wgpu::BindingResource::TextureView(
-                        &bloom_tech.blur_final_texture.view,
+                        &bloom_tech.mip_chain.get(0).unwrap().texture.view,
                     ),
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
                     resource: wgpu::BindingResource::Sampler(
-                        &bloom_tech.blur_final_texture.sampler,
+                        &bloom_tech.mip_chain.get(0).unwrap().texture.sampler,
                     ),
                 },
             ],

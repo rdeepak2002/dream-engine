@@ -261,11 +261,11 @@ impl RendererWgpu {
             &shadow_tech,
         );
 
-        // algorithms for computing bloom mask and applying it onto frame texture
-        let bloom_tech = BloomTech::new(&device, config.width, config.height);
-
         // hdr and gamma correction
         let hdr_tech = HdrTech::new(&device, config.width, config.height);
+
+        // algorithms for computing bloom mask and applying it onto frame texture
+        let bloom_tech = BloomTech::new(&device, config.width, config.height, &frame_texture);
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -350,8 +350,14 @@ impl RendererWgpu {
         self.deferred_rendering_tech
             .resize(&self.device, self.config.width, self.config.height);
         // resize mask for bloom
-        self.bloom_tech
-            .resize(&self.device, self.config.width, self.config.height);
+        self.bloom_tech = BloomTech::new(
+            &self.device,
+            self.config.width,
+            self.config.height,
+            &self.no_hdr_frame_texture,
+        );
+        // self.bloom_tech
+        //     .resize(&self.device, self.config.width, self.config.height);
         // resize hdr result
         self.hdr_tech
             .resize(&self.device, self.config.width, self.config.height);
@@ -426,15 +432,8 @@ impl RendererWgpu {
             |material: &Material| material.factor_alpha < 1.0,
         );
 
-        // compute bloom mask
-        self.bloom_tech.generate_bright_mask(
-            &mut encoder,
-            &self.device,
-            &mut self.no_hdr_frame_texture,
-        );
-
-        // generate blur texture
-        self.bloom_tech.generate_blur(&mut encoder, &self.device);
+        // generate bloom texture
+        self.bloom_tech.generate_bloom_texture(&mut encoder);
 
         // compute hdr version of texture
         self.hdr_tech.apply_hdr_and_gamma_correction(

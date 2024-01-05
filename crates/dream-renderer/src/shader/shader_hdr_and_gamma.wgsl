@@ -58,16 +58,18 @@ fn aces_tone_map(hdr: vec3<f32>) -> vec3<f32> {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    var hdr_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
-    hdr_color += textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords).xyz;
+    // linearly mix hdr and bloom colors
+    let hdr_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
+    let bloom_color = textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords).xyz;
+    let bloom_intensity: f32 = 0.02;
+    let mixed_color = mix(hdr_color, bloom_color, bloom_intensity);
 
-    // exposure tone mapping
-    var mapped = aces_tone_map(hdr_color);
-//    var mapped = vec3(1.0) - exp(-hdr_color * exposure);
-//    var mapped = frame_color / (frame_color + vec3(1.0));
+    // tone mapping
+    let mapped = aces_tone_map(mixed_color);
+
     // gamma correction
     let gamma = 2.2;
-    mapped = pow(mapped, vec3(1.0 / gamma));
+    var gamma_corrected = pow(mapped, vec3(1.0 / gamma));
 
-    return vec4(mapped, 1.0);
+    return vec4(gamma_corrected, 1.0);
 }
