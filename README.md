@@ -48,7 +48,8 @@ cutting-edge game engine with the collaborative prowess of Google Docs
   - [ ] Image based lighting (IBL)
     - [ ] Diffuse irradiance
     - [ ] Specular IBL
-- [ ] HDRI environments
+- [ ] Atmospheric scattering
+- [ ] HDR environment maps
 - [x] Normal mapping
 - [ ] Parallax mapping
 - [x] Deferred renderer for opaque meshes
