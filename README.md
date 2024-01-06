@@ -76,13 +76,14 @@ cutting-edge game engine with the collaborative prowess of Google Docs
 - [x] Asset management with file handles and automatic resource deallocation
 - [x] Cross-platform (web and desktop) file system library
 - [x] Multithreaded task executor (powered by [rayon](https://github.com/rayon-rs/rayon))
-  - [x] Support for web assembly build using web workers
+  - [x] Support for web assembly build using web workers and shared
+    memory ([SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer))
   - [x] Multithreaded resource loading
 - [x] Web assembly compilation support (powered by [wasm-pack](https://rustwasm.github.io/wasm-pack/))
 - [ ] Terrain editor
 - [ ] P2P editor collaboration
 - [ ] Project exporter
-- [ ] Math library (abstraction of [nalgebra](https://nalgebra.org/))
+- [x] Math library (abstraction of [nalgebra](https://nalgebra.org/))
 - [ ] Editor user interface
   - [x] Renderer panel
   - [x] Inspector panel
