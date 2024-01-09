@@ -285,6 +285,8 @@ pub struct CameraUniform {
     pub inv_view_proj: [[f32; 4]; 4],
     position: [f32; 3],
     _padding: f32,
+    pub inv_proj: [[f32; 4]; 4],
+    pub inv_view: [[f32; 4]; 4],
 }
 
 impl CameraUniform {
@@ -308,6 +310,8 @@ impl CameraUniform {
             .expect("Unable to invert camera view projection matrix")
             .into();
         self.position = eye.into();
+        self.inv_view = view.try_inverse().unwrap().into();
+        self.inv_proj = proj.try_inverse().unwrap().into();
     }
 
     pub fn update_view_proj_ortho(
@@ -332,6 +336,8 @@ impl CameraUniform {
             .expect("Unable to invert camera view projection matrix")
             .into();
         self.position = eye.into();
+        self.inv_view = view.try_inverse().unwrap().into();
+        self.inv_proj = proj.try_inverse().unwrap().into();
     }
 }
 
@@ -344,6 +350,8 @@ impl Default for CameraUniform {
             inv_view_proj: Matrix4::identity().into(),
             position: [0.0, 0.0, 0.0],
             _padding: 1.,
+            inv_proj: Matrix4::identity().into(),
+            inv_view: Matrix4::identity().into(),
         }
     }
 }

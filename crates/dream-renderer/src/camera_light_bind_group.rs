@@ -20,16 +20,6 @@ impl CameraLightBindGroup {
                     },
                     count: None,
                 },
-                // wgpu::BindGroupLayoutEntry {
-                //     binding: 1,
-                //     visibility: wgpu::ShaderStages::all(),
-                //     ty: wgpu::BindingType::Buffer {
-                //         ty: wgpu::BufferBindingType::Uniform,
-                //         has_dynamic_offset: false,
-                //         min_binding_size: None,
-                //     },
-                //     count: None,
-                // },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
@@ -50,10 +40,6 @@ impl CameraLightBindGroup {
                     binding: 0,
                     resource: camera.camera_buffer.as_entire_binding(),
                 },
-                // wgpu::BindGroupEntry {
-                //     binding: 1,
-                //     resource: skinning_tech.skinning_buffer.as_entire_binding(),
-                // },
                 wgpu::BindGroupEntry {
                     binding: 1,
                     resource: lights.lights_buffer.as_entire_binding(),

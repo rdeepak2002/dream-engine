@@ -19,6 +19,7 @@
 pub mod bloom_tech;
 pub mod camera;
 pub mod camera_light_bind_group;
+mod cubemap_tech;
 pub mod deferred_rendering_tech;
 pub mod forward_rendering_tech;
 pub mod gltf_loader;

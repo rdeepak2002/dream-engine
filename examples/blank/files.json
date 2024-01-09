@@ -4,6 +4,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "hdr.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "script.py.meta",
     "fileUrl": null
   },
@@ -97,6 +101,14 @@
   },
   {
     "filepath": "models/berserk_armor_4k.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "hdr/newport_loft.hdr",
+    "fileUrl": null
+  },
+  {
+    "filepath": "hdr/newport_loft.hdr.meta",
     "fileUrl": null
   }
 ]

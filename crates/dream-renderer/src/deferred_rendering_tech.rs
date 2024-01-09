@@ -15,6 +15,7 @@ pub struct DeferredRenderingTech {
     pub render_pipeline_write_g_buffers: wgpu::RenderPipeline,
     pub render_pipeline_render_deferred_result: wgpu::RenderPipeline,
     pub render_lights_for_deferred_gbuffers_bind_group_layout: wgpu::BindGroupLayout,
+    resized: bool,
 }
 
 impl DeferredRenderingTech {
@@ -311,6 +312,7 @@ impl DeferredRenderingTech {
             render_lights_for_deferred_gbuffers_bind_group,
             render_pipeline_write_g_buffers,
             render_pipeline_render_deferred_result,
+            resized: true,
         }
     }
 
@@ -452,8 +454,8 @@ impl DeferredRenderingTech {
         &mut self,
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
-        frame_texture: &mut texture::Texture,
-        depth_texture: &mut texture::Texture,
+        frame_texture: &mut Texture,
+        depth_texture: &mut Texture,
         shadow_tech: &ShadowTech,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
     ) {
@@ -465,53 +467,58 @@ impl DeferredRenderingTech {
                     view: &frame_texture.view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        // load: wgpu::LoadOp::Clear(wgpu::Color {
+                        //     r: 0.1,
+                        //     g: 0.2,
+                        //     b: 0.3,
+                        //     a: 1.0,
+                        // }),
+                        load: wgpu::LoadOp::Load,
                         store: true,
                     },
                 })],
                 depth_stencil_attachment: None,
             });
 
-        self.render_lights_for_deferred_gbuffers_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.render_lights_for_deferred_gbuffers_bind_group_layout,
-                entries: &[
-                    wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.g_buffer_texture_views[0].as_ref().unwrap().view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.g_buffer_texture_views[1].as_ref().unwrap().view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 2,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.g_buffer_texture_views[2].as_ref().unwrap().view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 3,
-                        resource: wgpu::BindingResource::TextureView(
-                            &self.g_buffer_texture_views[3].as_ref().unwrap().view,
-                        ),
-                    },
-                    wgpu::BindGroupEntry {
-                        binding: 4,
-                        resource: wgpu::BindingResource::TextureView(&depth_texture.view),
-                    },
-                ],
-                label: Some("render_lights_for_deferred_gbuffers_bind_group"),
-            });
+        if self.resized {
+            log::debug!("Recreating bind groups");
+            self.render_lights_for_deferred_gbuffers_bind_group =
+                device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &self.render_lights_for_deferred_gbuffers_bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.g_buffer_texture_views[0].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.g_buffer_texture_views[1].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 2,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.g_buffer_texture_views[2].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 3,
+                            resource: wgpu::BindingResource::TextureView(
+                                &self.g_buffer_texture_views[3].as_ref().unwrap().view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 4,
+                            resource: wgpu::BindingResource::TextureView(&depth_texture.view),
+                        },
+                    ],
+                    label: Some("render_lights_for_deferred_gbuffers_bind_group"),
+                });
+            self.resized = false;
+        }
 
         // camera and lights bind group
         render_pass_render_lights_for_deferred.set_bind_group(
@@ -585,5 +592,6 @@ impl DeferredRenderingTech {
         ];
 
         self.g_buffer_texture_views = g_buffer_texture_views;
+        self.resized = true;
     }
 }

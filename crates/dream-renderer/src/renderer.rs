@@ -26,6 +26,7 @@ use dream_math::{Point3, UnitQuaternion, Vector3};
 
 use crate::bloom_tech::BloomTech;
 use crate::camera_light_bind_group::CameraLightBindGroup;
+use crate::cubemap_tech::CubemapTech;
 use crate::deferred_rendering_tech::DeferredRenderingTech;
 use crate::forward_rendering_tech::ForwardRenderingTech;
 use crate::hdr_tech::HdrTech;
@@ -64,6 +65,7 @@ pub struct RendererWgpu {
     forward_rendering_tech: ForwardRenderingTech,
     pbr_material_tech: PbrMaterialTech,
     skinning_tech: SkinningTech,
+    cubemap_tech: CubemapTech,
     lights: Lights,
     pub shadow_tech: ShadowTech,
     camera_light_bind_group: CameraLightBindGroup,
@@ -267,6 +269,15 @@ impl RendererWgpu {
         // algorithms for computing bloom mask and applying it onto frame texture
         let bloom_tech = BloomTech::new(&device, config.width, config.height, &frame_texture);
 
+        // cubemap
+        let cubemap_tech = CubemapTech::new(
+            &device,
+            &queue,
+            config.width,
+            config.height,
+            &camera_bones_light_bind_group,
+        );
+
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
             model_guids: Default::default(),
@@ -294,6 +305,7 @@ impl RendererWgpu {
             bloom_tech,
             hdr_tech,
             surface_texture_format,
+            cubemap_tech,
         }
     }
 
@@ -400,6 +412,16 @@ impl RendererWgpu {
             &self.render_storage,
             &self.camera_light_bind_group,
             &self.camera,
+        );
+
+        // draw cubemap
+        // TODO: possible issue is that deferred rendering tech might be clearing the screen, but instead only cubemap should
+        self.cubemap_tech.render_cubemap(
+            &self.device,
+            &self.queue,
+            &mut encoder,
+            &mut self.no_hdr_frame_texture,
+            &self.camera_light_bind_group,
         );
 
         // render to gbuffers

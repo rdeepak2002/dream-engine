@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 gltf = { workspace = true, features = ["KHR_materials_emissive_strength"] }
-image = { version = "0.24", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.24", default-features = false, features = ["png", "jpeg", "hdr"] }
 crossbeam-channel = { workspace = true }
 anyhow = { workspace = true }
 cfg-if = { workspace = true }

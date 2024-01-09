@@ -22,6 +22,9 @@ fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String
         } else if mime_type == "image/jpeg" {
             image::load_from_memory_with_format(bytes, ImageFormat::Jpeg)
                 .expect("Unable to decode jpg image")
+        } else if mime_type == "image/hdr" {
+            image::load_from_memory_with_format(bytes, ImageFormat::Hdr)
+                .expect("Unable to decode hdr image")
         } else {
             panic!("Unsupported mime_type provided: {}", mime_type);
         }
