@@ -1,11 +1,10 @@
 use wgpu::util::DeviceExt;
-use wgpu::TextureFormat::Rgba16Float;
+use wgpu::TextureFormat::Rgba32Float;
 use wgpu::{Extent3d, ImageCopyTexture, Origin3d, TextureAspect, TextureFormat};
 
 use dream_math::{pi, Matrix4, Point3, Vector3};
 
 use crate::camera_light_bind_group::CameraLightBindGroup;
-use crate::image::Image;
 use crate::shader::Shader;
 use crate::texture::Texture;
 
@@ -17,7 +16,6 @@ pub struct CameraUniform {
 }
 
 pub struct CubemapTech {
-    hdri_image: Image,
     hdri_texture_bind_group: Option<wgpu::BindGroup>,
     render_pipeline_equirectangular_to_cubemap: wgpu::RenderPipeline,
     pub single_texture_bind_group_layout: wgpu::BindGroupLayout,
@@ -37,22 +35,12 @@ impl CubemapTech {
         height: u32,
         camera_lights_bind_group: &CameraLightBindGroup,
     ) -> Self {
-        // load hdri image into texture
-        let hdr_image_bytes = include_bytes!("newport_loft.hdr");
-        // let hdr_image_bytes = include_bytes!("puresky_2k.hdr");
-        // TODO: correctly load hdri by referring to this: https://github.com/sotrh/learn-wgpu/blob/master/code/intermediate/tutorial13-hdr/src/resources.rs#L287
-        let mut hdri_image = Image::default();
-        hdri_image.load_from_bytes_threaded(
-            hdr_image_bytes,
-            "hdr_image_bytes",
-            Some(String::from("image/hdr")),
-        );
         // define cubemap texture to render to
         let cubemap_texture = Texture::new_cubemap_texture(
             device,
             (width, width),
             Some("cubemap_texture"),
-            Some(wgpu::TextureFormat::Rgba16Float),
+            Some(wgpu::TextureFormat::Rgba32Float),
             wgpu::TextureUsages::TEXTURE_BINDING
                 | wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_DST,
@@ -97,17 +85,17 @@ impl CubemapTech {
                         ty: wgpu::BindingType::Texture {
                             multisampled: false,
                             view_dimension: wgpu::TextureViewDimension::D2,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
                         },
                         count: None,
                     },
                     // sampler
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                        count: None,
-                    },
+                    // wgpu::BindGroupLayoutEntry {
+                    //     binding: 1,
+                    //     visibility: wgpu::ShaderStages::FRAGMENT,
+                    //     ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                    //     count: None,
+                    // },
                 ],
                 label: Some("single_texture_bind_group_layout"),
             });
@@ -177,7 +165,7 @@ impl CubemapTech {
             camera_bind_groups.push(camera_bind_group);
 
             let target_texture =
-                Texture::create_frame_texture(&device, width, width, "target_texture", Rgba16Float);
+                Texture::create_frame_texture(&device, width, width, "target_texture", Rgba32Float);
 
             target_textures.push(target_texture);
         }
@@ -225,7 +213,7 @@ impl CubemapTech {
                     module: shader_equirectangular_to_cubemap.get_shader_module(),
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
-                        format: TextureFormat::Rgba16Float,
+                        format: TextureFormat::Rgba32Float,
                         blend: None,
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -291,7 +279,6 @@ impl CubemapTech {
                 multiview: None,
             });
         Self {
-            hdri_image,
             hdri_texture_bind_group: None,
             render_pipeline_equirectangular_to_cubemap,
             render_pipeline_draw_cubemap,
@@ -312,42 +299,45 @@ impl CubemapTech {
         no_hdr_frame_texture: &mut Texture,
         camera_lights_bind_group: &CameraLightBindGroup,
     ) {
-        // wait until hdri image is loaded on new thread
-        if !self.hdri_image.loaded() {
-            self.hdri_image.update();
-            return;
-        }
-
         // once hdri image is loaded, create a texture on the gpu associated with it
         if self.hdri_texture_bind_group.is_none() {
-            // let rgba = self.hdri_image.to_rgba8();
-            // let rgba = self.hdri_image.to_rgba8();
-            let rgba = self.hdri_image.to_rgba8();
-            let hdri_texture = Texture::new_with_filter(
-                &device,
-                &queue,
-                rgba.to_vec(),
-                rgba.dimensions(),
-                Some("hdri_texture"),
-                Some(wgpu::FilterMode::Linear),
-                Some(TextureFormat::Rgba8Unorm),
+            // load hdri image into texture
+            let hdri_image_bytes = include_bytes!("newport_loft.hdr");
+            // let hdri_image_bytes = include_bytes!("puresky_2k.hdr");
+            let (hdri_image_pixels, meta) = Texture::get_pixels_for_hdri_image(hdri_image_bytes);
+            let hdri_texture = Texture::create_2d_texture(
+                device,
+                meta.width,
+                meta.height,
+                wgpu::TextureFormat::Rgba32Float,
+                wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
                 wgpu::FilterMode::Linear,
-                wgpu::FilterMode::Linear,
-            )
-            .expect("Unable to create hdri texture from hdri image");
+                None,
+            );
+            queue.write_texture(
+                wgpu::ImageCopyTexture {
+                    texture: &hdri_texture.texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                &bytemuck::cast_slice(&hdri_image_pixels),
+                wgpu::ImageDataLayout {
+                    offset: 0,
+                    bytes_per_row: Some(
+                        hdri_texture.texture.width() * std::mem::size_of::<[f32; 4]>() as u32,
+                    ),
+                    rows_per_image: Some(hdri_texture.texture.height()),
+                },
+                hdri_texture.texture.size(),
+            );
             self.hdri_texture_bind_group =
                 Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout: &self.single_texture_bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: wgpu::BindingResource::TextureView(&hdri_texture.view),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: wgpu::BindingResource::Sampler(&hdri_texture.sampler),
-                        },
-                    ],
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&hdri_texture.view),
+                    }],
                     label: Some("hdri_texture_bind_group"),
                 }));
         }
@@ -452,7 +442,7 @@ impl CubemapTech {
             &device,
             (width, width),
             Some("cubemap_texture"),
-            Some(wgpu::TextureFormat::Rgba16Float),
+            Some(wgpu::TextureFormat::Rgba32Float),
             wgpu::TextureUsages::TEXTURE_BINDING
                 | wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_DST,
@@ -476,7 +466,7 @@ impl CubemapTech {
         self.target_textures = Vec::new();
         for _ in 0..6 {
             let target_texture =
-                Texture::create_frame_texture(&device, width, width, "target_texture", Rgba16Float);
+                Texture::create_frame_texture(&device, width, width, "target_texture", Rgba32Float);
             self.target_textures.push(target_texture);
         }
     }

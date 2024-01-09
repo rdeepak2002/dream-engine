@@ -68,8 +68,8 @@ fn vs_main(
 
 @group(1) @binding(0)
 var equirectangular_map: texture_2d<f32>;
-@group(1) @binding(1)
-var equirectangular_map_sampler: sampler;
+//@group(1) @binding(1)
+//var equirectangular_map_sampler: sampler;
 
 fn sampleSphericalMap(v: vec3<f32>) -> vec2<f32> {
     let invAtan = vec2<f32>(0.1591, 0.3183);
@@ -82,6 +82,10 @@ fn sampleSphericalMap(v: vec3<f32>) -> vec2<f32> {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let uv: vec2<f32> = sampleSphericalMap(normalize(in.world_position.xyz));
-    let color: vec3<f32> = textureSample(equirectangular_map, equirectangular_map_sampler, uv).rgb;
+    let color: vec3<f32> = textureLoad(
+          equirectangular_map,
+          vec2<i32>(uv.xy * vec2<f32>(textureDimensions(equirectangular_map))),
+          0
+    ).rgb;
     return vec4<f32>(color, 1.0);
 }

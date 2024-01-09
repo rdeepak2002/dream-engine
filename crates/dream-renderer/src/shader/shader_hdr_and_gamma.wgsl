@@ -66,10 +66,12 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     // tone mapping
     let mapped = aces_tone_map(mixed_color);
+//    let mapped = mixed_color;
 
     // gamma correction
     let gamma = 2.2;
     var gamma_corrected = pow(mapped, vec3(1.0 / gamma));
+//    let gamma_corrected = mapped;
 
     return vec4(gamma_corrected, 1.0);
 }
