@@ -59,19 +59,25 @@ fn aces_tone_map(hdr: vec3<f32>) -> vec3<f32> {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // linearly mix hdr and bloom colors
-    let hdr_color = textureSample(frame_texture, frame_texture_sampler, in.tex_coords).xyz;
-    let bloom_color = textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords).xyz;
+    let hdr_color_rgba = textureSample(frame_texture, frame_texture_sampler, in.tex_coords);
+    let bloom_color_rgba = textureSample(bloom_texture, bloom_texture_sampler, in.tex_coords);
+//    let hdr_color = hdr_color_rgba.xyz;
+//    let bloom_color = bloom_color_rgba.xyz;
     let bloom_intensity: f32 = 0.02;
-    let mixed_color = mix(hdr_color, bloom_color, bloom_intensity);
+    let mixed_color_rgba = mix(hdr_color_rgba, bloom_color_rgba, bloom_intensity);
+//    let mixed_color_rgba = hdr_color_rgba + bloom_color_rgba * bloom_intensity;
+    let mixed_color = mixed_color_rgba.rgb;
 
     // tone mapping
     let mapped = aces_tone_map(mixed_color);
-//    let mapped = mixed_color;
 
     // gamma correction
-    let gamma = 2.2;
+//    let gamma = 2.2;
+//    var gamma_corrected = pow(mapped, vec3(1.0 / gamma));
+
+    // don't gamma correct cuz egui does it for us
+    let gamma = 1.0;
     var gamma_corrected = pow(mapped, vec3(1.0 / gamma));
-//    let gamma_corrected = mapped;
 
     return vec4(gamma_corrected, 1.0);
 }

@@ -415,11 +415,11 @@ impl RendererWgpu {
         );
 
         // draw cubemap
-        // TODO: possible issue is that deferred rendering tech might be clearing the screen, but instead only cubemap should
         self.cubemap_tech.render_cubemap(
             &self.device,
             &self.queue,
             &mut encoder,
+            // &mut self.hdr_tech.hdr_texture,
             &mut self.no_hdr_frame_texture,
             &self.camera_light_bind_group,
         );

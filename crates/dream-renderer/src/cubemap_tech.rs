@@ -35,6 +35,8 @@ impl CubemapTech {
         height: u32,
         camera_lights_bind_group: &CameraLightBindGroup,
     ) -> Self {
+        let width = 1080;
+
         // define cubemap texture to render to
         let cubemap_texture = Texture::new_cubemap_texture(
             device,
@@ -253,6 +255,7 @@ impl CubemapTech {
                     entry_point: "fs_main",
                     targets: &[Some(wgpu::ColorTargetState {
                         format: TextureFormat::Rgba16Float,
+                        // format: TextureFormat::Bgra8UnormSrgb,
                         blend: None,
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -296,13 +299,14 @@ impl CubemapTech {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-        no_hdr_frame_texture: &mut Texture,
+        hdr_frame_texture: &mut Texture,
         camera_lights_bind_group: &CameraLightBindGroup,
     ) {
         // once hdri image is loaded, create a texture on the gpu associated with it
         if self.hdri_texture_bind_group.is_none() {
             // load hdri image into texture
-            let hdri_image_bytes = include_bytes!("newport_loft.hdr");
+            let hdri_image_bytes = include_bytes!("pure-sky.hdr");
+            // let hdri_image_bytes = include_bytes!("newport_loft.hdr");
             // let hdri_image_bytes = include_bytes!("puresky_2k.hdr");
             let (hdri_image_pixels, meta) = Texture::get_pixels_for_hdri_image(hdri_image_bytes);
             let hdri_texture = Texture::create_2d_texture(
@@ -416,7 +420,7 @@ impl CubemapTech {
             label: Some("render_pass_draw_cubemap"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                 // view: &no_hdr_frame_texture.view,
-                view: &no_hdr_frame_texture.view,
+                view: &hdr_frame_texture.view,
                 resolve_target: None,
                 ops: wgpu::Operations {
                     // load: wgpu::LoadOp::Load,
@@ -438,6 +442,7 @@ impl CubemapTech {
     }
 
     pub fn resize(&mut self, device: &wgpu::Device, width: u32, height: u32) {
+        let width = 1080;
         self.cubemap_texture = Texture::new_cubemap_texture(
             &device,
             (width, width),

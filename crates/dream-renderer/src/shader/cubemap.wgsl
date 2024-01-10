@@ -15,52 +15,7 @@ var<uniform> lightsBuffer: LightsUniform;
 @vertex
 fn vs_main(
     @builtin(vertex_index) id: u32,
-//  @builtin(vertex_index) in_vertex_index: u32,
 ) -> VertexOutput {
-//    var pos = array(
-//        // back face
-//        vec3(-1.0f, -1.0f, -1.0f), // bottom-left
-//        vec3( 1.0f,  1.0f, -1.0f), // top-right
-//        vec3( 1.0f, -1.0f, -1.0f), // bottom-right
-//        vec3( 1.0f,  1.0f, -1.0f), // top-right
-//        vec3(-1.0f, -1.0f, -1.0f), // bottom-left
-//        vec3(-1.0f,  1.0f, -1.0f), // top-left
-//        // front face
-//        vec3(-1.0f, -1.0f,  1.0f), // bottom-left
-//        vec3( 1.0f, -1.0f,  1.0f), // bottom-right
-//        vec3( 1.0f,  1.0f,  1.0f), // top-right
-//        vec3( 1.0f,  1.0f,  1.0f), // top-right
-//        vec3(-1.0f,  1.0f,  1.0f), // top-left
-//        vec3(-1.0f, -1.0f,  1.0f), // bottom-left
-//        // left face
-//        vec3(-1.0f,  1.0f,  1.0f), // top-right
-//        vec3(-1.0f,  1.0f, -1.0f), // top-left
-//        vec3(-1.0f, -1.0f, -1.0f), // bottom-left
-//        vec3(-1.0f, -1.0f, -1.0f), // bottom-left
-//        vec3(-1.0f, -1.0f,  1.0f), // bottom-right
-//        vec3(-1.0f,  1.0f,  1.0f), // top-right
-//        // right face
-//        vec3( 1.0f,  1.0f,  1.0f), // top-left
-//        vec3( 1.0f, -1.0f, -1.0f), // bottom-right
-//        vec3( 1.0f,  1.0f, -1.0f), // top-right
-//        vec3( 1.0f, -1.0f, -1.0f), // bottom-right
-//        vec3( 1.0f,  1.0f,  1.0f), // top-left
-//        vec3( 1.0f, -1.0f,  1.0f), // bottom-left
-//        // bottom face
-//        vec3(-1.0f, -1.0f, -1.0f), // top-right
-//        vec3( 1.0f, -1.0f, -1.0f), // top-left
-//        vec3( 1.0f, -1.0f,  1.0f), // bottom-left
-//        vec3( 1.0f, -1.0f,  1.0f), // bottom-left
-//        vec3(-1.0f, -1.0f,  1.0f), // bottom-right
-//        vec3(-1.0f, -1.0f, -1.0f), // top-right
-//        // top face
-//        vec3(-1.0f,  1.0f, -1.0f), // top-left
-//        vec3( 1.0f,  1.0f , 1.0f), // bottom-right
-//        vec3( 1.0f,  1.0f, -1.0f), // top-right
-//        vec3( 1.0f,  1.0f,  1.0f), // bottom-right
-//        vec3(-1.0f,  1.0f, -1.0f), // top-left
-//        vec3(-1.0f,  1.0f,  1.0f), // bottom-left
-//    );
     let uv = vec2<f32>(vec2<u32>(
         id & 1u,
         (id >> 1u) & 1u,
@@ -102,7 +57,10 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let tex_sample = textureSample(cubemap_texture, cubemap_sampler, ray_direction).rgb;
 
     // tone mapping
-    let mapped = aces_tone_map(tex_sample);
+    let mapped = tex_sample;
+//    let mapped = aces_tone_map(tex_sample);
+//    let exposure = 1.0;
+//    let mapped = vec3(1.0) - exp(-tex_sample * exposure);
 
     // gamma correction
 //    let gamma = 2.2;
