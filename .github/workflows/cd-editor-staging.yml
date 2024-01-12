@@ -26,13 +26,13 @@ jobs:
           toolchain: nightly
       - name: Add Toolchain
         working-directory: crates/dream-runner
-        run: rustup component add rust-src --toolchain nightly-2023-06-10-x86_64-unknown-linux-gnu
+        run: rustup component add rust-src --toolchain nightly-2024-01-11-x86_64-unknown-linux-gnu
       - name: Build web
         working-directory: crates/dream-runner
-        run: rustup run nightly-2023-06-10 wasm-pack build --target web --out-dir ../../web/build --release
+        run: rustup run nightly-2024-01-11 wasm-pack build --target web --out-dir ../../web/build --release
       - name: Build web webgl
         working-directory: crates/dream-runner
-        run: rustup run nightly-2023-06-10 wasm-pack build --target web --out-dir ../../web/build-webgl --release --features=wgpu/webgl
+        run: rustup run nightly-2024-01-11 wasm-pack build --target web --out-dir ../../web/build-webgl --release --features=wgpu/webgl
       - name: Delete web git ignore
         working-directory: web
         run: rm -rf .gitignore

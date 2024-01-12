@@ -18,7 +18,7 @@ jobs:
           toolchain: nightly
       - name: Add nightly toolchain component
         working-directory: crates/dream-runner
-        run: rustup component add rust-src --toolchain nightly-2023-06-10-x86_64-unknown-linux-gnu
+        run: rustup component add rust-src --toolchain nightly-2024-01-11-x86_64-unknown-linux-gnu
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -35,7 +35,7 @@ jobs:
           toolchain: nightly
       - name: Add nightly toolchain component
         working-directory: crates/dream-runner
-        run: rustup component add rust-src --toolchain nightly-2023-06-10-x86_64-unknown-linux-gnu
+        run: rustup component add rust-src --toolchain nightly-2024-01-11-x86_64-unknown-linux-gnu
       - name: Build
         working-directory: crates/dream-runner
-        run: rustup run nightly-2023-06-10 wasm-pack build --target web --out-dir ../../web/build --release
+        run: rustup run nightly-2024-01-11 wasm-pack build --target web --out-dir ../../web/build --release
