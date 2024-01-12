@@ -151,7 +151,8 @@ impl RendererWgpu {
                 .formats
                 .iter()
                 .copied()
-                .find(|f| f.is_srgb())
+                // .find(|f| f.is_srgb())
+                .find(|f| !f.is_srgb())
                 .unwrap_or(surface_caps.formats[0]);
 
             surface_texture_format = Some(surface_format);

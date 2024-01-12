@@ -18,7 +18,7 @@ impl HdrTech {
             width,
             height,
             "hdr_texture",
-            wgpu::TextureFormat::Bgra8UnormSrgb,
+            wgpu::TextureFormat::Bgra8Unorm,
         );
 
         let shader_hdr = Shader::new(
@@ -91,7 +91,7 @@ impl HdrTech {
                 module: shader_hdr.get_shader_module(),
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: TextureFormat::Bgra8UnormSrgb,
+                    format: TextureFormat::Bgra8Unorm,
                     blend: None,
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
@@ -192,7 +192,7 @@ impl HdrTech {
             width,
             height,
             "hdr_texture",
-            wgpu::TextureFormat::Bgra8UnormSrgb,
+            wgpu::TextureFormat::Bgra8Unorm,
         );
 
         self.hdr_texture = hdr_texture;
