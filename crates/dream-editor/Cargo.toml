@@ -9,6 +9,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 egui-winit = { version = "0.25.0", default-features = false, features = ["links", "wayland"] }
 egui-wgpu = { version = "0.25.0" }
+egui_demo_lib = "0.25.0"
 crossbeam-channel = { workspace = true }
 cfg-if = { workspace = true }
 winit = { workspace = true }

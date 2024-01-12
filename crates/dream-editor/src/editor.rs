@@ -31,6 +31,8 @@ pub struct EditorEguiWgpu {
     renderer_panel: Arc<Mutex<RendererPanel>>,
     panels: Vec<Arc<Mutex<dyn Panel>>>,
     egui_wgpu_renderer: egui_wgpu::Renderer,
+    color_test: egui_demo_lib::ColorTest,
+    pub show_color_test: bool,
 }
 
 pub fn generate_egui_wgpu_renderer(
@@ -94,6 +96,8 @@ impl EditorEguiWgpu {
             Arc::downgrade(&app.scene),
         )));
         let renderer_panel = Arc::new(Mutex::new(RendererPanel::default()));
+        let color_test = egui_demo_lib::ColorTest::default();
+        let show_color_test = false;
 
         Self {
             egui_wgpu_renderer,
@@ -108,22 +112,33 @@ impl EditorEguiWgpu {
                 scene_hierarchy_panel,
                 renderer_controls_panel,
             ],
+            color_test,
+            show_color_test,
         }
     }
 
     pub fn init_egui_winit_state(&mut self) {}
 
     pub fn render_egui_editor_content(&mut self) {
-        for i in 0..self.panels.len() {
-            self.panels[i]
+        if self.show_color_test {
+            egui::CentralPanel::default().show(self.egui_winit_state.egui_ctx(), |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.expand_to_include_x(ui.available_width());
+                    self.color_test.ui(ui);
+                });
+            });
+        } else {
+            for i in 0..self.panels.len() {
+                self.panels[i]
+                    .lock()
+                    .unwrap()
+                    .draw(&self.egui_winit_state.egui_ctx());
+            }
+            self.renderer_panel
                 .lock()
                 .unwrap()
                 .draw(&self.egui_winit_state.egui_ctx());
         }
-        self.renderer_panel
-            .lock()
-            .unwrap()
-            .draw(&self.egui_winit_state.egui_ctx());
     }
 
     pub fn handle_event(
