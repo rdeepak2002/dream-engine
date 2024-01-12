@@ -2,16 +2,16 @@
   <configuration default="false" name="Run dream-runner debug" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="command" value="run --package dream-runner --bin dream-runner" />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
-    <option name="emulateTerminal" value="false" />
+    <envs>
+      <env name="RUST_LOG" value="none,dream_editor=debug,dream_renderer=debug,dream_ecs=debug,dream_math=debug,dream_app=debug,dream_window=debug,dream_fs=debug,dream_resource=debug,dream_tasks=debug,dream_runner=debug,dream_time=debug" />
+    </envs>
+    <option name="emulateTerminal" value="true" />
     <option name="channel" value="NIGHTLY" />
     <option name="requiredFeatures" value="true" />
     <option name="allFeatures" value="false" />
     <option name="withSudo" value="false" />
     <option name="buildTarget" value="REMOTE" />
     <option name="backtrace" value="SHORT" />
-    <envs>
-      <env name="RUST_LOG" value="none,dream_editor=debug,dream_renderer=debug,dream_ecs=debug,dream_math=debug,dream_app=debug,dream_window=debug,dream_fs=debug,dream_resource=debug,dream_tasks=debug,dream_runner=debug,dream_time=debug" />
-    </envs>
     <option name="isRedirectInput" value="false" />
     <option name="redirectInputPath" value="" />
     <method v="2">
