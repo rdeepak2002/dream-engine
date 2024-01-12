@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::unbounded;
 use egui::RawInput;
+use winit::raw_window_handle::{DisplayHandle, HandleError};
 
 use crate::assets_panel::AssetsPanel;
 use crate::inspector_panel::InspectorPanel;
@@ -30,15 +31,14 @@ pub struct EditorEguiWgpu {
     renderer_panel: Arc<Mutex<RendererPanel>>,
     panels: Vec<Arc<Mutex<dyn Panel>>>,
     egui_wgpu_renderer: egui_wgpu::Renderer,
-    egui_context: egui::Context,
 }
 
 pub fn generate_egui_wgpu_renderer(
     state: &dream_renderer::renderer::RendererWgpu,
 ) -> egui_wgpu::Renderer {
+    // TODO: use bgra8unorm texture for desktop build
     egui_wgpu::Renderer::new(
         &state.device,
-        // state.preferred_texture_format.unwrap(),
         state.surface_texture_format.unwrap(),
         Some(dream_renderer::texture::Texture::DEPTH_FORMAT),
         1,
@@ -63,11 +63,17 @@ impl EditorEguiWgpu {
         scale_factor: f32,
         event_loop: &winit::event_loop::EventLoop<()>,
     ) -> Self {
+        log::debug!("Using scale factor {:?} for editor", scale_factor);
         let depth_texture_egui = generate_egui_wgpu_depth_texture(renderer);
         let mut egui_wgpu_renderer = generate_egui_wgpu_renderer(renderer);
-        let mut egui_winit_state = egui_winit::State::new(&event_loop);
-        egui_winit_state.set_pixels_per_point(scale_factor);
-        let egui_winit_context = egui::Context::default();
+        let mut egui_winit_state = egui_winit::State::new(
+            egui::Context::default(),
+            egui::ViewportId::ROOT,
+            &event_loop,
+            None,
+            None,
+        );
+        // egui_winit_state.set_pixels_per_point(scale_factor);
 
         let (sx, rx) = unbounded::<EditorEvent>();
 
@@ -91,7 +97,7 @@ impl EditorEguiWgpu {
 
         Self {
             egui_wgpu_renderer,
-            egui_context: egui_winit_context,
+            // egui_context: egui_winit_context,
             egui_winit_state,
             depth_texture_egui,
             renderer_panel,
@@ -105,16 +111,28 @@ impl EditorEguiWgpu {
         }
     }
 
+    pub fn init_egui_winit_state(&mut self) {}
+
     pub fn render_egui_editor_content(&mut self) {
         for i in 0..self.panels.len() {
-            self.panels[i].lock().unwrap().draw(&self.egui_context);
+            self.panels[i]
+                .lock()
+                .unwrap()
+                .draw(&self.egui_winit_state.egui_ctx());
         }
-        self.renderer_panel.lock().unwrap().draw(&self.egui_context);
+        self.renderer_panel
+            .lock()
+            .unwrap()
+            .draw(&self.egui_winit_state.egui_ctx());
     }
 
-    pub fn handle_event(&mut self, window_event: &winit::event::WindowEvent) -> bool {
+    pub fn handle_event(
+        &mut self,
+        window: &winit::window::Window,
+        window_event: &winit::event::WindowEvent,
+    ) -> bool {
         self.egui_winit_state
-            .on_event(&self.egui_context, window_event)
+            .on_window_event(&window, window_event)
             .consumed
     }
 
@@ -124,26 +142,19 @@ impl EditorEguiWgpu {
         input: RawInput,
         pixels_per_point: f32,
     ) -> Result<(), wgpu::SurfaceError> {
-        let output = state
-            .surface
-            .as_ref()
-            .expect("No surface available for editor to draw to")
-            .get_current_texture()?;
-        // TODO: should we really be creating a view every time?
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        self.egui_context.begin_frame(input);
+        self.egui_winit_state.egui_ctx().begin_frame(input);
 
         self.renderer_panel
             .lock()
-            .unwrap()
+            .expect("Unable to acquire lock on renderer panel")
             .update_texture(state, &mut self.egui_wgpu_renderer);
         self.render_egui_editor_content();
 
-        let egui_full_output = self.egui_context.end_frame();
-        let egui_paint_jobs = self.egui_context.tessellate(egui_full_output.shapes);
+        let egui_full_output = self.egui_winit_state.egui_ctx().end_frame();
+        let egui_paint_jobs = self
+            .egui_winit_state
+            .egui_ctx()
+            .tessellate(egui_full_output.shapes, pixels_per_point);
         let mut encoder = state
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -151,6 +162,17 @@ impl EditorEguiWgpu {
             });
 
         {
+            let surface = state
+                .surface
+                .as_ref()
+                .expect("No surface available for editor to draw to");
+            let output = surface
+                .get_current_texture()
+                .expect("Unable to get current texture");
+            let view = output
+                .texture
+                .create_view(&wgpu::TextureViewDescriptor::default());
+
             for (id, image_delta) in &egui_full_output.textures_delta.set {
                 self.egui_wgpu_renderer.update_texture(
                     &state.device,
@@ -187,17 +209,19 @@ impl EditorEguiWgpu {
                                 b: 0.10588235294,
                                 a: 1.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &self.depth_texture_egui.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Clear(1.0),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         }),
                         stencil_ops: None,
                     }),
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
                 });
 
                 self.egui_wgpu_renderer.render(

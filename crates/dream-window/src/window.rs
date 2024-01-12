@@ -1,4 +1,7 @@
 use crossbeam_channel::unbounded;
+use winit::dpi::PhysicalSize;
+use winit::keyboard::Key;
+use winit::raw_window_handle::HasDisplayHandle;
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
@@ -15,7 +18,7 @@ pub struct Window {
 
 impl Default for Window {
     fn default() -> Self {
-        let event_loop = EventLoop::new();
+        let event_loop = EventLoop::new().expect("Unable to create event loop");
         let window = WindowBuilder::new()
             .with_inner_size(winit::dpi::PhysicalSize::new(3000, 1750))
             .build(&event_loop)
@@ -32,7 +35,7 @@ impl Default for Window {
         {
             let win = web_sys::window().unwrap();
 
-            window.set_inner_size(winit::dpi::LogicalSize::new(
+            window.request_inner_size(winit::dpi::LogicalSize::new(
                 win.inner_width().unwrap().as_f64().unwrap() as f32,
                 win.inner_height().unwrap().as_f64().unwrap() as f32,
             ));
@@ -42,7 +45,11 @@ impl Default for Window {
                 .and_then(|win| win.document())
                 .and_then(|doc| {
                     let dst = doc.get_element_by_id("dream-window-container")?;
-                    let canvas = web_sys::Element::from(window.canvas());
+                    let canvas = web_sys::Element::from(
+                        window
+                            .canvas()
+                            .expect("Unable to acquire HTML canvas for winit"),
+                    );
                     dst.append_child(&canvas).ok()?;
                     Some(())
                 })
@@ -90,109 +97,171 @@ impl Window {
 
         let sleep_millis: u128 = 16;
         let mut last_update_time = dream_time::time::now();
-        self.event_loop.run(move |event, _, control_flow| {
-            match event {
-                Event::RedrawRequested(window_id) if window_id == self.window.id() => {
-                    if let Some(size) = rx.try_iter().last() {
-                        self.window.set_inner_size(size);
-                    }
-
-                    let editor_raw_input = editor.egui_winit_state.take_egui_input(&self.window);
-                    let editor_pixels_per_point = self.window.scale_factor() as f32;
-
-                    let now = dream_time::time::now();
-                    if now - last_update_time > sleep_millis {
-                        app.update();
-                        app.draw(&mut renderer);
-                        last_update_time = dream_time::time::now();
-                    }
-
-                    // draw the scene (to texture)
-                    match renderer.render() {
-                        Ok(_) => {}
-                        // reconfigure the surface if it's lost or outdated
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(None);
-                            editor.handle_resize(&mut renderer);
-                        }
-                        // quit when system is out of memory
-                        Err(wgpu::SurfaceError::OutOfMemory) => {
-                            log::error!("Quitting because system out of memory");
-                            *control_flow = ControlFlow::Exit
-                        }
-                        // ignore timeout
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                    }
-
-                    // draw editor
-                    match editor.render_wgpu(&renderer, editor_raw_input, editor_pixels_per_point) {
-                        Ok(_) => {
-                            renderer.set_camera_aspect_ratio(editor.get_renderer_aspect_ratio());
-                        }
-                        Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                            renderer.resize(None);
-                            editor.handle_resize(&renderer);
-                        }
-                        Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
-                    }
-                }
-
-                Event::DeviceEvent {
-                    event: DeviceEvent::MouseMotion { delta },
-                    ..
-                } => app.process_mouse(delta.0, delta.1),
-
-                Event::WindowEvent { event, .. } => {
-                    editor.handle_event(&event);
-                    if true {
-                        //  was !editor.handle_event(&event)
+        log::debug!("Starting event loop");
+        self.event_loop
+            .run(move |event, event_loop_window_target| {
+                match event {
+                    Event::NewEvents(StartCause) => match StartCause {
+                        StartCause::ResumeTimeReached { .. } => {}
+                        StartCause::WaitCancelled { .. } => {}
+                        StartCause::Poll => {}
+                        StartCause::Init => {}
+                    },
+                    Event::WindowEvent {
+                        event,
+                        window_id: _window_id,
+                    } => {
+                        editor.handle_event(&self.window, &event);
                         match event {
-                            WindowEvent::KeyboardInput {
-                                input:
-                                    KeyboardInput {
-                                        virtual_keycode: Some(key),
-                                        state,
-                                        ..
-                                    },
-                                ..
-                            } => app.process_keyboard(key, state),
-                            WindowEvent::MouseWheel { delta, .. } => {
-                                app.process_scroll(&delta);
-                            }
-                            WindowEvent::MouseInput {
-                                button: MouseButton::Left,
-                                state,
-                                ..
-                            } => {
-                                app.process_mouse_left_input(state == ElementState::Pressed);
-                            }
-                            WindowEvent::MouseInput {
-                                button: MouseButton::Right,
-                                state,
-                                ..
-                            } => {
-                                app.process_mouse_right_input(state == ElementState::Pressed);
-                            }
+                            WindowEvent::ActivationTokenDone { .. } => {}
                             WindowEvent::Resized(physical_size) => {
+                                log::debug!("Window event resized");
                                 renderer.resize(Some(physical_size));
                                 editor.handle_resize(&renderer);
                             }
-                            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
-                            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                                // new_inner_size is &mut so w have to dereference it twice
-                                renderer.resize(Some(*new_inner_size));
-                                editor.handle_resize(&renderer);
+                            WindowEvent::Moved(_) => {}
+                            WindowEvent::CloseRequested => {
+                                event_loop_window_target.exit();
                             }
-                            _ => (),
+                            WindowEvent::Destroyed => {}
+                            WindowEvent::DroppedFile(_) => {}
+                            WindowEvent::HoveredFile(_) => {}
+                            WindowEvent::HoveredFileCancelled => {}
+                            WindowEvent::Focused(_) => {}
+                            WindowEvent::KeyboardInput {
+                                device_id: _device_id,
+                                event,
+                                is_synthetic: _is_synthetic,
+                            } => {
+                                app.process_keyboard(event.logical_key, event.state);
+                            }
+                            WindowEvent::ModifiersChanged(_) => {}
+                            WindowEvent::Ime(_) => {}
+                            WindowEvent::CursorMoved { .. } => {}
+                            WindowEvent::CursorEntered { .. } => {}
+                            WindowEvent::CursorLeft { .. } => {}
+                            WindowEvent::MouseWheel {
+                                device_id: _device_id,
+                                delta,
+                                phase: _phase,
+                            } => {
+                                app.process_scroll(&delta);
+                            }
+                            WindowEvent::MouseInput {
+                                device_id: _device_id,
+                                state,
+                                button,
+                            } => match button {
+                                MouseButton::Left => {
+                                    app.process_mouse_left_input(state == ElementState::Pressed);
+                                }
+                                MouseButton::Right => {
+                                    app.process_mouse_right_input(state == ElementState::Pressed);
+                                }
+                                MouseButton::Middle => {}
+                                MouseButton::Back => {}
+                                MouseButton::Forward => {}
+                                MouseButton::Other(_) => {}
+                            },
+                            WindowEvent::TouchpadMagnify { .. } => {}
+                            WindowEvent::SmartMagnify { .. } => {}
+                            WindowEvent::TouchpadRotate { .. } => {}
+                            WindowEvent::TouchpadPressure { .. } => {}
+                            WindowEvent::AxisMotion { .. } => {}
+                            WindowEvent::Touch(_) => {}
+                            WindowEvent::ScaleFactorChanged {
+                                scale_factor,
+                                inner_size_writer: _inner_size_writer,
+                            } => {
+                                // TODO: handle scale factor change
+                                log::warn!("TODO: handle scale factor change to {:?}", scale_factor);
+                            }
+                            WindowEvent::ThemeChanged(_) => {}
+                            WindowEvent::Occluded(_) => {}
+                            WindowEvent::RedrawRequested => {
+                                if let Some(size) = rx.try_iter().last() {
+                                    log::debug!("Received new window size");
+                                    renderer.resize(Some(PhysicalSize {
+                                        width: size.width as u32,
+                                        height: size.height as u32,
+                                    }));
+                                    editor.handle_resize(&renderer);
+                                }
+
+                                // use 32 since bloom filter uses a mip chain of size 5 (2^5 = 32)
+                                if self.window.inner_size().width < 32 || self.window.inner_size().height < 32 {
+                                    log::warn!("Window size is too small in either height of width, skipping frame");
+                                    return;
+                                }
+
+                                let editor_raw_input =
+                                    editor.egui_winit_state.take_egui_input(&self.window);
+                                let editor_pixels_per_point = self.window.scale_factor() as f32;
+
+                                let now = dream_time::time::now();
+                                if now - last_update_time > sleep_millis {
+                                    app.update();
+                                    app.draw(&mut renderer);
+                                    last_update_time = dream_time::time::now();
+                                }
+
+                                // draw the scene (to texture)
+                                match renderer.render() {
+                                    Ok(_) => {}
+                                    // reconfigure the surface if it's lost or outdated
+                                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                        renderer.resize(None);
+                                        editor.handle_resize(&mut renderer);
+                                    }
+                                    // quit when system is out of memory
+                                    Err(wgpu::SurfaceError::OutOfMemory) => {
+                                        log::error!("Quitting because system out of memory");
+                                    }
+                                    // ignore timeout
+                                    Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                                }
+
+                                // draw editor
+                                match editor.render_wgpu(
+                                    &renderer,
+                                    editor_raw_input,
+                                    editor_pixels_per_point,
+                                ) {
+                                    Ok(_) => {
+                                        renderer.set_camera_aspect_ratio(
+                                            editor.get_renderer_aspect_ratio(),
+                                        );
+                                    }
+                                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                        log::warn!("Surface lost or outdated");
+                                        renderer.resize(None);
+                                        editor.handle_resize(&renderer);
+                                    }
+                                    Err(wgpu::SurfaceError::OutOfMemory) => {
+                                        log::error!("Out of memory");
+                                    }
+                                    Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                                }
+                            }
                         }
+                    },
+                    Event::DeviceEvent {
+                        device_id: DeviceId,
+                        event: DeviceEvent::MouseMotion { delta },
+                    } => {
+                        app.process_mouse(delta.0, delta.1);
                     }
+                    Event::UserEvent(_) => {}
+                    Event::Suspended => {}
+                    Event::Resumed => {}
+                    Event::AboutToWait => {
+                        self.window.request_redraw();
+                    }
+                    Event::LoopExiting => {}
+                    Event::MemoryWarning => {}
+                    _ => {}
                 }
-                Event::MainEventsCleared => {
-                    self.window.request_redraw();
-                }
-                _ => {}
-            }
-        });
+            })
+            .expect("Unable to run event loop");
     }
 }

@@ -2,19 +2,20 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 use once_cell::sync::Lazy;
-use winit::event::VirtualKeyCode;
+// use winit::event::VirtualKeyCode;
+use winit::keyboard::Key;
 
 use dream_math::Vector2;
 
 static INPUT: Lazy<Arc<RwLock<Input>>> = Lazy::new(|| Arc::new(RwLock::new(Input::default())));
 
-pub fn set_keyboard_state(key_code: VirtualKeyCode, state: f32) {
+pub fn set_keyboard_state(key_code: Key, state: f32) {
     let i = INPUT.clone();
     let input = i.write();
     input.unwrap().key_states.insert(key_code, state);
 }
 
-pub fn get_keyboard_state(key_code: VirtualKeyCode) -> f32 {
+pub fn get_keyboard_state(key_code: Key) -> f32 {
     let i = INPUT.clone();
     let input = i.read();
     let res = *input
@@ -92,7 +93,7 @@ pub fn is_renderer_panel_active() -> bool {
 
 #[derive(Default, Debug)]
 struct Input {
-    key_states: HashMap<VirtualKeyCode, f32>,
+    key_states: HashMap<Key, f32>,
     mouse_left_is_pressed: bool,
     mouse_right_is_pressed: bool,
     mouse_move: Vector2<f32>,

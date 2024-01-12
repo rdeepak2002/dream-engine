@@ -18,7 +18,8 @@
 use std::sync::{Arc, Mutex, Weak};
 
 use winit::dpi::PhysicalPosition;
-use winit::event::{ElementState, MouseScrollDelta, VirtualKeyCode};
+use winit::event::{ElementState, MouseScrollDelta};
+use winit::keyboard::Key;
 
 use dream_ecs::component::{Bone, Light, LightType, MeshRenderer, SceneCamera, Transform};
 use dream_ecs::entity::Entity;
@@ -407,7 +408,7 @@ impl App {
         }
     }
 
-    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) {
+    pub fn process_keyboard(&mut self, key: Key, state: ElementState) {
         let amount = if state == ElementState::Pressed {
             1.0
         } else {

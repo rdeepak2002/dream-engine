@@ -313,10 +313,12 @@ impl BloomTech {
                             b: 0.0,
                             a: 1.0,
                         }),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
             });
             if i == 0 {
                 // first down sample
@@ -349,10 +351,12 @@ impl BloomTech {
                         //     b: 0.0,
                         //     a: 0.0,
                         // }),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
             });
             render_pass.set_bind_group(0, &mip.texture_bind_group, &[]);
             render_pass.set_bind_group(1, &self.filter_radius_bind_group, &[]);

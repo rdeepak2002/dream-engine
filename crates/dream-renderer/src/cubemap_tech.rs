@@ -363,10 +363,12 @@ impl CubemapTech {
                                 b: 0.0,
                                 a: 0.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     })],
                     depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
                 });
 
             render_pass_equirectangular_to_cubemap.set_bind_group(
@@ -430,10 +432,12 @@ impl CubemapTech {
                         b: 0.0,
                         a: 0.0,
                     }),
-                    store: true,
+                    store: wgpu::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
         });
         render_pass_draw_cubemap.set_bind_group(0, &camera_lights_bind_group.bind_group, &[]);
         render_pass_draw_cubemap.set_bind_group(1, &self.cubemap_texture_bind_group, &[]);

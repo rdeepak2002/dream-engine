@@ -1,3 +1,5 @@
+#![feature(stdsimd)]
+
 /// Dream is a software for developing real-time 3D experiences.
 /// Copyright (C) 2023 Deepak Ramalignam
 ///

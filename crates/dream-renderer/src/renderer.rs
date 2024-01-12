@@ -78,13 +78,15 @@ impl RendererWgpu {
         // instance is a handle to our GPU
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
+            flags: Default::default(),
             dx12_shader_compiler: Default::default(),
+            gles_minor_version: Default::default(),
         });
 
         // size is the dimensions of the window
         let size;
         // surface is the surface of our window
-        let surface;
+        let mut surface;
         if window.is_some() {
             size = window.as_ref().unwrap().inner_size();
             // # Safety
@@ -285,6 +287,11 @@ impl RendererWgpu {
             instance_buffer_map: Default::default(),
         };
 
+        if surface.is_some() {
+            log::debug!("Surface being configured here");
+            surface.as_mut().unwrap().configure(&device, &config);
+        }
+
         Self {
             surface,
             device,
@@ -331,6 +338,7 @@ impl RendererWgpu {
         );
         // update surface using new config
         if self.surface.is_some() {
+            log::debug!("Surface being configured here");
             self.surface
                 .as_mut()
                 .unwrap()

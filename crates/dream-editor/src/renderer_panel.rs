@@ -22,7 +22,6 @@ impl RendererPanel {
     ) {
         // show final render
         if self.render_output_epaint_texture_id.is_some() {
-            // free old texture to prevent memory leak
             egui_wgpu_renderer.free_texture(self.render_output_epaint_texture_id.as_ref().unwrap());
             // TODO: try using update texture
             // egui_wgpu_renderer.update_texture(

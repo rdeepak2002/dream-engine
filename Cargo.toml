@@ -13,13 +13,13 @@ serde_yaml = "0.9.21"
 
 # rendering API
 #wgpu = { version = "0.17.0", features = ["webgl"] } # enable this feature to do webgl
-wgpu = { version = "0.17.1" }
+wgpu = { version = "0.18.0" }
 
 # 3D model parsing
 gltf = "1.1.0"
 
 # windowing
-winit = "0.28.7"
+winit = "0.29.4"
 
 # logging
 log = "0.4"
@@ -31,7 +31,7 @@ once_cell = "1.17.1"
 cfg-if = "1"
 
 # immediate gui library
-egui = { version = "0.23.0" }
+egui = { version = "0.25.0" }
 
 # easy conversion to plain datatypes
 bytemuck = { version = "1.12", features = ["derive"] }

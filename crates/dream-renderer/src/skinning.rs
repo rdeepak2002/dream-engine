@@ -192,6 +192,7 @@ impl SkinningTech {
                 {
                     let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                         label: Some("compute skinning pass"),
+                        timestamp_writes: None,
                     });
                     cpass.set_bind_group(0, &primitive.primitive_info_bind_group, &[]);
                     cpass.set_bind_group(1, &self.skinning_bind_group, &[]);

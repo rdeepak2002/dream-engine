@@ -118,6 +118,9 @@ impl Panel for AssetsPanel {
                 let size = 50.0;
                 let extra_size = 25.0;
                 let num_items_per_row = (panel_width / (size + 10.0)) as i32 as usize;
+                if num_items_per_row == 0 {
+                    return;
+                }
                 egui::Grid::new("AssetGrid")
                     .min_col_width(size + extra_size)
                     .max_col_width(size + extra_size)

@@ -341,7 +341,7 @@ impl DeferredRenderingTech {
                                 b: 0.0,
                                 a: 0.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     }),
                     // normal
@@ -355,7 +355,7 @@ impl DeferredRenderingTech {
                                 b: 0.0,
                                 a: 0.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     }),
                     // emissive
@@ -369,7 +369,7 @@ impl DeferredRenderingTech {
                                 b: 0.0,
                                 a: 0.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     }),
                     // ao roughness metallic
@@ -383,7 +383,7 @@ impl DeferredRenderingTech {
                                 b: 0.0,
                                 a: 0.0,
                             }),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     }),
                 ],
@@ -391,10 +391,12 @@ impl DeferredRenderingTech {
                     view: &depth_texture.view,
                     depth_ops: Some(wgpu::Operations {
                         load: wgpu::LoadOp::Clear(1.0),
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     }),
                     stencil_ops: None,
                 }),
+                timestamp_writes: None,
+                occlusion_query_set: None,
             });
         render_pass_write_g_buffers.set_pipeline(&self.render_pipeline_write_g_buffers);
 
@@ -474,10 +476,12 @@ impl DeferredRenderingTech {
                         //     a: 1.0,
                         // }),
                         load: wgpu::LoadOp::Load,
-                        store: true,
+                        store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
             });
 
         if self.resized {
