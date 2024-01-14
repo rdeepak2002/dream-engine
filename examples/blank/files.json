@@ -24,11 +24,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/BoxTexturedNonPowerOfTwo.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/sphere.glb.meta",
     "fileUrl": null
   },
   {
     "filepath": "models/robot.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/MultiUVTest.glb",
     "fileUrl": null
   },
   {
@@ -44,7 +52,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/BoomBox.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/BoxTexturedNonPowerOfTwo.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/campfire.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/BoxTextured.glb",
     "fileUrl": null
   },
   {
@@ -85,6 +105,18 @@
   },
   {
     "filepath": "models/cube.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/MultiUVTest.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/BoxTextured.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/BoomBox.glb",
     "fileUrl": null
   },
   {

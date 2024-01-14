@@ -218,6 +218,28 @@ impl Default for App {
                 ),
             );
         }
+        // {
+        //     // test model
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "515ff347-2991-45ff-93f8-ba97799c1323".into(),
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(0.7, 0.21, 1.0),
+        //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //         ),
+        //     );
+        // }
         {
             // raiden
             let entity_handle =

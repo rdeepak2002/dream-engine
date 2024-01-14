@@ -132,7 +132,8 @@ fn compute_final_color(shadow_visibility: f32, world_position: vec3<f32>, camera
     }
 
     // TODO: ambient should be retrieved from skybox / atmosphere
-    let ambientIntensity = 0.03;
+//    let ambientIntensity = 0.03;
+    let ambientIntensity = 0.3;
     let ambient: vec3<f32> = vec3(ambientIntensity, ambientIntensity, ambientIntensity) * albedo.rgb * ao;
     var color = result + ambient;
 

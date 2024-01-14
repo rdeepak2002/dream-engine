@@ -226,20 +226,24 @@ impl Material {
 
         // load base color image
         let rgba_image = self.base_color_image.to_rgba8();
-        let base_color_texture = crate::texture::Texture::new(
+        let base_color_texture = crate::texture::Texture::new_with_address_mode(
             device,
             queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Base color texture"),
             Some(wgpu::FilterMode::Linear),
-            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
+            // Some(wgpu::TextureFormat::Rgba8UnormSrgb),
+            Some(wgpu::TextureFormat::Rgba8Unorm),
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
         )
         .expect("Unable to load base color texture");
 
         // load metallic image
         let rgba_image = self.metallic_roughness_image.to_rgba8();
-        let metallic_roughness_texture = crate::texture::Texture::new(
+        let metallic_roughness_texture = crate::texture::Texture::new_with_address_mode(
             device,
             queue,
             rgba_image.to_vec(),
@@ -247,12 +251,15 @@ impl Material {
             Some("Metallic roughness texture"),
             Some(wgpu::FilterMode::Linear),
             Some(wgpu::TextureFormat::Rgba8Unorm),
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
         )
         .expect("Unable to load metallic roughness texture");
 
         // load normal map image
         let rgba_image = self.normal_map_image.to_rgba8();
-        let normal_map_texture = crate::texture::Texture::new(
+        let normal_map_texture = crate::texture::Texture::new_with_address_mode(
             device,
             queue,
             rgba_image.to_vec(),
@@ -260,25 +267,32 @@ impl Material {
             Some("Normal map texture"),
             Some(wgpu::FilterMode::Linear),
             Some(wgpu::TextureFormat::Rgba8Unorm),
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
         )
         .expect("Unable to load normal map texture");
 
         // load emissive image
         let rgba_image = self.emissive_image.to_rgba8();
-        let emissive_texture = crate::texture::Texture::new(
+        let emissive_texture = crate::texture::Texture::new_with_address_mode(
             device,
             queue,
             rgba_image.to_vec(),
             rgba_image.dimensions(),
             Some("Emissive texture"),
             Some(wgpu::FilterMode::Linear),
-            Some(wgpu::TextureFormat::Rgba8UnormSrgb),
+            // Some(wgpu::TextureFormat::Rgba8UnormSrgb),
+            Some(wgpu::TextureFormat::Rgba8Unorm),
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
         )
         .expect("Unable to load emissive texture");
 
         // load occlusion image
         let rgba_image = self.occlusion_image.to_rgba8();
-        let occlusion_texture = crate::texture::Texture::new(
+        let occlusion_texture = crate::texture::Texture::new_with_address_mode(
             device,
             queue,
             rgba_image.to_vec(),
@@ -286,6 +300,9 @@ impl Material {
             Some("Occlusion texture"),
             Some(wgpu::FilterMode::Linear),
             Some(wgpu::TextureFormat::Rgba8Unorm),
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
+            wgpu::AddressMode::Repeat,
         )
         .expect("Unable to load occlusion texture");
 
