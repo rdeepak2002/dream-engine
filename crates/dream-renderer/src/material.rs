@@ -1,3 +1,4 @@
+use std::path::Path;
 use wgpu::util::DeviceExt;
 
 use crate::image::Image;
@@ -79,6 +80,7 @@ impl Material {
         device: &wgpu::Device,
         pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
         buffer_data: &[Vec<u8>],
+        image_folder: &Path,
     ) -> Self {
         let pbr_properties = material.pbr_metallic_roughness();
 
@@ -90,8 +92,11 @@ impl Material {
                 base_color_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                base_color_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                base_color_image.load_from_gltf_texture_threaded(
+                    texture_info.texture(),
+                    buffer_data,
+                    image_folder,
+                );
             }
         }
 
@@ -103,8 +108,11 @@ impl Material {
                 metallic_roughness_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                metallic_roughness_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                metallic_roughness_image.load_from_gltf_texture_threaded(
+                    texture_info.texture(),
+                    buffer_data,
+                    image_folder,
+                );
             }
         }
 
@@ -116,8 +124,11 @@ impl Material {
                 normal_map_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                normal_map_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                normal_map_image.load_from_gltf_texture_threaded(
+                    texture_info.texture(),
+                    buffer_data,
+                    image_folder,
+                );
             }
         }
 
@@ -129,7 +140,11 @@ impl Material {
                 emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                emissive_image.load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                emissive_image.load_from_gltf_texture_threaded(
+                    texture_info.texture(),
+                    buffer_data,
+                    image_folder,
+                );
             }
         }
 
@@ -141,8 +156,11 @@ impl Material {
                 occlusion_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
-                occlusion_image
-                    .load_from_gltf_texture_threaded(texture_info.texture(), buffer_data);
+                occlusion_image.load_from_gltf_texture_threaded(
+                    texture_info.texture(),
+                    buffer_data,
+                    image_folder,
+                );
             }
         }
 

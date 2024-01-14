@@ -36,6 +36,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/raiden_separated_textures.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/MultiUVTest.glb",
     "fileUrl": null
   },
@@ -145,6 +149,154 @@
   },
   {
     "filepath": "models/berserk_armor_4k.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_15.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_14.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_16.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_15.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_17.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_13.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/raiden_separated_textures.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_8.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/.DS_Store",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_12.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_10.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_18.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_11.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_14.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_21.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_20.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_5.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_8.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_9.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_19.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_9.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_13.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_12.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/raiden_separated_textures.bin.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/raiden_separated_textures.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_0.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_11.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_0.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_17.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_16.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_5.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/raiden_separated_textures.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_20.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_10.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_21.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_19.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden_separated_textures/Image_18.png",
     "fileUrl": null
   },
   {

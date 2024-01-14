@@ -250,7 +250,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "11b43475-e5be-409b-9416-47d88fc372c1".into(), // 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+                "47133c33-5d54-4fe9-9e9d-d737ecd80f7b".into(), // gltf: 47133c33-5d54-4fe9-9e9d-d737ecd80f7b ; glb: 11b43475-e5be-409b-9416-47d88fc372c1
                 true,
                 Default::default(),
             );

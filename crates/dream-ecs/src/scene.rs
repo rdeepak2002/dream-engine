@@ -206,8 +206,15 @@ impl Scene {
                     };
                 }
                 Source::Uri(uri) => {
-                    let bin = read_binary(std::path::PathBuf::from(uri), false)
-                        .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
+                    let current_gltf_path = std::path::PathBuf::from(path);
+                    let parent_folder = current_gltf_path.as_path().parent().unwrap();
+                    let final_path = parent_folder.join(std::path::PathBuf::from(uri));
+                    let bin = read_binary(final_path, true).unwrap_or_else(|_| {
+                        panic!(
+                            "unable to load binary at uri {:?}",
+                            std::path::PathBuf::from(uri)
+                        );
+                    });
                     buffer_data.push(bin);
                 }
             }

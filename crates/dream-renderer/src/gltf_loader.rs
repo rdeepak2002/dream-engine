@@ -16,6 +16,8 @@ pub fn read_gltf<'a>(
     device: &wgpu::Device,
     pbr_material_factors_bind_group_layout: &wgpu::BindGroupLayout,
 ) -> Model {
+    let current_gltf_path = std::path::PathBuf::from(path);
+    let parent_folder = current_gltf_path.as_path().parent().unwrap();
     let gltf = gltf::Gltf::from_slice(
         &read_binary(std::path::PathBuf::from(path), true)
             .unwrap_or_else(|_| panic!("Error loading binary for glb {}", path)),
@@ -30,7 +32,8 @@ pub fn read_gltf<'a>(
                 };
             }
             Source::Uri(uri) => {
-                let bin = read_binary(std::path::PathBuf::from(uri), false)
+                let final_path = parent_folder.join(std::path::PathBuf::from(uri));
+                let bin = read_binary(final_path, true)
                     .unwrap_or_else(|_| panic!("unable to load binary at uri {}", uri));
                 buffer_data.push(bin);
             }
@@ -47,6 +50,7 @@ pub fn read_gltf<'a>(
             device,
             pbr_material_factors_bind_group_layout,
             &buffer_data,
+            parent_folder,
         )));
     }
 

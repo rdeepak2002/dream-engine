@@ -59,6 +59,7 @@ pub fn read_binary(file_path: PathBuf, absolute: bool) -> Result<Vec<u8>> {
     let path = if absolute {
         file_path
     } else {
+        log::debug!("Using full path {:?}", get_full_path(file_path.clone()));
         get_full_path(file_path)
     };
     cfg_if! {

@@ -1,5 +1,6 @@
 use crossbeam_channel::{unbounded, Receiver};
 use image::{DynamicImage, ImageFormat, RgbaImage};
+use std::path::Path;
 
 // use dream_tasks::task_pool::get_async_task_pool;
 
@@ -34,6 +35,7 @@ fn dynamic_image_from_bytes(bytes: &[u8], _label: &str, mime_type: Option<String
 pub fn get_texture_bytes_info_from_gltf<'a>(
     texture: gltf::Texture<'a>,
     buffer_data: &[Vec<u8>],
+    image_folder: &Path,
 ) -> (Vec<u8>, String, Option<String>) {
     let texture_name = texture.name().unwrap_or("No texture name");
     let texture_source = texture.source().source();
@@ -54,7 +56,7 @@ pub fn get_texture_bytes_info_from_gltf<'a>(
             uri,
             mime_type: _mime_type,
         } => {
-            let bin = dream_fs::fs::read_binary(std::path::PathBuf::from(uri), false)
+            let bin = dream_fs::fs::read_binary(image_folder.join(uri), true)
                 .expect("unable to load binary");
             let buf_dat: &[u8] = &bin;
             (buf_dat.to_vec(), String::from(texture_name), None)
@@ -95,9 +97,11 @@ impl Image {
         &mut self,
         texture: gltf::Texture,
         buffer_data: &[Vec<u8>],
+        image_folder: &Path,
     ) {
         let texture = texture.clone();
-        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
+        let (bytes, label, mime_type) =
+            get_texture_bytes_info_from_gltf(texture, buffer_data, image_folder);
         self.load_from_bytes_threaded(&bytes, label.as_str(), mime_type);
     }
 
@@ -120,9 +124,11 @@ impl Image {
         &mut self,
         texture: gltf::Texture<'a>,
         buffer_data: &[Vec<u8>],
+        image_folder: &Path,
     ) {
         let texture = texture.clone();
-        let (bytes, label, mime_type) = get_texture_bytes_info_from_gltf(texture, buffer_data);
+        let (bytes, label, mime_type) =
+            get_texture_bytes_info_from_gltf(texture, buffer_data, image_folder);
         self.load_from_bytes(&bytes, label.as_str(), mime_type);
     }
 
