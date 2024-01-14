@@ -206,7 +206,14 @@ impl SkinningTech {
                         cpass.set_bind_group(2, &primitive.vertex_buffer_bind_group, &[]);
                         cpass.set_bind_group(3, &primitive.skinned_vertices_buffer_bind_group, &[]);
                         cpass.set_pipeline(&self.skinning_compute_pipeline);
-                        cpass.dispatch_workgroups(min!(primitive.buffer_length / 64, 65535), 1, 1);
+                        cpass.dispatch_workgroups(
+                            min!(
+                                primitive.buffer_length / 64,
+                                wgpu::Limits::default().max_compute_workgroups_per_dimension
+                            ),
+                            1,
+                            1,
+                        );
                     }
                 }
             }
