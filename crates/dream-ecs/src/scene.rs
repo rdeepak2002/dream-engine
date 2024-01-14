@@ -21,6 +21,7 @@ use std::sync::{Arc, Mutex, Weak};
 
 use anyhow::{anyhow, Result};
 use gltf::buffer::Source;
+use gltf::Node;
 use shipyard::{IntoIter, IntoWithId};
 
 use dream_fs::fs::read_binary;
@@ -214,7 +215,7 @@ impl Scene {
 
         // TODO: apply transformations of gltf_scene to this current entity (with id entity_id)
         for gltf_scene in gltf.scenes() {
-            // println!("Scene name: {}", gltf_scene.clone().name().unwrap());
+            log::debug!("Number of scene nodes: {}", gltf_scene.nodes().len());
             for node in gltf_scene.nodes() {
                 let mut skin_root_nodes = HashSet::new();
                 let mut inverse_bind_poses = HashMap::new();
@@ -265,10 +266,42 @@ impl Scene {
                 });
 
                 // set transform of root node of GLTF scene to this entity we are adding scene to
-                {
-                    let transform = get_gltf_transform(&node);
-                    let entity = Entity::from_handle(entity_id, scene.clone());
-                    entity.add_component(transform);
+                // {
+                //     let transform = get_gltf_transform(&node);
+                //     let entity = Entity::from_handle(entity_id, scene.clone());
+                //     entity.add_component(transform);
+                // }
+                let new_entity_id = Scene::create_entity(
+                    scene.clone(),
+                    Some(node.name().unwrap_or("Node").into()),
+                    Some(entity_id),
+                    Some(get_gltf_transform(&node)),
+                )
+                .expect("Unable to create entity while traversing GLTF nodes");
+                if node.mesh().is_some() {
+                    MeshRenderer::add_to_entity(
+                        scene.clone(),
+                        new_entity_id,
+                        resource_manager,
+                        guid.clone(),
+                        false,
+                        Some(node.mesh().unwrap().index()),
+                    );
+                }
+                let is_skin_root = skin_root_nodes.contains(&(node.index() as u32));
+                let is_bone = is_skin_root;
+                if is_bone {
+                    let entity = Entity::from_handle(new_entity_id, scene.clone());
+                    entity.add_component(Bone {
+                        is_root: is_skin_root,
+                        node_id: node.index() as u32,
+                        bone_id: *joint_node_id_to_joint_id
+                            .get(&(node.index() as u32))
+                            .unwrap_or(&1),
+                        inverse_bind_pose: *inverse_bind_poses
+                            .get(&(node.index() as u32))
+                            .unwrap_or(&Matrix4::<f32>::identity()),
+                    });
                 }
                 let node_idx = &(node.index() as u32);
                 process_gltf_child_node(
@@ -279,7 +312,7 @@ impl Scene {
                     scene.clone(),
                     resource_manager,
                     guid.clone(),
-                    entity_id,
+                    new_entity_id,
                     skin_root_nodes.contains(node_idx),
                 );
             }
@@ -311,61 +344,50 @@ impl Scene {
             entity_id: u64,
             is_bone: bool,
         ) {
-            match child_node.mesh() {
-                None => {
-                    for child in child_node.children() {
-                        let new_entity_id = Scene::create_entity(
-                            scene.clone(),
-                            Some(child.name().unwrap_or("Node").into()),
-                            Some(entity_id),
-                            Some(get_gltf_transform(&child)),
-                        )
-                        .expect("Unable to create entity while traversing GLTF nodes");
-                        let is_skin_root = skin_root_nodes.contains(&(child.index() as u32));
-                        let is_bone = is_bone || is_skin_root;
-                        if is_bone {
-                            let entity = Entity::from_handle(new_entity_id, scene.clone());
-                            entity.add_component(Bone {
-                                is_root: is_skin_root,
-                                node_id: child.index() as u32,
-                                bone_id: *joint_node_id_to_joint_id
-                                    .get(&(child.index() as u32))
-                                    .unwrap_or(&1),
-                                inverse_bind_pose: *inverse_bind_poses
-                                    .get(&(child.index() as u32))
-                                    .unwrap_or(&Matrix4::<f32>::identity()),
-                            });
-                        }
-                        process_gltf_child_node(
-                            child,
-                            skin_root_nodes,
-                            inverse_bind_poses,
-                            joint_node_id_to_joint_id,
-                            scene.clone(),
-                            resource_manager,
-                            guid.clone(),
-                            new_entity_id,
-                            is_bone,
-                        );
-                    }
-                }
-                Some(mesh) => {
-                    let new_entity_id = Scene::create_entity(
-                        scene.clone(),
-                        Some(mesh.name().unwrap_or("Mesh").into()),
-                        Some(entity_id),
-                        None,
-                    )
-                    .expect("Unable to create entity while traversing GLTF mesh nodes");
+            for child in child_node.children() {
+                let new_entity_id = Scene::create_entity(
+                    scene.clone(),
+                    Some(child.name().unwrap_or("Node").into()),
+                    Some(entity_id),
+                    Some(get_gltf_transform(&child)),
+                )
+                .expect("Unable to create entity while traversing GLTF nodes");
+                if child.mesh().is_some() {
                     MeshRenderer::add_to_entity(
-                        scene,
+                        scene.clone(),
                         new_entity_id,
                         resource_manager,
-                        guid,
+                        guid.clone(),
                         false,
-                        Some(mesh.index()),
+                        Some(child.mesh().unwrap().index()),
                     );
                 }
+                let is_skin_root = skin_root_nodes.contains(&(child.index() as u32));
+                let is_bone = is_bone || is_skin_root;
+                if is_bone {
+                    let entity = Entity::from_handle(new_entity_id, scene.clone());
+                    entity.add_component(Bone {
+                        is_root: is_skin_root,
+                        node_id: child.index() as u32,
+                        bone_id: *joint_node_id_to_joint_id
+                            .get(&(child.index() as u32))
+                            .unwrap_or(&1),
+                        inverse_bind_pose: *inverse_bind_poses
+                            .get(&(child.index() as u32))
+                            .unwrap_or(&Matrix4::<f32>::identity()),
+                    });
+                }
+                process_gltf_child_node(
+                    child,
+                    skin_root_nodes,
+                    inverse_bind_poses,
+                    joint_node_id_to_joint_id,
+                    scene.clone(),
+                    resource_manager,
+                    guid.clone(),
+                    new_entity_id,
+                    is_bone,
+                );
             }
         }
 

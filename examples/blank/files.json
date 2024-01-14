@@ -44,6 +44,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/ABeautifulGame.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/emissive-cube.glb",
     "fileUrl": null
   },
@@ -133,6 +137,10 @@
   },
   {
     "filepath": "models/raiden.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/ABeautifulGame.glb.meta",
     "fileUrl": null
   },
   {

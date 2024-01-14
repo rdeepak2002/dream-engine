@@ -797,6 +797,12 @@ impl ShadowTech {
                     panic!("no model loaded in renderer with guid {model_guid}")
                 });
                 let mesh_index = render_map_key.mesh_index;
+                if mesh_index as usize >= model.meshes.len() || model.meshes.is_empty() {
+                    // log::error!(
+                    //     "Unable to get mesh at index {mesh_index} for model with guid {model_guid}"
+                    // );
+                    continue;
+                }
                 let mesh = model.meshes.get(mesh_index as usize).unwrap_or_else(|| {
                     panic!("no mesh at index {mesh_index} for model with guid {model_guid}")
                 });
@@ -806,21 +812,23 @@ impl ShadowTech {
                     .get(render_map_key)
                     .expect("No instance buffer found in map");
                 render_pass_write_shadow_buffer.set_vertex_buffer(1, instance_buffer.slice(..));
-                for primitive in &mesh.primitives {
-                    // get the material and set it in the bind group
-                    let material = model
-                        .materials
-                        .get(primitive.material)
-                        .expect("No material at index");
-                    // render all types of objects
-                    if material.pbr_material_textures_bind_group.is_some() {
-                        render_pass_write_shadow_buffer.set_bind_group(
-                            2,
-                            material.pbr_material_textures_bind_group.as_ref().unwrap(),
-                            &[],
-                        );
-                        render_pass_write_shadow_buffer
-                            .draw_primitive_instanced(&primitive, 0..transforms.len() as u32);
+                if mesh.is_some() {
+                    for primitive in &mesh.as_ref().unwrap().primitives {
+                        // get the material and set it in the bind group
+                        let material = model
+                            .materials
+                            .get(primitive.material)
+                            .expect("No material at index");
+                        // render all types of objects
+                        if material.pbr_material_textures_bind_group.is_some() {
+                            render_pass_write_shadow_buffer.set_bind_group(
+                                2,
+                                material.pbr_material_textures_bind_group.as_ref().unwrap(),
+                                &[],
+                            );
+                            render_pass_write_shadow_buffer
+                                .draw_primitive_instanced(&primitive, 0..transforms.len() as u32);
+                        }
                     }
                 }
             }

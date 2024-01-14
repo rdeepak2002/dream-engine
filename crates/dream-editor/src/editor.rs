@@ -2,7 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use crossbeam_channel::unbounded;
 use egui::RawInput;
-use winit::raw_window_handle::{DisplayHandle, HandleError};
 
 use crate::assets_panel::AssetsPanel;
 use crate::inspector_panel::InspectorPanel;

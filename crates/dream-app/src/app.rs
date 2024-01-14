@@ -228,13 +228,13 @@ impl Default for App {
         //         Arc::downgrade(&scene),
         //         entity_handle,
         //         &resource_manager,
-        //         "515ff347-2991-45ff-93f8-ba97799c1323".into(),
+        //         "df8822a0-7bd2-439c-8e23-ab4cc1b9d6bd".into(),
         //         true,
         //         Default::default(),
         //     );
         //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
         //         Transform::new(
-        //             Vector3::new(0.7, 0.21, 1.0),
+        //             Vector3::new(2.0, 2.0, 1.0),
         //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
         //             Vector3::new(1.0, 1.0, 1.0),
         //         ),

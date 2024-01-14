@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use dream_math::Matrix4;
+use dream_math::{min, Matrix4};
 
 use crate::render_storage::RenderStorage;
 use crate::shader::Shader;
@@ -174,32 +174,40 @@ impl SkinningTech {
                 .get_mut(&*model_guid)
                 .unwrap_or_else(|| panic!("no model loaded in renderer with guid {model_guid}"));
             let mesh_index = render_map_key.mesh_index;
+            if mesh_index as usize >= model.meshes.len() || model.meshes.is_empty() {
+                // log::error!(
+                //     "Unable to get mesh at index {mesh_index} for model with guid {model_guid}"
+                // );
+                continue;
+            }
             let mesh = model
                 .meshes
                 .get_mut(mesh_index as usize)
                 .unwrap_or_else(|| {
                     panic!("no mesh at index {mesh_index} for model with guid {model_guid}")
                 });
-            for primitive in &mut mesh.primitives {
-                // get the material and set it in the bind group
-                let material = model
-                    .materials
-                    .get(primitive.material)
-                    .expect("No material at index");
-                // render all types of objects
-                if material.pbr_material_textures_bind_group.is_some()
-                    && primitive.skinned_vertex_buffer.is_some()
-                {
-                    let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                        label: Some("compute skinning pass"),
-                        timestamp_writes: None,
-                    });
-                    cpass.set_bind_group(0, &primitive.primitive_info_bind_group, &[]);
-                    cpass.set_bind_group(1, &self.skinning_bind_group, &[]);
-                    cpass.set_bind_group(2, &primitive.vertex_buffer_bind_group, &[]);
-                    cpass.set_bind_group(3, &primitive.skinned_vertices_buffer_bind_group, &[]);
-                    cpass.set_pipeline(&self.skinning_compute_pipeline);
-                    cpass.dispatch_workgroups(primitive.buffer_length / 64, 1, 1);
+            if mesh.is_some() {
+                for primitive in &mut mesh.as_mut().unwrap().primitives {
+                    // get the material and set it in the bind group
+                    let material = model
+                        .materials
+                        .get(primitive.material)
+                        .expect("No material at index");
+                    // render all types of objects
+                    if material.pbr_material_textures_bind_group.is_some()
+                        && primitive.skinned_vertex_buffer.is_some()
+                    {
+                        let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                            label: Some("compute skinning pass"),
+                            timestamp_writes: None,
+                        });
+                        cpass.set_bind_group(0, &primitive.primitive_info_bind_group, &[]);
+                        cpass.set_bind_group(1, &self.skinning_bind_group, &[]);
+                        cpass.set_bind_group(2, &primitive.vertex_buffer_bind_group, &[]);
+                        cpass.set_bind_group(3, &primitive.skinned_vertices_buffer_bind_group, &[]);
+                        cpass.set_pipeline(&self.skinning_compute_pipeline);
+                        cpass.dispatch_workgroups(min!(primitive.buffer_length / 64, 65535), 1, 1);
+                    }
                 }
             }
         }

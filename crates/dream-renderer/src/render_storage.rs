@@ -109,24 +109,32 @@ impl RenderStorage {
                 .get_mut(&*model_guid)
                 .unwrap_or_else(|| panic!("no model loaded in renderer with guid {}", model_guid));
             let mesh_index = render_map_key.mesh_index;
+            if mesh_index as usize >= model.meshes.len() || model.meshes.is_empty() {
+                log::error!(
+                    "Unable to get mesh at index {mesh_index} for model with guid {model_guid}"
+                );
+                continue;
+            }
             let mesh = model
                 .meshes
                 .get_mut(mesh_index as usize)
                 .unwrap_or_else(|| {
                     panic!("no mesh at index {mesh_index} for model with guid {model_guid}",)
                 });
-            for primitive in &mesh.primitives {
-                let material = model
-                    .materials
-                    .get_mut(primitive.material)
-                    .expect("No material at index");
-                if !material.loaded() {
-                    material.update_images();
-                    material.update_textures(
-                        device,
-                        queue,
-                        pbr_material_textures_bind_group_layout,
-                    );
+            if mesh.is_some() {
+                for primitive in &mesh.as_ref().unwrap().primitives {
+                    let material = model
+                        .materials
+                        .get_mut(primitive.material)
+                        .expect("No material at index");
+                    if !material.loaded() {
+                        material.update_images();
+                        material.update_textures(
+                            device,
+                            queue,
+                            pbr_material_textures_bind_group_layout,
+                        );
+                    }
                 }
             }
         }

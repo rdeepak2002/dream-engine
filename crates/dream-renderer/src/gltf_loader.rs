@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use dream_ecs::component::MeshRenderer;
 use gltf::buffer::Source;
 use gltf::Mesh;
 use wgpu::util::DeviceExt;
@@ -52,6 +53,9 @@ pub fn read_gltf<'a>(
     let mut mesh_list = Vec::new();
     for scene in gltf.scenes() {
         for node in scene.nodes() {
+            if node.mesh().is_some() {
+                mesh_list.push(node.mesh().unwrap());
+            }
             process_gltf_child_node(node, &mut mesh_list);
         }
     }
@@ -65,26 +69,30 @@ pub fn read_gltf<'a>(
             name: mesh.name().unwrap_or("mesh").to_string(),
             primitives: get_dream_primitives_from_gltf_mesh(device, mesh, &buffer_data),
         };
+        log::debug!("Mesh loaded name: {:?} idx: {:?}", mesh.name, idx);
         mesh_map.insert(idx, mesh);
     }
+    log::debug!("mesh_map keys: {:?}", mesh_map.keys());
     let mut meshes = Vec::new();
     for i in 0..mesh_map.len() {
-        meshes.push(mesh_map.remove(&i).unwrap());
+        if mesh_map.contains_key(&i) {
+            meshes.push(Some(mesh_map.remove(&i).unwrap()));
+        } else {
+            // TODO: this line shouldnt even be triggered
+            log::error!("Unable to remove mesh with key {i}");
+            meshes.push(None);
+        }
     }
 
     Model::new(meshes, materials)
 }
 
 fn process_gltf_child_node<'a>(child_node: gltf::Node<'a>, mesh_list: &mut Vec<Mesh<'a>>) {
-    match child_node.mesh() {
-        None => {
-            for child in child_node.children() {
-                process_gltf_child_node(child, mesh_list);
-            }
+    for child in child_node.children() {
+        if child.mesh().is_some() {
+            mesh_list.push(child.mesh().unwrap());
         }
-        Some(mesh) => {
-            mesh_list.push(mesh);
-        }
+        process_gltf_child_node(child, mesh_list);
     }
 }
 
