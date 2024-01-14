@@ -18,6 +18,7 @@ struct VertexOutput {
     @location(1) normal: vec3<f32>,
     @location(2) tangent: vec3<f32>,
     @location(3) bitangent: vec3<f32>,
+    @location(4) color: vec4<f32>,
 }
 
 @vertex
@@ -49,6 +50,7 @@ fn vs_main(
     out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
     out.bitangent = normalize(cross(out.tangent, out.normal));
+    out.color = model.color;
     return out;
 }
 
@@ -93,7 +95,7 @@ fn fs_main(in: VertexOutput) -> GBufferOutput {
     // base color
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
-    let base_color = base_color_texture * base_color_factor;
+    let base_color = in.color * base_color_texture * base_color_factor;
     // compute normal using normal map
     let TBN = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
     let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);

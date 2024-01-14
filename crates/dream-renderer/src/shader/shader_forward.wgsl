@@ -23,6 +23,7 @@ struct VertexOutput {
     @location(2) tangent: vec3<f32>,
     @location(3) bitangent: vec3<f32>,
     @location(4) world_position: vec3<f32>,
+    @location(5) color: vec4<f32>,
 }
 
 @vertex
@@ -55,6 +56,7 @@ fn vs_main(
     out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
     out.bitangent = normalize(cross(out.tangent, out.normal));
+    out.color = model.color;
     return out;
 }
 
@@ -135,7 +137,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // albedo
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
-    let albedo = base_color_texture * base_color_factor;
+    let albedo = in.color * base_color_texture * base_color_factor;
 
     // emissive
     var emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);

@@ -22,7 +22,7 @@ fn cs_main(@builtin(global_invocation_id) global_invocation_id : vec3<u32>) {
         return;
     }
 
-    let vertexInfoBytes = u32(20);
+    let vertexInfoBytes = u32(24);
 
     let offsetPx = u32(0);
     let offsetPy = u32(1);

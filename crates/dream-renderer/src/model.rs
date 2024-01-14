@@ -15,17 +15,20 @@ pub struct PrimitiveInfo {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ModelVertex {
-    pub position: [f32; 3],
     // 0 , 1,  2
-    pub tex_coords: [f32; 2],
+    pub position: [f32; 3],
     // 3,  4
-    pub normal: [f32; 3],
+    pub tex_coords: [f32; 2],
     // 5,  6,  7
-    pub tangent: [f32; 4],
+    pub normal: [f32; 3],
     // 8,  9,  10, 11
-    pub bone_ids: [u32; 4],
+    pub tangent: [f32; 4],
     // 12, 13, 14, 15
-    pub bone_weights: [f32; 4], // 16, 17, 18, 19
+    pub bone_ids: [u32; 4],
+    // 16, 17, 18, 19
+    pub bone_weights: [f32; 4],
+    // 20, 21, 22, 23
+    pub color: [f32; 4],
 }
 
 impl Vertex for ModelVertex {
@@ -63,6 +66,11 @@ impl Vertex for ModelVertex {
                 wgpu::VertexAttribute {
                     offset: mem::size_of::<[f32; 16]>() as wgpu::BufferAddress,
                     shader_location: 5,
+                    format: wgpu::VertexFormat::Float32x4,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 20]>() as wgpu::BufferAddress,
+                    shader_location: 6,
                     format: wgpu::VertexFormat::Float32x4,
                 },
             ],

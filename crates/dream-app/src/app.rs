@@ -219,30 +219,52 @@ impl Default for App {
             );
         }
         {
-            let entity_handle = Scene::create_entity(
-                Arc::downgrade(&scene),
-                Some("Dark Knight".into()),
-                None,
-                None,
-            )
-            .expect("Unable to create entity");
+            // raiden
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Raiden".into()), None, None)
+                    .expect("Unable to create entity");
             // add mesh renderer component
             MeshRenderer::add_to_entity(
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(), // 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+                "11b43475-e5be-409b-9416-47d88fc372c1".into(), // 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
                 true,
                 Default::default(),
             );
             Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
                 Transform::new(
                     Vector3::new(0.7, 0.21, 1.0),
-                    UnitQuaternion::from_euler_angles(-1.7, -2.2, 0.1),
+                    UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
                     Vector3::new(1.0, 1.0, 1.0),
                 ),
             );
         }
+        // {
+        //     let entity_handle = Scene::create_entity(
+        //         Arc::downgrade(&scene),
+        //         Some("Dark Knight".into()),
+        //         None,
+        //         None,
+        //     )
+        //     .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "7a71a1a6-a2ef-4e84-ad5d-4e3409d5ea87".into(), // 4k: f358ffb3-b766-4839-a93f-30b81ff9c107
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(0.7, 0.21, 1.0),
+        //             UnitQuaternion::from_euler_angles(-1.7, -2.2, 0.1),
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //         ),
+        //     );
+        // }
         // {
         //     let entity_handle =
         //         Scene::create_entity(Arc::downgrade(&scene), Some("Marisa".into()), None, None)

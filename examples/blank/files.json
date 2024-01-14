@@ -68,6 +68,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/raiden.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/berserk_armor.glb",
     "fileUrl": null
   },
@@ -93,6 +97,10 @@
   },
   {
     "filepath": "models/cube.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/raiden.glb.meta",
     "fileUrl": null
   },
   {

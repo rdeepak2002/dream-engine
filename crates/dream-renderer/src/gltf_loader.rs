@@ -155,12 +155,22 @@ fn get_dream_primitives_from_gltf_mesh(
                         tangent: [0.0, 0.0, 0.0, 0.0],
                         bone_ids: [0, 0, 0, 0],
                         bone_weights: [0., 0., 0., 0.],
+                        color: [1.0, 1.0, 1.0, 1.0],
                     })
             });
             log::debug!(
                 "Number of vertices: {:?}",
                 mesh_vertices_and_indices.vertices.len()
             );
+        }
+
+        if let Some(color_attribute) = reader.read_colors(0).map(|v| v.into_rgba_f32()) {
+            let mut color_index = 0;
+            color_attribute.for_each(|color| {
+                mesh_vertices_and_indices.vertices[color_index].color = color;
+
+                color_index += 1;
+            });
         }
 
         let mut manually_compute_tangents = false;
