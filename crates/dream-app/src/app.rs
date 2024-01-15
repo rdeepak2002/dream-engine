@@ -218,28 +218,28 @@ impl Default for App {
                 ),
             );
         }
-        // {
-        //     // test model
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
-        //             .expect("Unable to create entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "df8822a0-7bd2-439c-8e23-ab4cc1b9d6bd".into(),
-        //         true,
-        //         Default::default(),
-        //     );
-        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
-        //         Transform::new(
-        //             Vector3::new(2.0, 2.0, 1.0),
-        //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
-        //             Vector3::new(1.0, 1.0, 1.0),
-        //         ),
-        //     );
-        // }
+        {
+            // test model
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
+                    .expect("Unable to create entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "6ca0bd4f-7214-4a8a-bda2-b6f63f3e9d12".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(2.0, 2.0, 1.0),
+                    UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+                    Vector3::new(1.0, 1.0, 1.0),
+                ),
+            );
+        }
         {
             // raiden
             let entity_handle =

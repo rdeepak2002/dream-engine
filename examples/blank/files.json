@@ -68,6 +68,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/NormalTangentTest.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/campfire.glb.meta",
     "fileUrl": null
   },
@@ -100,11 +104,27 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/NormalTangentMirrorTest.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/berserk_armor.glb",
     "fileUrl": null
   },
   {
+    "filepath": "models/NormalTangentTest.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/berserk_armor.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/NormalTangentMirrorTest.glb.meta",
     "fileUrl": null
   },
   {
@@ -113,6 +133,10 @@
   },
   {
     "filepath": "models/cube.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest.glb.meta",
     "fileUrl": null
   },
   {

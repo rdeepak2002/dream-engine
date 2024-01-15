@@ -463,6 +463,17 @@ impl RendererWgpu {
             |material: &Material| material.factor_alpha < 1.0,
         );
 
+        // TODO: enable deferred rendering tech again
+        // self.forward_rendering_tech.render_to_output_texture(
+        //     &mut encoder,
+        //     &mut self.no_hdr_frame_texture,
+        //     &mut self.depth_texture,
+        //     &self.render_storage,
+        //     &self.camera_light_bind_group,
+        //     &self.shadow_tech,
+        //     |material: &Material| true,
+        // );
+
         // generate bloom texture
         self.bloom_tech.generate_bloom_texture(&mut encoder);
 

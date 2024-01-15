@@ -55,7 +55,7 @@ fn vs_main(
     out.clip_position = camera.view_proj * model_matrix * totalPosition;
     out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
-    out.bitangent = normalize(cross(out.tangent, out.normal));
+    out.bitangent = normalize(cross(out.normal, out.tangent));
     out.color = model.color;
     return out;
 }
