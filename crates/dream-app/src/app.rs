@@ -228,7 +228,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "6ca0bd4f-7214-4a8a-bda2-b6f63f3e9d12".into(),
+                "22965fe6-626c-406e-b9d5-d725ef2b8278".into(),
                 true,
                 Default::default(),
             );

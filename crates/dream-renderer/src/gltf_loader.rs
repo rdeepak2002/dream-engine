@@ -288,6 +288,8 @@ fn get_dream_primitives_from_gltf_mesh(
                     tangent.y = f * (delta_v2 * edge1.y - delta_v1 * edge2.y);
                     tangent.z = f * (delta_v2 * edge1.z - delta_v1 * edge2.z);
 
+                    // TODO: This w is incorrect I think?
+
                     mesh_vertices_and_indices.vertices
                         [mesh_vertices_and_indices.indices[i] as usize]
                         .tangent = [tangent.x, tangent.y, tangent.z, 1.0];
