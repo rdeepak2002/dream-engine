@@ -218,28 +218,28 @@ impl Default for App {
                 ),
             );
         }
-        {
-            // test model
-            let entity_handle =
-                Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
-                    .expect("Unable to create entity");
-            // add mesh renderer component
-            MeshRenderer::add_to_entity(
-                Arc::downgrade(&scene),
-                entity_handle,
-                &resource_manager,
-                "b3b60aaa-43ff-4b94-8e22-8b110f6d2c5c".into(), // tex transform: 0c97aecc-c5f4-412e-aa3a-29bb131e045e // alpha: 85ee7bd6-f149-493b-9c9a-9bc518fa7dd0
-                true,
-                Default::default(),
-            );
-            Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
-                Transform::new(
-                    Vector3::new(2.0, 2.0, 1.0),
-                    UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
-                    Vector3::new(1.0, 1.0, 1.0),
-                ),
-            );
-        }
+        // {
+        //     // test model
+        //     let entity_handle =
+        //         Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
+        //             .expect("Unable to create entity");
+        //     // add mesh renderer component
+        //     MeshRenderer::add_to_entity(
+        //         Arc::downgrade(&scene),
+        //         entity_handle,
+        //         &resource_manager,
+        //         "b3b60aaa-43ff-4b94-8e22-8b110f6d2c5c".into(), // tex transform: 0c97aecc-c5f4-412e-aa3a-29bb131e045e // alpha: 85ee7bd6-f149-493b-9c9a-9bc518fa7dd0
+        //         true,
+        //         Default::default(),
+        //     );
+        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+        //         Transform::new(
+        //             Vector3::new(2.0, 2.0, 1.0),
+        //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+        //             Vector3::new(1.0, 1.0, 1.0),
+        //         ),
+        //     );
+        // }
         {
             // raiden
             let entity_handle =
@@ -250,7 +250,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "47133c33-5d54-4fe9-9e9d-d737ecd80f7b".into(), // gltf: 47133c33-5d54-4fe9-9e9d-d737ecd80f7b ; glb: 11b43475-e5be-409b-9416-47d88fc372c1
+                "11b43475-e5be-409b-9416-47d88fc372c1".into(), // mgr: 11b43475-e5be-409b-9416-47d88fc372c1 ; mg4: 1800f1b9-6f46-4b1c-918b-af8b04b0888c
                 true,
                 Default::default(),
             );
