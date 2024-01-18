@@ -4,12 +4,18 @@ const LIGHT_TYPE_DIRECTIONAL: u32 = 1u;
 
 struct MaterialFactors {
     base_color: vec3<f32>,
-    _padding1: f32,
+    alpha: f32,
     emissive: vec4<f32>,
     metallic: f32,
     roughness: f32,
-    alpha: f32,
     alpha_cutoff: f32,
+    padding5: f32,
+    tex_transform_0: vec3<f32>,
+    padding1: f32,
+    tex_transform_1: vec3<f32>,
+    padding2: f32,
+    tex_transform_2: vec3<f32>,
+    padding3: f32,
 };
 
 struct Light {

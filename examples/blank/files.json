@@ -164,11 +164,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/AlphaBlendModeTest.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/raiden.glb.meta",
     "fileUrl": null
   },
   {
     "filepath": "models/ABeautifulGame.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest.meta",
     "fileUrl": null
   },
   {
@@ -321,6 +329,310 @@
   },
   {
     "filepath": "models/raiden_separated_textures/Image_18.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/LICENSE.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/metadata.json.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/screenshot.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/README.body.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/metadata.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/README.body.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/README.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/LICENSE.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/README.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Correct.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/UV.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/TextureTransformTest.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/TextureTransformTest.bin.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Arrow.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/UV.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Error.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/TextureTransformTest.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/NotSupported.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/NotSupported.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Correct.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/TextureTransformTest.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Arrow.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/glTF/Error.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/screenshot/screenshot.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/screenshot/screenshot.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/screenshot/screenshot-x150.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformTest/screenshot/screenshot-x150.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/LICENSE.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/metadata.json.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/README.body.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/metadata.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/README.body.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/README.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/LICENSE.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Binary.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/README.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Embedded.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Binary/AlphaBlendModeTest.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Binary/AlphaBlendModeTest.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Embedded/AlphaBlendModeTest.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF-Embedded/AlphaBlendModeTest.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendLabels.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_occlusionRoughnessMetallic.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendLabels.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.bin.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_occlusionRoughnessMetallic.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_normal.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_normal.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_baseColor.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/MatBed_baseColor.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/glTF/AlphaBlendModeTest.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot_large.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/MissingBorder.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/BlendFail.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/OpaqueVsBlend.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffDefaultFail.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffValueFail.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/BlendFail.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffDefaultFail.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffTests.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot-x150.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffTests.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/OpaqueFail.jpg.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot-x150.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/OpaqueVsBlend.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/MissingBorder.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/CutoffValueFail.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/OpaqueFail.jpg",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/AlphaBlendModeTest/screenshot/screenshot_large.jpg.meta",
     "fileUrl": null
   },
   {

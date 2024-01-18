@@ -128,29 +128,33 @@ var<uniform> cascade_settings_3: CascadeSettingsUniform;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    // texture transform (offset, scale, rotate)
+    let tex_transform = mat3x3<f32>(material_factors.tex_transform_0, material_factors.tex_transform_1, material_factors.tex_transform_2);
+    let tex_coords: vec2<f32> = (tex_transform * vec3(in.tex_coords, 1.0)).xy;
+
     // compute normal using normal map
     let TBN = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
-    let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, in.tex_coords);
+    let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, tex_coords);
     var normal = normal_map_texture.rgb * 2.0 - vec3(1.0, 1.0, 1.0);
     normal = normalize(TBN * normal);
 
     // albedo
-    let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
+    let base_color_texture = textureSample(texture_base_color, sampler_base_color, tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let albedo = in.color * base_color_texture * base_color_factor;
 
     // emissive
-    var emissive_texture = textureSample(texture_emissive, sampler_emissive, in.tex_coords);
+    var emissive_texture = textureSample(texture_emissive, sampler_emissive, tex_coords);
     let emissive_factor = vec4(material_factors.emissive.rgb, 1.0);
     let emissive_strength = material_factors.emissive.w;
     let emissive = emissive_texture * emissive_factor * emissive_strength;
 
     // ao
-    let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, in.tex_coords);
+    let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, tex_coords);
     let ao = occlusion_texture.r;
 
     // roughness
-    let metallic_roughness_texture = textureSample(texture_metallic_roughness, sampler_metallic_roughness, in.tex_coords);
+    let metallic_roughness_texture = textureSample(texture_metallic_roughness, sampler_metallic_roughness, tex_coords);
     let roughness = metallic_roughness_texture.g * material_factors.roughness;
 
     // metallic

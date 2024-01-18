@@ -7,7 +7,10 @@ pub type UnitVector3<T> = nalgebra::UnitVector3<T>;
 pub type Point3<T> = nalgebra::Point3<T>;
 pub type Point4<T> = nalgebra::Point4<T>;
 pub type Matrix4<T> = nalgebra::Matrix4<T>;
+pub type Matrix3<T> = nalgebra::Matrix3<T>;
+pub type Matrix2<T> = nalgebra::Matrix2<T>;
 pub type Rotation3<T> = nalgebra::Rotation3<T>;
+pub type Rotation2<T> = nalgebra::Rotation2<T>;
 
 pub fn pi() -> f32 {
     nalgebra::RealField::pi()

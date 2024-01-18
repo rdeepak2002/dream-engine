@@ -1,3 +1,5 @@
+use dream_math::{Matrix3, Matrix4, Rotation2, UnitQuaternion, Vector2, Vector3};
+use gltf::texture::TextureTransform;
 use std::path::Path;
 use wgpu::util::DeviceExt;
 
@@ -7,12 +9,18 @@ use crate::image::Image;
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MaterialFactors {
     pub base_color: [f32; 3],
-    pub _padding1: f32,
+    pub alpha: f32,
     pub emissive: [f32; 4],
     pub metallic: f32,
     pub roughness: f32,
-    pub alpha: f32,
     pub alpha_cutoff: f32,
+    pub padding5: f32,
+    pub tex_transform_0: [f32; 3],
+    pub padding1: f32,
+    pub tex_transform_1: [f32; 3],
+    pub padding2: f32,
+    pub tex_transform_2: [f32; 3],
+    pub padding3: f32,
 }
 
 impl MaterialFactors {
@@ -22,6 +30,7 @@ impl MaterialFactors {
         metallic: f32,
         roughness: f32,
         alpha_cutoff: f32,
+        tex_transform: [[f32; 3]; 3],
     ) -> Self {
         Self {
             base_color: [
@@ -29,12 +38,18 @@ impl MaterialFactors {
                 *base_color.get(1).unwrap(),
                 *base_color.get(2).unwrap(),
             ],
-            _padding1: 0.,
+            alpha: *(base_color.get(3).unwrap_or(&1.0)),
             emissive,
             metallic,
             roughness,
-            alpha: *(base_color.get(3).unwrap_or(&1.0)),
             alpha_cutoff,
+            padding5: 0.,
+            tex_transform_0: tex_transform[0],
+            padding1: 0.,
+            tex_transform_1: tex_transform[1],
+            padding2: 0.,
+            tex_transform_2: tex_transform[2],
+            padding3: 0.,
         }
     }
 }
@@ -74,6 +89,12 @@ pub struct Material {
     pub pbr_mat_buffer: wgpu::Buffer,
 }
 
+fn mat3_from_texture_transform(texture_transform: &TextureTransform) -> Matrix3<f32> {
+    Matrix3::<f32>::new_translation(&texture_transform.offset().into())
+        * Rotation2::new(-1.0 * texture_transform.rotation()).to_homogeneous()
+        * Matrix3::new_nonuniform_scaling(&texture_transform.scale().into())
+}
+
 impl Material {
     pub(crate) fn new<'a>(
         material: gltf::Material<'a>,
@@ -86,12 +107,16 @@ impl Material {
 
         // get base color texture
         let mut base_color_image = Image::default();
+        let mut base_color_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         match pbr_properties.base_color_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
                 base_color_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                if let Some(texture_transform) = texture_info.texture_transform() {
+                    base_color_transform = mat3_from_texture_transform(&texture_transform);
+                }
                 base_color_image.load_from_gltf_texture_threaded(
                     texture_info.texture(),
                     buffer_data,
@@ -102,12 +127,16 @@ impl Material {
 
         // get metallic texture
         let mut metallic_roughness_image = Image::default();
+        let mut metallic_roughness_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
                 metallic_roughness_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                if let Some(texture_transform) = texture_info.texture_transform() {
+                    metallic_roughness_transform = mat3_from_texture_transform(&texture_transform);
+                }
                 metallic_roughness_image.load_from_gltf_texture_threaded(
                     texture_info.texture(),
                     buffer_data,
@@ -134,12 +163,16 @@ impl Material {
 
         // get emissive texture
         let mut emissive_image = Image::default();
+        let mut emissive_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         match material.emissive_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
                 emissive_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                if let Some(texture_transform) = texture_info.texture_transform() {
+                    emissive_transform = mat3_from_texture_transform(&texture_transform);
+                }
                 emissive_image.load_from_gltf_texture_threaded(
                     texture_info.texture(),
                     buffer_data,
@@ -172,7 +205,8 @@ impl Material {
             [em_factor[0], em_factor[1], em_factor[2], em_strength],
             pbr_properties.metallic_factor(),
             pbr_properties.roughness_factor(),
-            material.alpha_cutoff().unwrap_or(0.0),
+            material.alpha_cutoff().unwrap_or(0.5),
+            base_color_transform.into(),
         );
 
         // create the gpu bind group for material factors

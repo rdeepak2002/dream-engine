@@ -303,7 +303,7 @@ fn get_dream_primitives_from_gltf_mesh(
             }
         }
 
-        let mesh_name = mesh.name().expect("No mesh name found");
+        let mesh_name = mesh.name().unwrap_or("mesh");
 
         // TODO: create a new() method for Primitive struct to do all this logic
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
