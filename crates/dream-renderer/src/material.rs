@@ -1,5 +1,7 @@
 use dream_math::{Matrix3, Matrix4, Rotation2, UnitQuaternion, Vector2, Vector3};
-use gltf::texture::TextureTransform;
+use gltf::material::{NormalTexture, OcclusionTexture};
+use gltf::texture::{Info, MagFilter, MinFilter, TextureTransform, WrappingMode};
+use gltf::Texture;
 use std::path::Path;
 use wgpu::util::DeviceExt;
 
@@ -70,6 +72,77 @@ impl From<gltf::material::AlphaMode> for AlphaBlendMode {
     }
 }
 
+pub struct TextureInfo {
+    pub address_mode_u: wgpu::AddressMode,
+    pub address_mode_v: wgpu::AddressMode,
+    pub address_mode_w: wgpu::AddressMode,
+    pub mag_filter: wgpu::FilterMode,
+    pub min_filter: wgpu::FilterMode,
+}
+
+impl Default for TextureInfo {
+    fn default() -> Self {
+        Self {
+            address_mode_u: wgpu::AddressMode::Repeat,
+            address_mode_v: wgpu::AddressMode::Repeat,
+            address_mode_w: wgpu::AddressMode::Repeat,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Nearest,
+        }
+    }
+}
+
+fn address_mode_for_gltf_wrapping_mode(
+    wrapping_mode: gltf::texture::WrappingMode,
+) -> wgpu::AddressMode {
+    return match wrapping_mode {
+        WrappingMode::ClampToEdge => wgpu::AddressMode::ClampToEdge,
+        WrappingMode::MirroredRepeat => wgpu::AddressMode::MirrorRepeat,
+        WrappingMode::Repeat => wgpu::AddressMode::Repeat,
+    };
+}
+
+fn filter_for_gltf_min_filter(filter: gltf::texture::MinFilter) -> wgpu::FilterMode {
+    return match filter {
+        MinFilter::Nearest => wgpu::FilterMode::Nearest,
+        MinFilter::Linear => wgpu::FilterMode::Linear,
+        MinFilter::NearestMipmapNearest => wgpu::FilterMode::Nearest,
+        MinFilter::LinearMipmapNearest => wgpu::FilterMode::Linear,
+        MinFilter::NearestMipmapLinear => wgpu::FilterMode::Nearest,
+        MinFilter::LinearMipmapLinear => wgpu::FilterMode::Linear,
+    };
+}
+
+fn filter_for_gltf_mag_filter(filter: gltf::texture::MagFilter) -> wgpu::FilterMode {
+    return match filter {
+        MagFilter::Nearest => wgpu::FilterMode::Nearest,
+        MagFilter::Linear => wgpu::FilterMode::Linear,
+    };
+}
+
+impl<'a> From<Texture<'a>> for TextureInfo {
+    fn from(gltf_texture: Texture) -> Self {
+        let address_mode_u = gltf_texture.sampler().wrap_s();
+        let address_mode_v = gltf_texture.sampler().wrap_t();
+        let address_mode_w = gltf::texture::WrappingMode::Repeat;
+        let mag_filter = gltf_texture
+            .sampler()
+            .mag_filter()
+            .unwrap_or(gltf::texture::MagFilter::Linear);
+        let min_filter = gltf_texture
+            .sampler()
+            .min_filter()
+            .unwrap_or(gltf::texture::MinFilter::Nearest);
+        Self {
+            address_mode_u: address_mode_for_gltf_wrapping_mode(address_mode_u),
+            address_mode_v: address_mode_for_gltf_wrapping_mode(address_mode_v),
+            address_mode_w: address_mode_for_gltf_wrapping_mode(address_mode_w),
+            mag_filter: filter_for_gltf_mag_filter(mag_filter),
+            min_filter: filter_for_gltf_min_filter(min_filter),
+        }
+    }
+}
+
 pub struct Material {
     // pub pbr_material_factors_bind_group: wgpu::BindGroup,
     pub pbr_material_textures_bind_group: Option<wgpu::BindGroup>,
@@ -87,6 +160,11 @@ pub struct Material {
     pub emissive_image: Image,
     pub occlusion_image: Image,
     pub pbr_mat_buffer: wgpu::Buffer,
+    pub base_color_texture_info: TextureInfo,
+    pub metallic_roughness_texture_info: TextureInfo,
+    pub normal_texture_info: TextureInfo,
+    pub emissive_texture_info: TextureInfo,
+    pub occlusion_texture_info: TextureInfo,
 }
 
 fn mat3_from_texture_transform(texture_transform: &TextureTransform) -> Matrix3<f32> {
@@ -108,6 +186,7 @@ impl Material {
         // get base color texture
         let mut base_color_image = Image::default();
         let mut base_color_transform: Matrix3<f32> = Matrix3::<f32>::identity();
+        let mut base_color_texture_info: TextureInfo = TextureInfo::default();
         match pbr_properties.base_color_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -122,12 +201,14 @@ impl Material {
                     buffer_data,
                     image_folder,
                 );
+                base_color_texture_info = texture_info.texture().into();
             }
         }
 
         // get metallic texture
         let mut metallic_roughness_image = Image::default();
         let mut metallic_roughness_transform: Matrix3<f32> = Matrix3::<f32>::identity();
+        let mut metallic_roughness_texture_info: TextureInfo = TextureInfo::default();
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
@@ -142,11 +223,13 @@ impl Material {
                     buffer_data,
                     image_folder,
                 );
+                metallic_roughness_texture_info = texture_info.texture().into();
             }
         }
 
         // get normal map texture
         let mut normal_map_image = Image::default();
+        let mut normal_texture_info = TextureInfo::default();
         match material.normal_texture() {
             None => {
                 let bytes = include_bytes!("default_normal.png");
@@ -158,12 +241,14 @@ impl Material {
                     buffer_data,
                     image_folder,
                 );
+                normal_texture_info = texture_info.texture().into();
             }
         }
 
         // get emissive texture
         let mut emissive_image = Image::default();
         let mut emissive_transform: Matrix3<f32> = Matrix3::<f32>::identity();
+        let mut emissive_texture_info = TextureInfo::default();
         match material.emissive_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -178,11 +263,13 @@ impl Material {
                     buffer_data,
                     image_folder,
                 );
+                emissive_texture_info = texture_info.texture().into();
             }
         }
 
         // get occlusion texture
         let mut occlusion_image = Image::default();
+        let mut occlusion_texture_info = TextureInfo::default();
         match material.occlusion_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -194,6 +281,7 @@ impl Material {
                     buffer_data,
                     image_folder,
                 );
+                occlusion_texture_info = texture_info.texture().into();
             }
         }
 
@@ -243,6 +331,11 @@ impl Material {
             emissive_image,
             occlusion_image,
             pbr_mat_buffer,
+            base_color_texture_info,
+            metallic_roughness_texture_info,
+            normal_texture_info,
+            emissive_texture_info,
+            occlusion_texture_info,
         }
     }
 
@@ -278,7 +371,7 @@ impl Material {
 
         // load base color image
         let rgba_image = self.base_color_image.to_rgba8();
-        let base_color_texture = crate::texture::Texture::new_with_address_mode(
+        let base_color_texture = crate::texture::Texture::new_with_address_mode_and_filters(
             device,
             queue,
             rgba_image.to_vec(),
@@ -287,31 +380,36 @@ impl Material {
             Some(wgpu::FilterMode::Linear),
             // Some(wgpu::TextureFormat::Rgba8UnormSrgb),
             Some(wgpu::TextureFormat::Rgba8Unorm),
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
+            self.base_color_texture_info.address_mode_u,
+            self.base_color_texture_info.address_mode_v,
+            self.base_color_texture_info.address_mode_w,
+            self.base_color_texture_info.min_filter,
+            self.base_color_texture_info.mag_filter,
         )
         .expect("Unable to load base color texture");
 
         // load metallic image
         let rgba_image = self.metallic_roughness_image.to_rgba8();
-        let metallic_roughness_texture = crate::texture::Texture::new_with_address_mode(
-            device,
-            queue,
-            rgba_image.to_vec(),
-            rgba_image.dimensions(),
-            Some("Metallic roughness texture"),
-            Some(wgpu::FilterMode::Linear),
-            Some(wgpu::TextureFormat::Rgba8Unorm),
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-        )
-        .expect("Unable to load metallic roughness texture");
+        let metallic_roughness_texture =
+            crate::texture::Texture::new_with_address_mode_and_filters(
+                device,
+                queue,
+                rgba_image.to_vec(),
+                rgba_image.dimensions(),
+                Some("Metallic roughness texture"),
+                Some(wgpu::FilterMode::Linear),
+                Some(wgpu::TextureFormat::Rgba8Unorm),
+                self.metallic_roughness_texture_info.address_mode_u,
+                self.metallic_roughness_texture_info.address_mode_v,
+                self.metallic_roughness_texture_info.address_mode_w,
+                self.metallic_roughness_texture_info.min_filter,
+                self.metallic_roughness_texture_info.mag_filter,
+            )
+            .expect("Unable to load metallic roughness texture");
 
         // load normal map image
         let rgba_image = self.normal_map_image.to_rgba8();
-        let normal_map_texture = crate::texture::Texture::new_with_address_mode(
+        let normal_map_texture = crate::texture::Texture::new_with_address_mode_and_filters(
             device,
             queue,
             rgba_image.to_vec(),
@@ -319,15 +417,17 @@ impl Material {
             Some("Normal map texture"),
             Some(wgpu::FilterMode::Linear),
             Some(wgpu::TextureFormat::Rgba8Unorm),
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
+            self.normal_texture_info.address_mode_u,
+            self.normal_texture_info.address_mode_v,
+            self.normal_texture_info.address_mode_w,
+            self.normal_texture_info.min_filter,
+            self.normal_texture_info.mag_filter,
         )
         .expect("Unable to load normal map texture");
 
         // load emissive image
         let rgba_image = self.emissive_image.to_rgba8();
-        let emissive_texture = crate::texture::Texture::new_with_address_mode(
+        let emissive_texture = crate::texture::Texture::new_with_address_mode_and_filters(
             device,
             queue,
             rgba_image.to_vec(),
@@ -336,15 +436,17 @@ impl Material {
             Some(wgpu::FilterMode::Linear),
             // Some(wgpu::TextureFormat::Rgba8UnormSrgb),
             Some(wgpu::TextureFormat::Rgba8Unorm),
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
+            self.emissive_texture_info.address_mode_u,
+            self.emissive_texture_info.address_mode_v,
+            self.emissive_texture_info.address_mode_w,
+            self.emissive_texture_info.min_filter,
+            self.emissive_texture_info.mag_filter,
         )
         .expect("Unable to load emissive texture");
 
         // load occlusion image
         let rgba_image = self.occlusion_image.to_rgba8();
-        let occlusion_texture = crate::texture::Texture::new_with_address_mode(
+        let occlusion_texture = crate::texture::Texture::new_with_address_mode_and_filters(
             device,
             queue,
             rgba_image.to_vec(),
@@ -352,9 +454,11 @@ impl Material {
             Some("Occlusion texture"),
             Some(wgpu::FilterMode::Linear),
             Some(wgpu::TextureFormat::Rgba8Unorm),
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
-            wgpu::AddressMode::Repeat,
+            self.occlusion_texture_info.address_mode_u,
+            self.occlusion_texture_info.address_mode_v,
+            self.occlusion_texture_info.address_mode_w,
+            self.occlusion_texture_info.min_filter,
+            self.occlusion_texture_info.mag_filter,
         )
         .expect("Unable to load occlusion texture");
 

@@ -221,7 +221,7 @@ impl Texture {
         })
     }
 
-    pub fn new_with_address_mode(
+    pub fn new_with_address_mode_and_filters(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         rgba: Vec<u8>,
@@ -232,6 +232,8 @@ impl Texture {
         address_mode_u: wgpu::AddressMode,
         address_mode_v: wgpu::AddressMode,
         address_mode_w: wgpu::AddressMode,
+        min_filter: wgpu::FilterMode,
+        mag_filter: wgpu::FilterMode,
     ) -> Result<Self> {
         let size = wgpu::Extent3d {
             width: dimensions.0,
@@ -271,8 +273,8 @@ impl Texture {
             address_mode_u,
             address_mode_v,
             address_mode_w,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
+            mag_filter,
+            min_filter,
             mipmap_filter: mip_map_filter.unwrap_or(wgpu::FilterMode::Nearest),
             ..Default::default()
         });

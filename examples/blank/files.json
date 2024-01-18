@@ -140,6 +140,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/TextureSettingsTest.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/MultiUVTest.glb.meta",
     "fileUrl": null
   },
@@ -329,6 +333,126 @@
   },
   {
     "filepath": "models/raiden_separated_textures/Image_18.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/LICENSE.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/metadata.json.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/screenshot.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/README.body.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/metadata.json",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/README.body.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/README.md",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/LICENSE.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Binary.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/README.md.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Embedded.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Binary/TextureSettingsTest.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Binary/TextureSettingsTest.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Embedded/TextureSettingsTest.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF-Embedded/TextureSettingsTest.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/CheckAndX.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureSettingsTest0.bin",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureTestLabels.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/CheckAndX_V.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureTestLabels.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureSettingsTest.gltf",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureSettingsTest.gltf.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/CheckAndX_V.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/TextureSettingsTest0.bin.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/glTF/CheckAndX.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/screenshot/screenshot.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/screenshot/screenshot-x150.png",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/screenshot/screenshot-x150.png.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureSettingsTest/screenshot/screenshot.png.meta",
     "fileUrl": null
   },
   {
