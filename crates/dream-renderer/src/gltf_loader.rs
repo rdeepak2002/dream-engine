@@ -76,7 +76,6 @@ pub fn read_gltf<'a>(
         log::debug!("Mesh loaded name: {:?} idx: {:?}", mesh.name, idx);
         mesh_map.insert(idx, mesh);
     }
-    log::debug!("mesh_map keys: {:?}", mesh_map.keys());
     let mut meshes = Vec::new();
     for i in 0..mesh_map.len() {
         if mesh_map.contains_key(&i) {

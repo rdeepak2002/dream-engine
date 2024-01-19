@@ -222,7 +222,6 @@ impl Scene {
 
         // TODO: apply transformations of gltf_scene to this current entity (with id entity_id)
         for gltf_scene in gltf.scenes() {
-            log::debug!("Number of scene nodes: {}", gltf_scene.nodes().len());
             for node in gltf_scene.nodes() {
                 let mut skin_root_nodes = HashSet::new();
                 let mut inverse_bind_poses = HashMap::new();

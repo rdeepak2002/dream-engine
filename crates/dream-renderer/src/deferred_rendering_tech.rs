@@ -494,7 +494,6 @@ impl DeferredRenderingTech {
             });
 
         if self.resized {
-            log::debug!("Recreating bind groups");
             self.render_lights_for_deferred_gbuffers_bind_group =
                 device.create_bind_group(&wgpu::BindGroupDescriptor {
                     layout: &self.render_lights_for_deferred_gbuffers_bind_group_layout,
