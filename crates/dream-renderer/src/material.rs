@@ -422,8 +422,10 @@ impl Material {
             material.alpha_cutoff().unwrap_or(0.5),
             base_color_transform.into(),
             metallic_roughness_transform.into(),
+            // TODO: normal texture transform (related PR: https://github.com/gltf-rs/gltf/pull/394/files)
             base_color_transform.into(),
             emissive_transform.into(),
+            // TODO: occlusion texture transform (related PR: https://github.com/gltf-rs/gltf/pull/394/files)
             base_color_transform.into(),
             base_color_tex_coord,
             metallic_roughness_tex_coord,

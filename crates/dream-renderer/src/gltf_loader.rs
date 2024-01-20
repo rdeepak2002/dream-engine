@@ -170,10 +170,10 @@ fn get_dream_primitives_from_gltf_mesh(
                         tex_coords_1: Default::default(),
                     })
             });
-            log::debug!(
-                "Number of vertices: {:?}",
-                mesh_vertices_and_indices.vertices.len()
-            );
+            // log::debug!(
+            //     "Number of vertices: {:?}",
+            //     mesh_vertices_and_indices.vertices.len()
+            // );
         }
 
         if let Some(color_attribute) = reader.read_colors(0).map(|v| v.into_rgba_f32()) {
