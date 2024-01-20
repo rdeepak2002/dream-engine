@@ -18,12 +18,16 @@ var<uniform> lightsBuffer: LightsUniform;
 
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) normal: vec3<f32>,
-    @location(2) tangent: vec3<f32>,
-    @location(3) bitangent: vec3<f32>,
-    @location(4) world_position: vec3<f32>,
-    @location(5) color: vec4<f32>,
+    @location(0) base_color_tex_coords: vec2<f32>,
+    @location(1) metallic_roughness_tex_coords: vec2<f32>,
+    @location(2) normal_tex_coords: vec2<f32>,
+    @location(3) emissive_tex_coords: vec2<f32>,
+    @location(4) occlusion_tex_coords: vec2<f32>,
+    @location(5) normal: vec3<f32>,
+    @location(6) tangent: vec3<f32>,
+    @location(7) bitangent: vec3<f32>,
+    @location(8) world_position: vec3<f32>,
+    @location(9) color: vec4<f32>,
 }
 
 @vertex
@@ -51,10 +55,29 @@ fn vs_main(
 
     var out: VertexOutput;
     out.world_position = (model_matrix * totalPosition).xyz;
-    out.tex_coords = model.tex_coords_0;
-    if (material_factors.tex_coord == u32(1)) {
-        out.tex_coords = model.tex_coords_1;
+
+    // apply the correct UV coords
+    out.base_color_tex_coords = model.tex_coords_0;
+    if (material_factors.base_color_tex_coord == u32(1)) {
+        out.base_color_tex_coords = model.tex_coords_1;
     }
+    out.metallic_roughness_tex_coords = model.tex_coords_0;
+    if (material_factors.metallic_roughness_tex_coord == u32(1)) {
+        out.metallic_roughness_tex_coords = model.tex_coords_1;
+    }
+    out.normal_tex_coords = model.tex_coords_0;
+    if (material_factors.normal_tex_coord == u32(1)) {
+        out.normal_tex_coords = model.tex_coords_1;
+    }
+    out.emissive_tex_coords = model.tex_coords_0;
+    if (material_factors.emissive_tex_coord == u32(1)) {
+        out.emissive_tex_coords = model.tex_coords_1;
+    }
+    out.occlusion_tex_coords = model.tex_coords_0;
+    if (material_factors.occlusion_tex_coord == u32(1)) {
+        out.occlusion_tex_coords = model.tex_coords_1;
+    }
+
     out.clip_position = camera.view_proj * model_matrix * totalPosition;
     out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);
@@ -133,34 +156,40 @@ var<uniform> cascade_settings_3: CascadeSettingsUniform;
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // texture transform (offset, scale, rotate)
     let tex_transform = mat3x3<f32>(material_factors.tex_transform_0, material_factors.tex_transform_1, material_factors.tex_transform_2);
-    let tex_coords: vec2<f32> = (tex_transform * vec3(in.tex_coords, 1.0)).xy;
+    var tex_coords: vec2<f32> = vec2(0.0, 0.0);
 
     // compute normal using normal map
+    tex_coords = (tex_transform * vec3(in.normal_tex_coords, 1.0)).xy;
     let TBN = mat3x3<f32>(in.tangent, in.bitangent, in.normal);
     let normal_map_texture = textureSample(texture_normal_map, sampler_normal_map, tex_coords);
     var normal = normal_map_texture.rgb * 2.0 - vec3(1.0, 1.0, 1.0);
     normal = normalize(TBN * normal);
 
     // albedo
+    tex_coords = (tex_transform * vec3(in.base_color_tex_coords, 1.0)).xy;
     let base_color_texture = textureSample(texture_base_color, sampler_base_color, tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let albedo = in.color * base_color_texture * base_color_factor;
 
     // emissive
+    tex_coords = (tex_transform * vec3(in.emissive_tex_coords, 1.0)).xy;
     var emissive_texture = textureSample(texture_emissive, sampler_emissive, tex_coords);
     let emissive_factor = vec4(material_factors.emissive.rgb, 1.0);
     let emissive_strength = material_factors.emissive.w;
     let emissive = emissive_texture * emissive_factor * emissive_strength;
 
     // ao
+    tex_coords = (tex_transform * vec3(in.occlusion_tex_coords, 1.0)).xy;
     let occlusion_texture = textureSample(texture_occlusion, sampler_occlusion, tex_coords);
     let ao = occlusion_texture.r;
 
     // roughness
+    tex_coords = (tex_transform * vec3(in.metallic_roughness_tex_coords, 1.0)).xy;
     let metallic_roughness_texture = textureSample(texture_metallic_roughness, sampler_metallic_roughness, tex_coords);
     let roughness = metallic_roughness_texture.g * material_factors.roughness;
 
     // metallic
+    tex_coords = (tex_transform * vec3(in.metallic_roughness_tex_coords, 1.0)).xy;
     let metallic = metallic_roughness_texture.b * material_factors.metallic;
 
     // transparency

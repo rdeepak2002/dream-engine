@@ -16,7 +16,13 @@ pub struct MaterialFactors {
     pub metallic: f32,
     pub roughness: f32,
     pub alpha_cutoff: f32,
-    pub tex_coord: u32,
+    // texture coordinates
+    pub base_color_tex_coord: u32,
+    pub metallic_roughness_tex_coord: u32,
+    pub normal_tex_coord: u32,
+    pub emissive_tex_coord: u32,
+    pub occlusion_tex_coord: u32,
+    // texture transform base color
     pub tex_transform_0: [f32; 3],
     pub padding1: f32,
     pub tex_transform_1: [f32; 3],
@@ -33,7 +39,11 @@ impl MaterialFactors {
         roughness: f32,
         alpha_cutoff: f32,
         tex_transform: [[f32; 3]; 3],
-        tex_coord: u32,
+        base_color_tex_coord: u32,
+        metallic_roughness_tex_coord: u32,
+        normal_tex_coord: u32,
+        emissive_tex_coord: u32,
+        occlusion_tex_coord: u32,
     ) -> Self {
         Self {
             base_color: [
@@ -46,7 +56,11 @@ impl MaterialFactors {
             metallic,
             roughness,
             alpha_cutoff,
-            tex_coord,
+            base_color_tex_coord,
+            metallic_roughness_tex_coord,
+            normal_tex_coord,
+            emissive_tex_coord,
+            occlusion_tex_coord,
             tex_transform_0: tex_transform[0],
             padding1: 0.,
             tex_transform_1: tex_transform[1],
@@ -182,7 +196,6 @@ impl Material {
         buffer_data: &[Vec<u8>],
         image_folder: &Path,
     ) -> Self {
-        let mut tex_coord = 0;
         let pbr_properties = material.pbr_metallic_roughness();
 
         // get base color texture
@@ -190,6 +203,7 @@ impl Material {
         // TODO: use this specifically for base color texture only
         let mut base_color_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut base_color_texture_info: TextureInfo = TextureInfo::default();
+        let mut base_color_tex_coord = 0;
         match pbr_properties.base_color_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -205,8 +219,7 @@ impl Material {
                     image_folder,
                 );
                 base_color_texture_info = texture_info.texture().into();
-                // TODO: use this specifically for base color texture only
-                tex_coord = texture_info.tex_coord();
+                base_color_tex_coord = texture_info.tex_coord();
             }
         }
 
@@ -215,6 +228,7 @@ impl Material {
         // TODO: use the tex transform matrix
         let mut metallic_roughness_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut metallic_roughness_texture_info: TextureInfo = TextureInfo::default();
+        let mut metallic_roughness_tex_coord = 0;
         match pbr_properties.metallic_roughness_texture() {
             None => {
                 let bytes = include_bytes!("black.png");
@@ -230,14 +244,14 @@ impl Material {
                     image_folder,
                 );
                 metallic_roughness_texture_info = texture_info.texture().into();
-                // TODO: use this
-                texture_info.tex_coord();
+                metallic_roughness_tex_coord = texture_info.tex_coord();
             }
         }
 
         // get normal map texture
         let mut normal_map_image = Image::default();
         let mut normal_texture_info = TextureInfo::default();
+        let mut normal_tex_coord = 0;
         match material.normal_texture() {
             None => {
                 let bytes = include_bytes!("default_normal.png");
@@ -250,8 +264,7 @@ impl Material {
                     image_folder,
                 );
                 normal_texture_info = texture_info.texture().into();
-                // TODO: use this
-                texture_info.tex_coord();
+                normal_tex_coord = texture_info.tex_coord();
             }
         }
 
@@ -260,6 +273,7 @@ impl Material {
         // TODO: use the tex transform matrix
         let mut emissive_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut emissive_texture_info = TextureInfo::default();
+        let mut emissive_tex_coord = 0;
         match material.emissive_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -275,14 +289,14 @@ impl Material {
                     image_folder,
                 );
                 emissive_texture_info = texture_info.texture().into();
-                // TODO: use this
-                texture_info.tex_coord();
+                emissive_tex_coord = texture_info.tex_coord();
             }
         }
 
         // get occlusion texture
         let mut occlusion_image = Image::default();
         let mut occlusion_texture_info = TextureInfo::default();
+        let mut occlusion_tex_coord = 0;
         match material.occlusion_texture() {
             None => {
                 let bytes = include_bytes!("white.png");
@@ -295,8 +309,7 @@ impl Material {
                     image_folder,
                 );
                 occlusion_texture_info = texture_info.texture().into();
-                // TODO: use this
-                texture_info.tex_coord();
+                occlusion_tex_coord = texture_info.tex_coord();
             }
         }
 
@@ -310,7 +323,11 @@ impl Material {
             pbr_properties.roughness_factor(),
             material.alpha_cutoff().unwrap_or(0.5),
             base_color_transform.into(),
-            tex_coord,
+            base_color_tex_coord,
+            metallic_roughness_tex_coord,
+            normal_tex_coord,
+            emissive_tex_coord,
+            occlusion_tex_coord,
         );
 
         // create the gpu bind group for material factors

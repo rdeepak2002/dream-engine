@@ -9,7 +9,13 @@ struct MaterialFactors {
     metallic: f32,
     roughness: f32,
     alpha_cutoff: f32,
-    tex_coord: u32,
+    // texture coordinates
+    base_color_tex_coord: u32,
+    metallic_roughness_tex_coord: u32,
+    normal_tex_coord: u32,
+    emissive_tex_coord: u32,
+    occlusion_tex_coord: u32,
+    // texture transform base color
     tex_transform_0: vec3<f32>,
     padding1: f32,
     tex_transform_1: vec3<f32>,

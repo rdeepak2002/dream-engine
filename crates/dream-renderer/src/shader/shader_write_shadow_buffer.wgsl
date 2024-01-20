@@ -44,7 +44,7 @@ fn vs_main(
     var out: VertexOutput;
     out.position = light_as_camera.view_proj * model_matrix * totalPosition;
     out.tex_coords = model.tex_coords_0;
-    if (material_factors.tex_coord == u32(1)) {
+    if (material_factors.base_color_tex_coord == u32(1)) {
         out.tex_coords = model.tex_coords_1;
     }
 

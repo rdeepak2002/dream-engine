@@ -228,7 +228,7 @@ impl Default for App {
                 Arc::downgrade(&scene),
                 entity_handle,
                 &resource_manager,
-                "57d472a2-7fa6-4604-91db-89a12571da57".into(),
+                "57d472a2-7fa6-4604-91db-89a12571da57".into(), // cube: 4668c131-3eec-4b4f-84a4-f24add9cd5a8 ; multiple: 57d472a2-7fa6-4604-91db-89a12571da57
                 true,
                 Default::default(),
             );
