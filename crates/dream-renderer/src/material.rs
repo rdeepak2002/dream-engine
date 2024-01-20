@@ -23,12 +23,9 @@ pub struct MaterialFactors {
     pub emissive_tex_coord: u32,
     pub occlusion_tex_coord: u32,
     // texture transform base color
-    pub tex_transform_0: [f32; 3],
-    pub padding1: f32,
-    pub tex_transform_1: [f32; 3],
-    pub padding2: f32,
-    pub tex_transform_2: [f32; 3],
-    pub padding3: f32,
+    pub base_color_tex_transform_0: [f32; 4],
+    pub base_color_tex_transform_1: [f32; 4],
+    pub base_color_tex_transform_2: [f32; 4],
 }
 
 impl MaterialFactors {
@@ -38,7 +35,7 @@ impl MaterialFactors {
         metallic: f32,
         roughness: f32,
         alpha_cutoff: f32,
-        tex_transform: [[f32; 3]; 3],
+        base_color_tex_transform: [[f32; 3]; 3],
         base_color_tex_coord: u32,
         metallic_roughness_tex_coord: u32,
         normal_tex_coord: u32,
@@ -61,12 +58,24 @@ impl MaterialFactors {
             normal_tex_coord,
             emissive_tex_coord,
             occlusion_tex_coord,
-            tex_transform_0: tex_transform[0],
-            padding1: 0.,
-            tex_transform_1: tex_transform[1],
-            padding2: 0.,
-            tex_transform_2: tex_transform[2],
-            padding3: 0.,
+            base_color_tex_transform_0: [
+                base_color_tex_transform[0][0],
+                base_color_tex_transform[0][1],
+                base_color_tex_transform[0][2],
+                1.0,
+            ],
+            base_color_tex_transform_1: [
+                base_color_tex_transform[1][0],
+                base_color_tex_transform[1][1],
+                base_color_tex_transform[1][2],
+                1.0,
+            ],
+            base_color_tex_transform_2: [
+                base_color_tex_transform[2][0],
+                base_color_tex_transform[2][1],
+                base_color_tex_transform[2][2],
+                1.0,
+            ],
         }
     }
 }

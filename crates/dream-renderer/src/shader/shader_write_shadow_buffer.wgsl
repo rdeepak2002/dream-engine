@@ -82,7 +82,7 @@ var<uniform> material_factors: MaterialFactors;
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // texture transform (offset, scale, rotate)
-    let tex_transform = mat3x3<f32>(material_factors.tex_transform_0, material_factors.tex_transform_1, material_factors.tex_transform_2);
+    let tex_transform = mat3x3<f32>(material_factors.base_color_tex_transform_0.xyz, material_factors.base_color_tex_transform_1.xyz, material_factors.base_color_tex_transform_2.xyz);
     let tex_coords: vec2<f32> = (tex_transform * vec3(in.tex_coords, 1.0)).xy;
 
     // albedo

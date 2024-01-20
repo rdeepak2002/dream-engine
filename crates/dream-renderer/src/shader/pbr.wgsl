@@ -16,12 +16,9 @@ struct MaterialFactors {
     emissive_tex_coord: u32,
     occlusion_tex_coord: u32,
     // texture transform base color
-    tex_transform_0: vec3<f32>,
-    padding1: f32,
-    tex_transform_1: vec3<f32>,
-    padding2: f32,
-    tex_transform_2: vec3<f32>,
-    padding3: f32,
+    base_color_tex_transform_0: vec4<f32>,
+    base_color_tex_transform_1: vec4<f32>,
+    base_color_tex_transform_2: vec4<f32>,
 };
 
 struct Light {
