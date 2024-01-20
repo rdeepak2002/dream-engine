@@ -47,6 +47,8 @@ fn vs_main(
     if (material_factors.base_color_tex_coord == u32(1)) {
         out.tex_coords = model.tex_coords_1;
     }
+    let tex_transform = mat3x3<f32>(material_factors.base_color_tex_transform_0.xyz, material_factors.base_color_tex_transform_1.xyz, material_factors.base_color_tex_transform_2.xyz);
+    out.tex_coords = (tex_transform * vec3(out.tex_coords, 1.0)).xy;
 
     return out;
 }
@@ -82,11 +84,8 @@ var<uniform> material_factors: MaterialFactors;
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     // texture transform (offset, scale, rotate)
-    let tex_transform = mat3x3<f32>(material_factors.base_color_tex_transform_0.xyz, material_factors.base_color_tex_transform_1.xyz, material_factors.base_color_tex_transform_2.xyz);
-    let tex_coords: vec2<f32> = (tex_transform * vec3(in.tex_coords, 1.0)).xy;
-
     // albedo
-    let base_color_texture = textureSample(texture_base_color, sampler_base_color, tex_coords);
+    let base_color_texture = textureSample(texture_base_color, sampler_base_color, in.tex_coords);
     let base_color_factor = vec4(material_factors.base_color, 1.0);
     let albedo = base_color_texture * base_color_factor;
 

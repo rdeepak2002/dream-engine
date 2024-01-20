@@ -19,6 +19,22 @@ struct MaterialFactors {
     base_color_tex_transform_0: vec4<f32>,
     base_color_tex_transform_1: vec4<f32>,
     base_color_tex_transform_2: vec4<f32>,
+    // texture transform metallic roughness
+    metallic_roughness_tex_transform_0: vec4<f32>,
+    metallic_roughness_tex_transform_1: vec4<f32>,
+    metallic_roughness_tex_transform_2: vec4<f32>,
+    // texture transform metallic roughness
+    normal_tex_transform_0: vec4<f32>,
+    normal_tex_transform_1: vec4<f32>,
+    normal_tex_transform_2: vec4<f32>,
+    // texture transform emissive
+    emissive_tex_transform_0: vec4<f32>,
+    emissive_tex_transform_1: vec4<f32>,
+    emissive_tex_transform_2: vec4<f32>,
+    // texture transform occlusion
+    occlusion_tex_transform_0: vec4<f32>,
+    occlusion_tex_transform_1: vec4<f32>,
+    occlusion_tex_transform_2: vec4<f32>,
 };
 
 struct Light {

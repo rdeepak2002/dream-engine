@@ -26,6 +26,22 @@ pub struct MaterialFactors {
     pub base_color_tex_transform_0: [f32; 4],
     pub base_color_tex_transform_1: [f32; 4],
     pub base_color_tex_transform_2: [f32; 4],
+    // texture transform base color
+    pub metallic_roughness_tex_transform_0: [f32; 4],
+    pub metallic_roughness_tex_transform_1: [f32; 4],
+    pub metallic_roughness_tex_transform_2: [f32; 4],
+    // texture transform normal
+    pub normal_tex_transform_0: [f32; 4],
+    pub normal_tex_transform_1: [f32; 4],
+    pub normal_tex_transform_2: [f32; 4],
+    // texture transform emissive
+    pub emissive_tex_transform_0: [f32; 4],
+    pub emissive_tex_transform_1: [f32; 4],
+    pub emissive_tex_transform_2: [f32; 4],
+    // texture transform occlusion
+    pub occlusion_tex_transform_0: [f32; 4],
+    pub occlusion_tex_transform_1: [f32; 4],
+    pub occlusion_tex_transform_2: [f32; 4],
 }
 
 impl MaterialFactors {
@@ -36,6 +52,10 @@ impl MaterialFactors {
         roughness: f32,
         alpha_cutoff: f32,
         base_color_tex_transform: [[f32; 3]; 3],
+        metallic_roughness_tex_transform: [[f32; 3]; 3],
+        normal_tex_transform: [[f32; 3]; 3],
+        emissive_tex_transform: [[f32; 3]; 3],
+        occlusion_tex_transform: [[f32; 3]; 3],
         base_color_tex_coord: u32,
         metallic_roughness_tex_coord: u32,
         normal_tex_coord: u32,
@@ -74,6 +94,78 @@ impl MaterialFactors {
                 base_color_tex_transform[2][0],
                 base_color_tex_transform[2][1],
                 base_color_tex_transform[2][2],
+                1.0,
+            ],
+            metallic_roughness_tex_transform_0: [
+                metallic_roughness_tex_transform[0][0],
+                metallic_roughness_tex_transform[0][1],
+                metallic_roughness_tex_transform[0][2],
+                1.0,
+            ],
+            metallic_roughness_tex_transform_1: [
+                metallic_roughness_tex_transform[1][0],
+                metallic_roughness_tex_transform[1][1],
+                metallic_roughness_tex_transform[1][2],
+                1.0,
+            ],
+            metallic_roughness_tex_transform_2: [
+                metallic_roughness_tex_transform[2][0],
+                metallic_roughness_tex_transform[2][1],
+                metallic_roughness_tex_transform[2][2],
+                1.0,
+            ],
+            normal_tex_transform_0: [
+                normal_tex_transform[0][0],
+                normal_tex_transform[0][1],
+                normal_tex_transform[0][2],
+                1.0,
+            ],
+            normal_tex_transform_1: [
+                normal_tex_transform[1][0],
+                normal_tex_transform[1][1],
+                normal_tex_transform[1][2],
+                1.0,
+            ],
+            normal_tex_transform_2: [
+                normal_tex_transform[2][0],
+                normal_tex_transform[2][1],
+                normal_tex_transform[2][2],
+                1.0,
+            ],
+            emissive_tex_transform_0: [
+                emissive_tex_transform[0][0],
+                emissive_tex_transform[0][1],
+                emissive_tex_transform[0][2],
+                1.0,
+            ],
+            emissive_tex_transform_1: [
+                emissive_tex_transform[1][0],
+                emissive_tex_transform[1][1],
+                emissive_tex_transform[1][2],
+                1.0,
+            ],
+            emissive_tex_transform_2: [
+                emissive_tex_transform[2][0],
+                emissive_tex_transform[2][1],
+                emissive_tex_transform[2][2],
+                1.0,
+            ],
+            occlusion_tex_transform_0: [
+                occlusion_tex_transform[0][0],
+                occlusion_tex_transform[0][1],
+                occlusion_tex_transform[0][2],
+                1.0,
+            ],
+            occlusion_tex_transform_1: [
+                occlusion_tex_transform[1][0],
+                occlusion_tex_transform[1][1],
+                occlusion_tex_transform[1][2],
+                1.0,
+            ],
+            occlusion_tex_transform_2: [
+                occlusion_tex_transform[2][0],
+                occlusion_tex_transform[2][1],
+                occlusion_tex_transform[2][2],
                 1.0,
             ],
         }
@@ -209,7 +301,6 @@ impl Material {
 
         // get base color texture
         let mut base_color_image = Image::default();
-        // TODO: use this specifically for base color texture only
         let mut base_color_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut base_color_texture_info: TextureInfo = TextureInfo::default();
         let mut base_color_tex_coord = 0;
@@ -234,7 +325,6 @@ impl Material {
 
         // get metallic texture
         let mut metallic_roughness_image = Image::default();
-        // TODO: use the tex transform matrix
         let mut metallic_roughness_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut metallic_roughness_texture_info: TextureInfo = TextureInfo::default();
         let mut metallic_roughness_tex_coord = 0;
@@ -279,7 +369,6 @@ impl Material {
 
         // get emissive texture
         let mut emissive_image = Image::default();
-        // TODO: use the tex transform matrix
         let mut emissive_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut emissive_texture_info = TextureInfo::default();
         let mut emissive_tex_coord = 0;
@@ -331,6 +420,10 @@ impl Material {
             pbr_properties.metallic_factor(),
             pbr_properties.roughness_factor(),
             material.alpha_cutoff().unwrap_or(0.5),
+            base_color_transform.into(),
+            metallic_roughness_transform.into(),
+            base_color_transform.into(),
+            emissive_transform.into(),
             base_color_transform.into(),
             base_color_tex_coord,
             metallic_roughness_tex_coord,
