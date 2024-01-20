@@ -132,7 +132,7 @@ impl mikktspace::Geometry for MeshVerticesAndIndicesContainer {
     }
 
     fn tex_coord(&self, face: usize, vert: usize) -> [f32; 2] {
-        self.vertex(face, vert).tex_coords
+        self.vertex(face, vert).tex_coords_0
     }
 
     fn set_tangent_encoded(&mut self, tangent: [f32; 4], face: usize, vert: usize) {
@@ -161,12 +161,13 @@ fn get_dream_primitives_from_gltf_mesh(
                     .vertices
                     .push(crate::model::ModelVertex {
                         position: vertex,
-                        tex_coords: Default::default(),
+                        tex_coords_0: Default::default(),
                         normal: Default::default(),
                         tangent: [0.0, 0.0, 0.0, 0.0],
                         bone_ids: [0, 0, 0, 0],
                         bone_weights: [0., 0., 0., 0.],
                         color: [1.0, 1.0, 1.0, 1.0],
+                        tex_coords_1: Default::default(),
                     })
             });
             log::debug!(
@@ -206,7 +207,16 @@ fn get_dream_primitives_from_gltf_mesh(
         if let Some(tex_coord_attribute) = reader.read_tex_coords(0).map(|v| v.into_f32()) {
             let mut tex_coord_index = 0;
             tex_coord_attribute.for_each(|tex_coord| {
-                mesh_vertices_and_indices.vertices[tex_coord_index].tex_coords = tex_coord;
+                mesh_vertices_and_indices.vertices[tex_coord_index].tex_coords_0 = tex_coord;
+
+                tex_coord_index += 1;
+            });
+        }
+
+        if let Some(tex_coord_attribute) = reader.read_tex_coords(1).map(|v| v.into_f32()) {
+            let mut tex_coord_index = 0;
+            tex_coord_attribute.for_each(|tex_coord| {
+                mesh_vertices_and_indices.vertices[tex_coord_index].tex_coords_1 = tex_coord;
 
                 tex_coord_index += 1;
             });
@@ -274,10 +284,11 @@ fn get_dream_primitives_from_gltf_mesh(
                     let edge1 = Vector3::from(v1.position) - Vector3::from(v0.position);
                     let edge2 = Vector3::from(v2.position) - Vector3::from(v0.position);
 
-                    let delta_u1 = v1.tex_coords[0] - v0.tex_coords[0];
-                    let delta_v1 = v1.tex_coords[1] - v0.tex_coords[1];
-                    let delta_u2 = v2.tex_coords[0] - v0.tex_coords[0];
-                    let delta_v2 = v2.tex_coords[1] - v0.tex_coords[1];
+                    // TODO: when should we consider tex_coords_1? - maybe store another set of tangents...?
+                    let delta_u1 = v1.tex_coords_0[0] - v0.tex_coords_0[0];
+                    let delta_v1 = v1.tex_coords_0[1] - v0.tex_coords_0[1];
+                    let delta_u2 = v2.tex_coords_0[0] - v0.tex_coords_0[0];
+                    let delta_v2 = v2.tex_coords_0[1] - v0.tex_coords_0[1];
 
                     let f = 1.0 / (delta_u1 * delta_v2 - delta_u2 * delta_v1);
 

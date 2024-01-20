@@ -409,7 +409,6 @@ impl RendererWgpu {
         self.skinning_tech.update_all_bones_buffer(&self.queue);
 
         // use compute shader to calculate new vertices after animation transformations
-        // TODO: add this back, but becareful that tangent w is not thanos snapped
         self.skinning_tech
             .compute_shader_update_vertices(&mut encoder, &mut self.render_storage);
 

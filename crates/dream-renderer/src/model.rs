@@ -18,7 +18,7 @@ pub struct ModelVertex {
     // 0 , 1,  2
     pub position: [f32; 3],
     // 3,  4
-    pub tex_coords: [f32; 2],
+    pub tex_coords_0: [f32; 2],
     // 5,  6,  7
     pub normal: [f32; 3],
     // 8,  9,  10, 11
@@ -29,6 +29,8 @@ pub struct ModelVertex {
     pub bone_weights: [f32; 4],
     // 20, 21, 22, 23
     pub color: [f32; 4],
+    // 24, 25
+    pub tex_coords_1: [f32; 2],
 }
 
 impl Vertex for ModelVertex {
@@ -72,6 +74,11 @@ impl Vertex for ModelVertex {
                     offset: mem::size_of::<[f32; 20]>() as wgpu::BufferAddress,
                     shader_location: 6,
                     format: wgpu::VertexFormat::Float32x4,
+                },
+                wgpu::VertexAttribute {
+                    offset: mem::size_of::<[f32; 24]>() as wgpu::BufferAddress,
+                    shader_location: 7,
+                    format: wgpu::VertexFormat::Float32x2,
                 },
             ],
         }

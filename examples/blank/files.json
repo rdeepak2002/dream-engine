@@ -32,7 +32,15 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/TextureLinearInterpolationTest.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/robot.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/MultiUVTest.glb",
     "fileUrl": null
   },
   {
@@ -96,6 +104,14 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/MultiUVTest.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureLinearInterpolationTest.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/emissive-cube.glb.meta",
     "fileUrl": null
   },
@@ -108,11 +124,19 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/TextureTransformMultiTest.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/ABeautifulGame.glb.meta",
     "fileUrl": null
   },
   {
     "filepath": "models/berserk_armor_4k.glb",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/TextureTransformMultiTest.glb",
     "fileUrl": null
   },
   {

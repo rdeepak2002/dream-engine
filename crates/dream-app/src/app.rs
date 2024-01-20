@@ -218,28 +218,28 @@ impl Default for App {
                 ),
             );
         }
-        // {
-        //     // test model
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
-        //             .expect("Unable to create entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "b3b60aaa-43ff-4b94-8e22-8b110f6d2c5c".into(), // tex transform: 0c97aecc-c5f4-412e-aa3a-29bb131e045e // alpha: 85ee7bd6-f149-493b-9c9a-9bc518fa7dd0
-        //         true,
-        //         Default::default(),
-        //     );
-        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
-        //         Transform::new(
-        //             Vector3::new(2.0, 2.0, 1.0),
-        //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
-        //             Vector3::new(1.0, 1.0, 1.0),
-        //         ),
-        //     );
-        // }
+        {
+            // test model
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
+                    .expect("Unable to create entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "57d472a2-7fa6-4604-91db-89a12571da57".into(),
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(2.0, 2.0, 1.0),
+                    UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+                    Vector3::new(1.0, 1.0, 1.0),
+                ),
+            );
+        }
         {
             // raiden
             let entity_handle =

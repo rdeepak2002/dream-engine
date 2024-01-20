@@ -45,7 +45,10 @@ fn vs_main(
     totalNormal = normalize(totalNormal);
 
     var out: VertexOutput;
-    out.tex_coords = model.tex_coords;
+    out.tex_coords = model.tex_coords_0;
+    if (material_factors.tex_coord == u32(1)) {
+        out.tex_coords = model.tex_coords_1;
+    }
     out.clip_position = camera.view_proj * model_matrix * totalPosition;
     out.normal = normalize((model_matrix * vec4(totalNormal, 0.0)).xyz);
     out.tangent = normalize((model_matrix * vec4(model.tangent.xyz, 0.0)).xyz);

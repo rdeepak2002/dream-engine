@@ -9,7 +9,7 @@ struct MaterialFactors {
     metallic: f32,
     roughness: f32,
     alpha_cutoff: f32,
-    padding5: f32,
+    tex_coord: u32,
     tex_transform_0: vec3<f32>,
     padding1: f32,
     tex_transform_1: vec3<f32>,
