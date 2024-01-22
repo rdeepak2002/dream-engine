@@ -349,6 +349,7 @@ impl Material {
 
         // get normal map texture
         let mut normal_map_image = Image::default();
+        let mut normal_map_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut normal_texture_info = TextureInfo::default();
         let mut normal_tex_coord = 0;
         match material.normal_texture() {
@@ -357,6 +358,9 @@ impl Material {
                 normal_map_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                if let Some(texture_transform) = texture_info.texture_transform() {
+                    normal_map_transform = mat3_from_texture_transform(&texture_transform);
+                }
                 normal_map_image.load_from_gltf_texture_threaded(
                     texture_info.texture(),
                     buffer_data,
@@ -393,6 +397,7 @@ impl Material {
 
         // get occlusion texture
         let mut occlusion_image = Image::default();
+        let mut occlusion_transform: Matrix3<f32> = Matrix3::<f32>::identity();
         let mut occlusion_texture_info = TextureInfo::default();
         let mut occlusion_tex_coord = 0;
         match material.occlusion_texture() {
@@ -401,6 +406,9 @@ impl Material {
                 occlusion_image.load_from_bytes_threaded(bytes, "default", None);
             }
             Some(texture_info) => {
+                if let Some(texture_transform) = texture_info.texture_transform() {
+                    occlusion_transform = mat3_from_texture_transform(&texture_transform);
+                }
                 occlusion_image.load_from_gltf_texture_threaded(
                     texture_info.texture(),
                     buffer_data,
@@ -422,11 +430,9 @@ impl Material {
             material.alpha_cutoff().unwrap_or(0.5),
             base_color_transform.into(),
             metallic_roughness_transform.into(),
-            // TODO: normal texture transform (related PR: https://github.com/gltf-rs/gltf/pull/394/files)
-            base_color_transform.into(),
+            normal_map_transform.into(),
             emissive_transform.into(),
-            // TODO: occlusion texture transform (related PR: https://github.com/gltf-rs/gltf/pull/394/files)
-            base_color_transform.into(),
+            occlusion_transform.into(),
             base_color_tex_coord,
             metallic_roughness_tex_coord,
             normal_tex_coord,

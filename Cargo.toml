@@ -16,7 +16,7 @@ serde_yaml = "0.9.21"
 wgpu = { version = "0.18.0" }
 
 # 3D model parsing
-gltf = "1.1.0"
+gltf = { version = "1.4.0", git = "https://github.com/rdeepak2002/dream-gltf.git", branch = "main" }
 
 # windowing
 winit = "0.29.4"
