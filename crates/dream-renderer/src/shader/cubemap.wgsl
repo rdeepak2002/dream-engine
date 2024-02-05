@@ -52,13 +52,17 @@ fn aces_tone_map(hdr: vec3<f32>) -> vec3<f32> {
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let view_pos_homogeneous = camera.inv_proj * in.world_position;
     let view_ray_direction = view_pos_homogeneous.xyz / view_pos_homogeneous.w;
-    var ray_direction = normalize((camera.inv_view * vec4(view_ray_direction, 0.0)).xyz);
+    let ray_direction = normalize((camera.inv_view * vec4(view_ray_direction, 0.0)).xyz);
+    let world_pos = ray_direction;
 
-    let tex_sample = textureSample(cubemap_texture, cubemap_sampler, ray_direction).rgb;
+    var tex_sample = textureSample(cubemap_texture, cubemap_sampler, world_pos).rgb;
+//    tex_sample.r = clamp(tex_sample.r, 0, 50);
+//    tex_sample.g = clamp(tex_sample.g, 0, 50);
+//    tex_sample.b = clamp(tex_sample.b, 0, 50);
 
     // tone mapping
-    let mapped = tex_sample;
-//    let mapped = aces_tone_map(tex_sample);
+    var mapped = tex_sample;
+//    mapped = aces_tone_map(tex_sample);
 //    let exposure = 1.0;
 //    let mapped = vec3(1.0) - exp(-tex_sample * exposure);
 

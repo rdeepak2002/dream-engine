@@ -1,6 +1,8 @@
 struct CameraUniform {
     view: mat4x4<f32>,
     projection: mat4x4<f32>,
+    inv_view: mat4x4<f32>,
+    inv_proj: mat4x4<f32>,
 };
 
 struct VertexOutput {
@@ -82,10 +84,19 @@ fn sampleSphericalMap(v: vec3<f32>) -> vec2<f32> {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let uv: vec2<f32> = sampleSphericalMap(normalize(in.world_position.xyz));
-    let color: vec3<f32> = textureLoad(
+    var color: vec3<f32> = textureLoad(
           equirectangular_map,
           vec2<i32>(uv.xy * vec2<f32>(textureDimensions(equirectangular_map))),
           0
     ).rgb;
+    if (color.r > 50.0) {
+        color.r = 50.0;
+    }
+    if (color.g > 50.0) {
+        color.g = 50.0;
+    }
+    if (color.b > 50.0) {
+        color.b = 50.0;
+    }
     return vec4<f32>(color, 1.0);
 }
