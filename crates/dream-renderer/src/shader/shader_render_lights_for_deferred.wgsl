@@ -1,3 +1,4 @@
+//include:pbr_structs.wgsl
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:shadow.wgsl
@@ -71,6 +72,11 @@ var sampler_shadow_map_3: sampler_comparison;
 var<uniform> light_as_camera_3: CameraUniform;
 @group(2) @binding(15)
 var<uniform> cascade_settings_3: CascadeSettingsUniform;
+
+@group(3) @binding(0)
+var irradiance_map: texture_cube<f32>;
+@group(3) @binding(1)
+var irradiance_map_sampler: sampler;
 
 fn world_from_screen_coord(coord : vec2<f32>, depth_sample: f32) -> vec3<f32> {
     // reconstruct world-space position from the screen coordinate

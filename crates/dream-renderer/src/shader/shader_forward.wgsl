@@ -1,3 +1,4 @@
+//include:pbr_structs.wgsl
 //include:pbr.wgsl
 //include:camera.wgsl
 //include:model.wgsl
@@ -165,6 +166,11 @@ var sampler_shadow_map_3: sampler_comparison;
 var<uniform> light_as_camera_3: CameraUniform;
 @group(2) @binding(15)
 var<uniform> cascade_settings_3: CascadeSettingsUniform;
+
+@group(3) @binding(0)
+var irradiance_map: texture_cube<f32>;
+@group(3) @binding(1)
+var irradiance_map_sampler: sampler;
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {

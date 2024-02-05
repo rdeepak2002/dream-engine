@@ -1,4 +1,4 @@
-//include:pbr.wgsl
+//include:pbr_structs.wgsl
 //include:camera.wgsl
 //include:model.wgsl
 

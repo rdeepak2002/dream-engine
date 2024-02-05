@@ -245,6 +245,15 @@ impl RendererWgpu {
             &pbr_material_tech,
         );
 
+        // cubemap
+        let cubemap_tech = CubemapTech::new(
+            &device,
+            &queue,
+            config.width,
+            config.height,
+            &camera_bones_light_bind_group,
+        );
+
         // algorithms for deferred rendering
         let deferred_rendering_tech = DeferredRenderingTech::new(
             &device,
@@ -255,6 +264,7 @@ impl RendererWgpu {
             &pbr_material_tech,
             &shadow_tech,
             &camera_bones_light_bind_group,
+            &cubemap_tech,
         );
 
         // algorithms for forward rendering
@@ -264,6 +274,7 @@ impl RendererWgpu {
             &pbr_material_tech,
             &camera_bones_light_bind_group,
             &shadow_tech,
+            &cubemap_tech,
         );
 
         // hdr and gamma correction
@@ -271,15 +282,6 @@ impl RendererWgpu {
 
         // algorithms for computing bloom mask and applying it onto frame texture
         let bloom_tech = BloomTech::new(&device, config.width, config.height, &frame_texture);
-
-        // cubemap
-        let cubemap_tech = CubemapTech::new(
-            &device,
-            &queue,
-            config.width,
-            config.height,
-            &camera_bones_light_bind_group,
-        );
 
         // storage for all 3D mesh data and positions
         let render_storage = RenderStorage {
@@ -450,6 +452,7 @@ impl RendererWgpu {
             &mut self.depth_texture,
             &self.shadow_tech,
             &self.camera_light_bind_group,
+            &self.cubemap_tech,
         );
 
         // forward render translucent objects
@@ -461,6 +464,7 @@ impl RendererWgpu {
             &self.camera_light_bind_group,
             &self.shadow_tech,
             |material: &Material| material.factor_alpha < 1.0,
+            &self.cubemap_tech,
         );
 
         // TODO: enable deferred rendering tech again

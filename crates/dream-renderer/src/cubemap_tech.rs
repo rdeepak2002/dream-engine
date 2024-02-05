@@ -24,7 +24,7 @@ pub struct CubemapTech {
     pub camera_bind_groups: Vec<wgpu::BindGroup>,
     pub cubemap_texture: Texture,
     pub irradiance_texture: Texture,
-    cubemap_texture_bind_group_layout: wgpu::BindGroupLayout,
+    pub cubemap_texture_bind_group_layout: wgpu::BindGroupLayout,
     cubemap_texture_bind_group: wgpu::BindGroup,
     hdri_to_cubemap_target_textures: Vec<Texture>,
     irradiance_cubemap_target_textures: Vec<Texture>,
@@ -409,8 +409,8 @@ impl CubemapTech {
         if self.hdri_texture_bind_group.is_none() {
             // load hdri image into texture
             // let hdri_image_bytes = include_bytes!("pure-sky.hdr");
-            let hdri_image_bytes = include_bytes!("newport_loft.hdr");
-            // let hdri_image_bytes = include_bytes!("puresky_2k.hdr");
+            // let hdri_image_bytes = include_bytes!("newport_loft.hdr");
+            let hdri_image_bytes = include_bytes!("puresky_2k.hdr");
             let (hdri_image_pixels, meta) = Texture::get_pixels_for_hdri_image(hdri_image_bytes);
             let hdri_texture = Texture::create_2d_texture(
                 device,

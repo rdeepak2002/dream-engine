@@ -11,6 +11,13 @@ impl Shader {
             source = source.replace("//include:pbr.wgsl", include_str!("shader/pbr.wgsl"));
         }
 
+        if source.contains("//include:pbr_structs.wgsl") {
+            source = source.replace(
+                "//include:pbr_structs.wgsl",
+                include_str!("shader/pbr_structs.wgsl"),
+            );
+        }
+
         if source.contains("//include:camera.wgsl") {
             source = source.replace("//include:camera.wgsl", include_str!("shader/camera.wgsl"));
         }

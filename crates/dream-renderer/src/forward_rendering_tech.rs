@@ -1,4 +1,5 @@
 use crate::camera_light_bind_group::CameraLightBindGroup;
+use crate::cubemap_tech::CubemapTech;
 use crate::instance::InstanceRaw;
 use crate::material::Material;
 use crate::model::{DrawModel, ModelVertex, Vertex};
@@ -19,6 +20,7 @@ impl ForwardRenderingTech {
         pbr_material_tech: &PbrMaterialTech,
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
+        cubemap_tech: &CubemapTech,
     ) -> Self {
         let shader_forward_render = Shader::new(
             device,
@@ -33,7 +35,7 @@ impl ForwardRenderingTech {
                     &camera_bones_lights_bind_group.bind_group_layout,
                     &pbr_material_tech.pbr_material_textures_bind_group_layout,
                     &shadow_tech.bind_group_layout,
-                    // &skinning_bind_group.bind_group_layout,
+                    &cubemap_tech.cubemap_texture_bind_group_layout,
                 ],
                 push_constant_ranges: &[],
             });
@@ -106,6 +108,7 @@ impl ForwardRenderingTech {
         camera_bones_lights_bind_group: &CameraLightBindGroup,
         shadow_tech: &ShadowTech,
         filter_func: fn(&Material) -> bool,
+        cubemap_tech: &CubemapTech,
     ) {
         // define render pass
         let mut render_pass_forward_rendering =
@@ -147,6 +150,13 @@ impl ForwardRenderingTech {
                 .bind_group
                 .as_ref()
                 .unwrap_or(&shadow_tech.dummy_bind_group),
+            &[],
+        );
+
+        // cubemap tech bind group
+        render_pass_forward_rendering.set_bind_group(
+            3,
+            &cubemap_tech.irradiance_cubemap_texture_bind_group,
             &[],
         );
 

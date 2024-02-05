@@ -1,6 +1,6 @@
 //include:camera.wgsl
 //include:model.wgsl
-//include:pbr.wgsl
+//include:pbr_structs.wgsl
 
 @group(0) @binding(0)
 var<uniform> camera: CameraUniform;

@@ -1,5 +1,5 @@
 //include:camera.wgsl
-//include:pbr.wgsl
+//include:pbr_structs.wgsl
 
 struct VertexOutput {
   @builtin(position) position : vec4<f32>,
