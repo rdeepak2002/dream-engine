@@ -218,28 +218,28 @@ impl Default for App {
                 ),
             );
         }
-        // {
-        //     // test model
-        //     let entity_handle =
-        //         Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
-        //             .expect("Unable to create entity");
-        //     // add mesh renderer component
-        //     MeshRenderer::add_to_entity(
-        //         Arc::downgrade(&scene),
-        //         entity_handle,
-        //         &resource_manager,
-        //         "57d472a2-7fa6-4604-91db-89a12571da57".into(), // cube: 4668c131-3eec-4b4f-84a4-f24add9cd5a8 ; multiple: 57d472a2-7fa6-4604-91db-89a12571da57
-        //         true,
-        //         Default::default(),
-        //     );
-        //     Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
-        //         Transform::new(
-        //             Vector3::new(2.0, 2.0, 1.0),
-        //             UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
-        //             Vector3::new(1.0, 1.0, 1.0),
-        //         ),
-        //     );
-        // }
+        {
+            // test model
+            let entity_handle =
+                Scene::create_entity(Arc::downgrade(&scene), Some("Test".into()), None, None)
+                    .expect("Unable to create entity");
+            // add mesh renderer component
+            MeshRenderer::add_to_entity(
+                Arc::downgrade(&scene),
+                entity_handle,
+                &resource_manager,
+                "06179ca3-15f8-4e99-becf-8dae4ba680c4".into(), // cube: 4668c131-3eec-4b4f-84a4-f24add9cd5a8 ; multiple: 57d472a2-7fa6-4604-91db-89a12571da57
+                true,
+                Default::default(),
+            );
+            Entity::from_handle(entity_handle, Arc::downgrade(&scene)).add_component(
+                Transform::new(
+                    Vector3::new(8.0, 7.0, 1.0),
+                    UnitQuaternion::from_euler_angles(0.0, 0.0, 0.0),
+                    Vector3::new(1.0, 1.0, 1.0),
+                ),
+            );
+        }
         {
             // raiden
             let entity_handle =

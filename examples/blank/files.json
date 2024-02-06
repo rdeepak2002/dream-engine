@@ -64,6 +64,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/MetalRoughSpheres.glb",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/marisa-sketchfab.glb",
     "fileUrl": null
   },
@@ -96,6 +100,10 @@
     "fileUrl": null
   },
   {
+    "filepath": "models/MetalRoughSpheresNoTextures.glb.meta",
+    "fileUrl": null
+  },
+  {
     "filepath": "models/cube.glb",
     "fileUrl": null
   },
@@ -105,6 +113,10 @@
   },
   {
     "filepath": "models/MultiUVTest.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/MetalRoughSpheres.glb.meta",
     "fileUrl": null
   },
   {
@@ -129,6 +141,10 @@
   },
   {
     "filepath": "models/ABeautifulGame.glb.meta",
+    "fileUrl": null
+  },
+  {
+    "filepath": "models/MetalRoughSpheresNoTextures.glb",
     "fileUrl": null
   },
   {
